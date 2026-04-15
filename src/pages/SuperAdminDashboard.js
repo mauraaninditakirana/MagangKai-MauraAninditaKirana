@@ -42,7 +42,10 @@ const SuperAdminDashboard = () => {
     const fetchData = async () => {
         try {
             const res = await axios.get('http://localhost:5000/api/submissions');
-            setSubmissions(res.data || []);
+            const sortedData = (res.data || []).sort((a, b) => 
+                new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
+            );
+            setSubmissions(sortedData);
         } catch (err) { 
             console.error("Gagal mengambil data:", err); 
         }
@@ -196,7 +199,13 @@ const SuperAdminDashboard = () => {
                                             <Eye size={14}/> Cek Berkas
                                         </button>
                                     </td>
-                                    <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
+                                    <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span>
+                                    {s.status === 'Menunggu Verifikasi' && s.catatan && s.catatan.includes('perbaikan') && (
+                                        <div style={{ fontSize: '10px', color: '#ff6600', marginTop: '4px', fontWeight: 'bold' }}>
+                                            (Data Baru Diperbaiki)
+                                        </div>
+                                    )}
+                                    </td>
                                     <td style={styles.td}>
                                         <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
                                             {s.status === 'Menunggu Verifikasi' && (

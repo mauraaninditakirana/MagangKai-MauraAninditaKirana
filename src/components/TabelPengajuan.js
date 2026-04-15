@@ -1,123 +1,133 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Eye, Clock, CheckCircle, XCircle, Download, FileCheck } from 'lucide-react';
+import { Download, Clock, CheckCircle, AlertCircle, Edit3 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const TabelPengajuan = ({ userId }) => {
-    const [submissions, setSubmissions] = useState([]);
+    const [data, setData] = useState([]);
 
     useEffect(() => {
-        fetchSubmissions();
+        if (userId) {
+            fetchRiwayat();
+        }
     }, [userId]);
 
-    const fetchSubmissions = async () => {
+    const fetchRiwayat = async () => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions?user_id=${userId}`);
-            setSubmissions(res.data);
-        } catch (error) {
-            console.error("Gagal mengambil data pengajuan", error);
+            setData(res.data);
+        } catch (err) {
+            console.error("Gagal ambil riwayat:", err);
         }
     };
 
-    // Menambahkan semua status baru ke dalam styling 
+    // ✨ FITUR BARU: Lihat Catatan Revisi ✨
+    const showCatatan = (catatan) => {
+        Swal.fire({
+            title: 'Catatan Revisi',
+            text: catatan || 'Silakan cek kembali berkas Anda.',
+            icon: 'info',
+            confirmButtonColor: '#ff6600'
+        });
+    };
+
     const getStatusStyle = (status) => {
         switch (status) {
-            case 'Selesai (Surat Dirilis)': 
-                return { color: '#27ae60', icon: <FileCheck size={16} /> }; // Hijau Tua
-            case 'Disetujui Unit': 
-                return { color: '#0055cc', icon: <CheckCircle size={16} /> }; // Biru KAI
-            case 'Ditinjau Unit': 
-                return { color: '#ff6600', icon: <Clock size={16} /> }; // Oranye
-            case 'Menunggu Verifikasi': 
-                return { color: '#3498db', icon: <Clock size={16} /> }; // Biru Muda
-            case 'Revisi': 
-                return { color: '#f39c12', icon: <Clock size={16} /> }; // Kuning
-            case 'Ditolak': 
-                return { color: '#e74c3c', icon: <XCircle size={16} /> }; // Merah
-            default: 
-                return { color: '#7f8c8d', icon: <Clock size={16} /> };
+            case 'Selesai (Surat Dirilis)': return { color: '#27ae60', icon: <CheckCircle size={16} />, bg: '#e1f7e7' };
+            case 'Disetujui Unit': return { color: '#0055cc', icon: <Clock size={16} />, bg: '#e0f0ff' };
+            case 'Ditinjau Unit': return { color: '#ff6600', icon: <Clock size={16} />, bg: '#fff4e5' };
+            case 'Revisi': return { color: '#e67e22', icon: <AlertCircle size={16} />, bg: '#fef5e7' };
+            case 'Ditolak': return { color: '#e74c3c', icon: <AlertCircle size={16} />, bg: '#f9ebea' };
+            default: return { color: '#7f8c8d', icon: <Clock size={16} />, bg: '#f8f9fa' };
         }
     };
 
     return (
-        <div style={styles.container}>
-            <h3 style={{color: '#003399', marginBottom: '15px'}}>Riwayat & Status Pengajuan</h3>
-            <div style={styles.tableResponsive}>
-                <table style={styles.table}>
-                    <thead>
-                        <tr style={styles.headerRow}>
-                            <th style={styles.th}>Unit</th>
-                            <th style={styles.th}>Judul Project</th>
-                            <th style={styles.th}>Status Tracking</th>
-                            <th style={styles.th}>Unduh Berkas Balasan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {submissions.length > 0 ? submissions.map((s) => {
-                            const statusStyle = getStatusStyle(s.status);
-                            return (
-                                <tr key={s.id} style={styles.row}>
-                                    <td style={styles.td}><b>{s.nama_unit}</b></td>
-                                    <td style={styles.td}>{s.judul_atau_tujuan}</td>
-                                    <td style={styles.td}>
-                                        <div style={{display: 'flex', alignItems: 'center', gap: '5px', color: statusStyle.color, fontWeight: 'bold'}}>
-                                            {statusStyle.icon} {s.status}
+        <div style={styles.card}>
+            <table style={styles.table}>
+                <thead>
+                    <tr style={styles.thRow}>
+                        <th style={styles.th}>Unit Tujuan</th>
+                        <th style={styles.th}>Judul Project</th>
+                        <th style={styles.th}>Status Tracking</th>
+                        <th style={{ ...styles.th, textAlign: 'center' }}>Aksi / Berkas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.length > 0 ? data.map((s) => {
+                        const style = getStatusStyle(s.status);
+                        return (
+                            <tr key={s.id} style={styles.row}>
+                                <td style={styles.td}><b>{s.nama_unit}</b></td>
+                                <td style={styles.td}>{s.judul_atau_tujuan}</td>
+                                <td style={styles.td}>
+                                    <div style={{ 
+                                        display: 'inline-flex', alignItems: 'center', gap: '8px', 
+                                        color: style.color, backgroundColor: style.bg,
+                                        padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' 
+                                    }}>
+                                        {style.icon} {s.status}
+                                    </div>
+                                </td>
+                                <td style={{ ...styles.td, textAlign: 'center' }}>
+                                    
+                                    {/* ✨ LOGIKA TOMBOL REVISI ✨ */}
+                                    {s.status === 'Revisi' && (
+                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                            <button 
+                                                onClick={() => showCatatan(s.catatan)}
+                                                style={styles.btnInfo}
+                                                title="Lihat alasan revisi"
+                                            >
+                                                Lihat Catatan
+                                            </button>
+                                            <button 
+                                                onClick={() => window.location.href = `/dashboard?revisi=${s.id}`}
+                                                style={styles.btnEdit}
+                                            >
+                                                <Edit3 size={14} /> Perbaiki Data
+                                            </button>
                                         </div>
-                                    </td>
-                                    <td style={styles.td}>
-                                        {/* ✨ EDIT 2: Logika Download disesuaikan dengan status 'Selesai' ✨ */}
-                                        {s.status === 'Selesai (Surat Dirilis)' ? (
-                                            <div style={{display: 'flex', gap: '10px'}}>
-                                                <a 
-                                                    href={`http://localhost:5000/api/submissions/${s.id}/download`} 
-                                                    target="_blank" 
-                                                    rel="noreferrer"
-                                                    style={styles.btnDownload}
-                                                >
-                                                    <Download size={14} /> Surat Balasan
-                                                </a>
-                                                <a 
-                                                    href="/template-id-card.pdf" 
-                                                    download 
-                                                    style={{...styles.btnDownload, backgroundColor: '#ff6600'}}
-                                                >
-                                                    <Download size={14} /> ID Card
-                                                </a>
-                                            </div>
-                                        ) : (
-                                            <span style={{color: '#aaa', fontSize: '12px', fontStyle: 'italic'}}>
-                                                {s.status === 'Ditolak' ? 'Mohon maaf, pengajuan ditolak' : 'Tersedia setelah disetujui pusat'}
-                                            </span>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        }) : (
-                            <tr>
-                                <td colSpan="4" style={{textAlign: 'center', padding: '30px', color: '#888'}}>Belum ada riwayat pengajuan.</td>
+                                    )}
+
+                                    {s.status === 'Selesai (Surat Dirilis)' && (
+                                        <button 
+                                            onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download`, '_blank')}
+                                            style={styles.btnDownload}
+                                        >
+                                            <Download size={14} /> Unduh Surat
+                                        </button>
+                                    )}
+
+                                    {['Ditinjau Unit', 'Disetujui Unit', 'Menunggu Verifikasi'].includes(s.status) && (
+                                        <span style={styles.textWait}>Berkas sedang diproses</span>
+                                    )}
+
+                                    {s.status === 'Ditolak' && (
+                                        <button onClick={() => showCatatan(s.catatan)} style={{...styles.btnInfo, color: '#e74c3c'}}>Lihat Alasan</button>
+                                    )}
+                                </td>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                        );
+                    }) : (
+                        <tr><td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#999' }}>Belum ada pengajuan.</td></tr>
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 };
 
 const styles = {
-    container: { backgroundColor: '#fff', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', marginTop: '20px' },
-    tableResponsive: { overflowX: 'auto' },
+    card: { backgroundColor: '#fff', borderRadius: '15px', padding: '25px', boxShadow: '0 5px 20px rgba(0,0,0,0.05)' },
     table: { width: '100%', borderCollapse: 'collapse' },
-    headerRow: { backgroundColor: '#f8f9fa', textAlign: 'left' },
-    th: { padding: '15px', borderBottom: '2px solid #eee', fontSize: '12px', color: '#888', textTransform: 'uppercase' },
-    td: { padding: '15px', borderBottom: '1px solid #eee', fontSize: '13px', color: '#444' },
-    row: { transition: '0.3s' },
-    btnDownload: { 
-        display: 'flex', alignItems: 'center', gap: '5px', 
-        backgroundColor: '#27ae60', color: '#fff', 
-        padding: '8px 14px', borderRadius: '8px', 
-        textDecoration: 'none', fontSize: '11px', fontWeight: 'bold',
-        transition: '0.2s'
-    }
+    thRow: { borderBottom: '2px solid #f0f0f0' },
+    th: { textAlign: 'left', padding: '15px 12px', color: '#888', fontSize: '12px', textTransform: 'uppercase' },
+    td: { padding: '20px 12px', borderBottom: '1px solid #f9f9f9', fontSize: '14px' },
+    btnDownload: { display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' },
+    btnEdit: { display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' },
+    btnInfo: { backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #d0dfff', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
+    textWait: { color: '#bbb', fontStyle: 'italic', fontSize: '12px' }
 };
 
 export default TabelPengajuan;
