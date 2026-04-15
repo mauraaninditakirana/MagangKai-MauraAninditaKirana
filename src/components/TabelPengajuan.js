@@ -18,7 +18,7 @@ const TabelPengajuan = ({ userId }) => {
         }
     };
 
-    // ✨ EDIT 1: Menambahkan semua status baru ke dalam styling ✨
+    // Menambahkan semua status baru ke dalam styling 
     const getStatusStyle = (status) => {
         switch (status) {
             case 'Selesai (Surat Dirilis)': 

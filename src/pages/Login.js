@@ -19,7 +19,6 @@ const Login = () => {
 
         Swal.fire('Berhasil Login!', 'Selamat datang kembali', 'success');
 
-        // ✨ FIX: RUTE BARU YANG SUDAH KITA SEPAKATI ✨
         const role = userData.role;
 
         if (role === 'Super Admin') {

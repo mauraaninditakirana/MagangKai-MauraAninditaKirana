@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, UserCog, Building2, 
-    LogOut, PlusCircle, Edit, Trash2, Search 
+    LogOut, PlusCircle, Edit, Trash2, Search, FileText, Archive
 } from 'lucide-react';
 
 const UnitManagement = () => {
@@ -159,6 +159,9 @@ const UnitManagement = () => {
                 </div>
                 <div style={styles.menuActive}>
                     <Building2 size={18}/> Manajemen Unit
+                </div>
+                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}>    
+                    <FileText size={18}/> Arsip Data Peserta
                 </div>
 
                 <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}>

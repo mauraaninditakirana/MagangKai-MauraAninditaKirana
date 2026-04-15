@@ -14,13 +14,16 @@ const Dashboard = () => {
             return;
         }
         setUserData(JSON.parse(storedUser));
+        
+        // Memastikan halaman mulai dari atas saat dibuka
+        window.scrollTo(0, 0);
     }, [navigate]);
 
     if (!userData) return null;
 
     return (
         <div style={styles.container}>
-            {/* SIDEBAR USER */}
+            {/* SIDEBAR USER - SEKARANG STICKY & TIDAK IKUT SCROLL */}
             <div style={styles.sidebar}>
                 <div style={styles.logoArea}>
                     <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>MAGANG</span></h3>
@@ -42,29 +45,99 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* KONTEN UTAMA */}
+            {/* KONTEN UTAMA - AREA INI YANG BISA DI-SCROLL */}
             <div style={styles.main}>
-                <h2 style={{color:'#003399', marginBottom: '5px'}}>Halo, {userData.nama_lengkap}! 👋</h2>
-                <p style={{color:'#666', marginBottom: '30px'}}>Silakan isi form di bawah ini untuk mengajukan kegiatan.</p>
+                <div style={styles.headerArea}>
+                    <h2 style={{color:'#003399', marginBottom: '5px'}}>Halo, {userData.nama_lengkap || userData.nama}! 👋</h2>
+                    <p style={{color:'#666', margin: 0}}>Silakan isi form di bawah ini untuk mengajukan kegiatan.</p>
+                </div>
                 
-                {/* HANYA FORM PENGAJUAN YANG ADA DI SINI */}
-                <FormPengajuan 
-                    userId={userData.id} 
-                    onDocsUploaded={() => navigate('/riwayat')} 
-                />
+                <div style={styles.formContainer}>
+                    <FormPengajuan 
+                        userId={userData.id} 
+                        onDocsUploaded={() => navigate('/riwayat')} 
+                    />
+                </div>
             </div>
         </div>
     );
 };
 
 const styles = {
-    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
-    logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
-    menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', border: '1px solid transparent' },
-    menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', border: '1px solid transparent', transition: '0.3s' },
-    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
-    main: { flex: 1, padding: '40px', overflowY: 'auto' }
+    container: { 
+        display: 'flex', 
+        minHeight: '100vh', 
+        backgroundColor: '#f0f4f8',
+        fontFamily: 'sans-serif'
+    },
+    sidebar: { 
+        width: '260px', 
+        backgroundColor: '#083182', 
+        color: '#fff', 
+        padding: '30px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
+        // Sidebar
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        boxSizing: 'border-box'
+    },
+    logoArea: { 
+        marginBottom: '40px', 
+        borderBottom: '1px solid rgba(255,255,255,0.1)', 
+        paddingBottom: '20px' 
+    },
+    menuActive: { 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px', 
+        padding: '15px', 
+        backgroundColor: '#ff6600', 
+        borderRadius: '12px', 
+        fontWeight: 'bold', 
+        fontSize: '14px', 
+        color: '#fff', 
+        marginBottom: '10px' 
+    },
+    menuItem: { 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px', 
+        padding: '15px', 
+        borderRadius: '12px', 
+        cursor: 'pointer', 
+        fontSize: '14px', 
+        color: '#ccc', 
+        marginBottom: '10px', 
+        transition: '0.3s' 
+    },
+    logout: { 
+        marginTop: 'auto', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '10px', 
+        padding: '15px', 
+        cursor: 'pointer', 
+        color: '#ffaaaa', 
+        fontSize: '14px',
+        fontWeight: 'bold'
+    },
+    main: { 
+        flex: 1, 
+        padding: '40px', 
+        overflowY: 'auto' // Menjadikan area utama bisa di-scroll
+    },
+    headerArea: {
+        marginBottom: '30px'
+    },
+    formContainer: {
+        backgroundColor: '#fff',
+        borderRadius: '16px',
+        padding: '20px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+    }
 };
 
 export default Dashboard;

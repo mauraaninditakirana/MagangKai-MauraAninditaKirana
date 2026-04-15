@@ -46,7 +46,7 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
             return Swal.fire('Perhatian', 'Mohon pilih Keperluan dan Unit Tujuan', 'warning');
         }
 
-        // ✨ LOGIKA CERDAS: Cek apakah sisa kuota cukup untuk jumlah anggota ✨
+        // Cek apakah sisa kuota cukup untuk jumlah anggota 
         const selectedUnit = units.find(u => u.id.toString() === formData.unit_id.toString());
         if (selectedUnit && formData.jumlah_anggota > selectedUnit.kuota) {
             return Swal.fire(

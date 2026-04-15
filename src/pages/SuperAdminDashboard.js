@@ -14,8 +14,6 @@ const SuperAdminDashboard = () => {
     
     // Ambil data user dari localStorage
     const user = JSON.parse(localStorage.getItem('user')) || {};
-
-    // ✨ PERBAIKAN SATPAM (useEffect): Mencegah terlempar ke Landing Page ✨
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
         
@@ -36,7 +34,7 @@ const SuperAdminDashboard = () => {
         // 3. Jika lolos sensor, baru ambil data
         fetchData();
         
-        // Opsional: Memastikan halaman selalu mulai dari atas saat pindah menu
+        // Memastikan halaman selalu mulai dari atas saat pindah menu
         window.scrollTo(0, 0);
 
     }, [navigate]); // Cukup navigate sebagai dependency agar stabil
@@ -140,6 +138,10 @@ const SuperAdminDashboard = () => {
 
                 <div style={styles.menuItem} onClick={() => navigate('/admin/units')}>
                     <Building2 size={18}/> Manajemen Unit
+                </div>
+                
+                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}>    
+                    <FileText size={18}/> Arsip Data Peserta
                 </div>
 
                 <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}>

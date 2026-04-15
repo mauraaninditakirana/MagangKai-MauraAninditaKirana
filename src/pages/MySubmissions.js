@@ -14,20 +14,23 @@ const MySubmissions = () => {
             return;
         }
         setUserData(JSON.parse(storedUser));
+        
+        // Memastikan scroll kembali ke atas saat navigasi
+        window.scrollTo(0, 0);
     }, [navigate]);
 
     if (!userData) return null;
 
     return (
         <div style={styles.container}>
-            {/* SIDEBAR USER */}
+            {/* SIDEBAR USER - STICKY & IDENTIK */}
             <div style={styles.sidebar}>
                 <div style={styles.logoArea}>
                     <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>MAGANG</span></h3>
                     <small style={{opacity:0.7}}>Portal Mahasiswa</small>
                 </div>
                 
-                {/* Menu Buat Pengajuan (Tidak Aktif, Klik untuk pindah ke Dashboard) */}
+                {/* Menu Buat Pengajuan (Tidak Aktif) */}
                 <div style={styles.menuItem} onClick={() => navigate('/dashboard')}>
                     <FilePlus size={18}/> Buat Pengajuan
                 </div>
@@ -44,15 +47,13 @@ const MySubmissions = () => {
 
             {/* KONTEN UTAMA */}
             <div style={styles.main}>
-                <div style={{marginBottom: '30px'}}>
+                <div style={styles.headerArea}>
                     <h2 style={{color:'#003399', margin: 0}}>Riwayat Pengajuan Saya 📂</h2>
-                    {/* Menampilkan nama user agar lebih personal */}
                     <p style={{color:'#666', marginTop: '5px'}}>
                         Halo {userData.nama_lengkap || userData.nama}, pantau status dan unduh surat balasan di sini.
                     </p>
                 </div>
                 
-                {/* Panggil Tabel di sini - Pastikan userId terkirim agar filter data jalan */}
                 <TabelPengajuan userId={userData.id} />
             </div>
         </div>
@@ -62,13 +63,14 @@ const MySubmissions = () => {
 const styles = {
     container: { 
         display: 'flex', 
-        minHeight: '100vh', 
+        height: '100vh', 
         backgroundColor: '#f0f4f8', 
-        fontFamily: 'sans-serif' 
+        fontFamily: 'sans-serif',
+        overflow: 'hidden' 
     },
     sidebar: { 
         width: '260px', 
-        backgroundColor: '#003399', 
+        backgroundColor: '#083182', 
         color: '#fff', 
         padding: '30px', 
         display: 'flex', 
@@ -76,7 +78,8 @@ const styles = {
         boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
         position: 'sticky',
         top: 0,
-        height: '100vh'
+        height: '100vh',
+        boxSizing: 'border-box' // KUNCI SIDEBAR 
     },
     logoArea: { 
         marginBottom: '40px', 
@@ -106,8 +109,7 @@ const styles = {
         fontSize: '14px', 
         color: '#ccc', 
         marginBottom: '10px', 
-        transition: '0.3s',
-        ':hover': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }
+        transition: '0.3s'
     },
     logout: { 
         marginTop: 'auto', 
@@ -124,6 +126,9 @@ const styles = {
         flex: 1, 
         padding: '40px', 
         overflowY: 'auto' 
+    },
+    headerArea: {
+        marginBottom: '30px'
     }
 };
 

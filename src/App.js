@@ -4,11 +4,12 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import SuperAdminDashboard from './pages/SuperAdminDashboard'; // <-- Peta ke HC Pusat
-import AdminDashboard from './pages/AdminDashboard';           // <-- Peta ke Kepala Unit
+import SuperAdminDashboard from './pages/SuperAdminDashboard'; 
+import AdminDashboard from './pages/AdminDashboard';           
 import UserManagement from './pages/UserManagement';
 import MySubmissions from './pages/MySubmissions';
 import UnitManagement from './pages/UnitManagement';
+import ArchiveManagement from './pages/ArchiveManagement';
 
 function App() {
   return (
@@ -29,6 +30,8 @@ function App() {
 
         {/* Dashboard Kepala Unit */}
         <Route path="/admin" element={<AdminDashboard />} />
+
+        <Route path="/admin/archive" element={<ArchiveManagement />} />
       </Routes>
     </Router>
   );

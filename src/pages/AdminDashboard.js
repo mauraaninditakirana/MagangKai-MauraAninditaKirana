@@ -7,12 +7,9 @@ import { Check, X, Eye, ClipboardList, LogOut } from 'lucide-react';
 const AdminDashboard = () => {
     const [submissions, setSubmissions] = useState([]);
     const navigate = useNavigate();
-    
-    // ✨ FIX 1: Pelindung agar tidak blank putih jika localStorage kosong
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
-        // ✨ FIX 2: Toleransi role (bisa 'Admin Unit' atau 'admin')
         if (!user.role || (user.role !== 'Admin Unit' && user.role !== 'admin')) { 
             navigate('/'); 
             return; 
@@ -22,10 +19,9 @@ const AdminDashboard = () => {
 
     const fetchUnitData = async () => {
         try {
-            // ✨ FIX 3: Ambil semua data, lalu filter secara manual dengan String() agar akurat
+            // Ambil semua data, lalu filter secara manual dengan String() agar akurat
             const res = await axios.get('http://localhost:5000/api/submissions');
             
-            // CCTV Console: Silakan cek F12 jika data masih kosong
             console.log("🔍 Identitas Admin:", user);
             console.log("📦 Total Data di Database:", res.data);
 
@@ -41,7 +37,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // ✨ FITUR BARU: Kepala Unit sekarang bisa melihat berkas! ✨
+    
     const viewDocs = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
@@ -61,7 +57,7 @@ const AdminDashboard = () => {
     const sendDecision = async (id, decision) => {
         const statusResult = decision === 'Setuju' ? 'Disetujui Unit' : 'Ditolak';
         
-        // Tambahkan konfirmasi ganda biar Admin tidak salah klik
+        //konfirmasi ganda biar Admin tidak salah klik
         const confirm = await Swal.fire({
             title: `Yakin ingin ${decision} mahasiswa ini?`,
             text: decision === 'Setuju' ? "Kuota unit akan otomatis terpotong." : "Mahasiswa akan ditolak.",

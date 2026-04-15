@@ -14,13 +14,13 @@ const LandingPage = () => {
     const caraDaftarRef = useRef(null);
     const faqRef = useRef(null);
 
-    // Fungsi klik untuk menggulir halaman dengan mulus
+    // Fungsi klik untuk menggulir halaman dengan baik
     const scrollToSection = (ref, sectionName) => {
         setActiveSection(sectionName);
         ref.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // Peringatan sebelum dilempar ke Login (Tetap dipertahankan)
+   
     const handleCekKuota = () => {
         Swal.fire({
             title: 'Akses Terbatas',
@@ -33,11 +33,11 @@ const LandingPage = () => {
         });
     };
 
-    // CCTV untuk mendeteksi bagian halaman mana yang sedang di-scroll
+    // deteksi bagian halaman mana yang sedang di-scroll
     useEffect(() => {
         const observerOptions = {
             root: null,
-            rootMargin: '-80px 0px 0px 0px', // Kompensasi tinggi navbar
+            rootMargin: '-80px 0px 0px 0px', // tinggi navbar
             threshold: 0.5, // Memicu perubahan jika 50% bagian sudah terlihat
         };
 
@@ -198,7 +198,7 @@ const styles = {
     btnLogin: { backgroundColor: '#e74c3c', color: 'white', border: 'none', padding: '10px 25px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', transition: '0.3s', boxShadow: '0 4px 10px rgba(231, 76, 60, 0.3)' },
     
     // Beranda Styles
-    hero: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #003399 0%, #0055ff 100%)', color: 'white', textAlign: 'center', padding: '60px 20px', position: 'relative', overflow: 'hidden', scrollMarginTop: '70px' },
+    hero: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #003399 0%, #083ba1 100%)', color: 'white', textAlign: 'center', padding: '60px 20px', position: 'relative', overflow: 'hidden', scrollMarginTop: '70px' },
     heroContent: { zIndex: 2, maxWidth: '800px' },
     title: { fontSize: '48px', fontWeight: '800', margin: '0 0 20px 0', lineHeight: '1.2', letterSpacing: '-1px' },
     subtitle: { fontSize: '18px', lineHeight: '1.6', opacity: '0.9', margin: 0 },
