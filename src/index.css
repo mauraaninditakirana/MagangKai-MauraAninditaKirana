@@ -1,13 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  --kai-blue: #003399;   /* Biru Tua KAI */
+  --kai-orange: #ff6600; /* Oranye KAI */
+  --kai-white: #ffffff;
+  --kai-gray: #f4f4f4;
+}
+
+/* Memaksa scrollbar selalu ada agar layout tidak geser-geser saat pindah menu */
+html {
+  overflow-y: scroll;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--kai-gray);
+  color: #333;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+* {
+  box-sizing: border-box;
+}
+
+/* Tambahan: Animasi halus untuk tombol dan menu */
+button, a {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Animasi putar untuk tombol refresh jika sedang loading */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
