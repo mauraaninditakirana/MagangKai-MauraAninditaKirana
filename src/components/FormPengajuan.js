@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { Send, FileUp, ClipboardList } from 'lucide-react';
+// UBAH/TAMBAH: Import useLocation untuk membaca parameter URL
+import { useLocation } from 'react-router-dom'; 
+import { Send, FileUp, ClipboardList, Edit3 } from 'lucide-react'; 
 
 const FormPengajuan = ({ userId, onDocsUploaded }) => {
+    // UBAH/TAMBAH: Ambil parameter ?revisi= dari URL
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const revisiId = queryParams.get('revisi');
+
     const [units, setUnits] = useState([]);
     const [submissionTypes, setSubmissionTypes] = useState([]); 
     const [formData, setFormData] = useState({
@@ -29,7 +36,32 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
             { id: 3, nama: 'Penelitian / Riset Data' },
             { id: 4, nama: 'Tugas Akhir / Skripsi' }
         ]);
-    }, []);
+
+        // Jika Mode Revisi (Ambil data lama)
+        if (revisiId) {
+            axios.get(`http://localhost:5000/api/submissions/${revisiId}`)
+                .then(res => {
+                    const dataLama = res.data;
+                    // Masukkan data lama ke dalam form agar user tidak perlu ngetik ulang
+                    setFormData({
+                        submission_type_id: dataLama.submission_type_id || '',
+                        unit_id: dataLama.unit_id || '',
+                        judul_atau_tujuan: dataLama.judul_atau_tujuan || '',
+                        kategori_pendaftar: dataLama.kategori_pendaftar || 'Individu',
+                        jumlah_anggota: dataLama.jumlah_anggota || 1,
+                        tanggal_mulai: dataLama.tanggal_mulai ? dataLama.tanggal_mulai.split('T')[0] : '',
+                        tanggal_selesai: dataLama.tanggal_selesai ? dataLama.tanggal_selesai.split('T')[0] : ''
+                    });
+                })
+                .catch(err => console.error("Gagal load data revisi:", err));
+        } else {
+            // Bersihkan form jika bukan mode revisi (daftar baru)
+            setFormData({
+                submission_type_id: '', unit_id: '', judul_atau_tujuan: '',
+                kategori_pendaftar: 'Individu', jumlah_anggota: 1, tanggal_mulai: '', tanggal_selesai: ''
+            });
+        }
+    }, [revisiId]); // Efek akan berjalan ulang jika URL (revisiId) berubah
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -65,26 +97,36 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/submissions', data);
-            Swal.fire('Berhasil!', 'Pengajuan Anda telah berhasil dikirim.', 'success');
+            if (revisiId) {
+                // Beri tahu backend bahwa ini adalah hasil revisi mahasiswa
+                data.append('catatan', 'Mahasiswa telah melakukan perbaikan data/dokumen.');
+                
+                await axios.put(`http://localhost:5000/api/submissions/${revisiId}/revisi`, data);
+                Swal.fire('Berhasil!', 'Perbaikan data Anda telah terkirim.', 'success');
+            } else {
+                await axios.post('http://localhost:5000/api/submissions', data);
+                Swal.fire('Berhasil!', 'Pengajuan Anda telah berhasil dikirim.', 'success');
+            }
             onDocsUploaded();
         } catch (error) {
-            Swal.fire('Gagal', 'Terjadi kesalahan saat mengirim pengajuan.', 'error');
+            Swal.fire('Gagal', 'Terjadi kesalahan saat mengirim data.', 'error');
         }
     };
 
     return (
         <div style={styles.card}>
             <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
-                <ClipboardList color="#003399" />
-                <h3 style={{color: '#003399', margin: 0}}>Form Pengajuan Baru</h3>
+                {revisiId ? <Edit3 color="#ff6600" /> : <ClipboardList color="#003399" />}
+                <h3 style={{color: revisiId ? '#ff6600' : '#003399', margin: 0}}>
+                    {revisiId ? 'Form Perbaikan Data (Revisi)' : 'Form Pengajuan Baru'}
+                </h3>
             </div>
             
             <form onSubmit={handleSubmit} style={styles.form}>
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Jenis Keperluan</label>
-                        <select name="submission_type_id" onChange={handleChange} style={styles.input} required>
+                        <select name="submission_type_id" value={formData.submission_type_id} onChange={handleChange} style={styles.input} required>
                             <option value="">-- Pilih Keperluan --</option>
                             {submissionTypes.map(type => (
                                 <option key={type.id} value={type.id}>{type.nama}</option>
@@ -94,9 +136,8 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
 
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Unit Tujuan</label>
-                        <select name="unit_id" onChange={handleChange} style={styles.input} required>
+                        <select name="unit_id" value={formData.unit_id} onChange={handleChange} style={styles.input} required>
                             <option value="">-- Pilih Unit --</option>
-                            {/* ✨ LOGIKA CERDAS: Kunci opsi jika kuota habis ✨ */}
                             {units.map(u => (
                                 <option key={u.id} value={u.id} disabled={u.kuota <= 0}>
                                     {u.nama_unit} {u.kuota <= 0 ? '(KUOTA PENUH 🚫)' : `(Sisa Kuota: ${u.kuota} Orang)`}
@@ -109,7 +150,7 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Kategori Pendaftar</label>
-                        <select name="kategori_pendaftar" onChange={handleChange} style={styles.input}>
+                        <select name="kategori_pendaftar" value={formData.kategori_pendaftar} onChange={handleChange} style={styles.input}>
                             <option value="Individu">Individu</option>
                             <option value="Kelompok">Kelompok</option>
                         </select>
@@ -117,15 +158,27 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
                     {formData.kategori_pendaftar === 'Kelompok' && (
                         <div style={styles.inputBox}>
                             <label style={styles.label}>Jumlah Anggota (Termasuk Anda)</label>
-                            <input type="number" name="jumlah_anggota" min="2" onChange={handleChange} style={styles.input} required />
+                            <input type="number" name="jumlah_anggota" value={formData.jumlah_anggota} min="2" onChange={handleChange} style={styles.input} required />
                         </div>
                     )}
+                </div>
+                <div style={styles.inputBox}>
+                    <label style={styles.label}>Asal Instansi / Universitas</label>
+                    <input 
+                        name="asal_instansi" 
+                        value={formData.asal_instansi}
+                        placeholder="Contoh: Universitas Muhammadiyah Yogyakarta" 
+                        onChange={handleChange} 
+                        style={styles.input} 
+                        required 
+                    />
                 </div>
 
                 <div style={styles.inputBox}>
                     <label style={styles.label}>Judul Project / Nama Penelitian</label>
                     <input 
                         name="judul_atau_tujuan" 
+                        value={formData.judul_atau_tujuan}
                         placeholder="Contoh: Analisis Sistem Manajemen Barang di KAI Jogja" 
                         onChange={handleChange} 
                         style={styles.input} 
@@ -136,11 +189,11 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Rencana Tanggal Mulai</label>
-                        <input type="date" name="tanggal_mulai" onChange={handleChange} style={styles.input} required />
+                        <input type="date" name="tanggal_mulai" value={formData.tanggal_mulai} onChange={handleChange} style={styles.input} required />
                     </div>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Rencana Tanggal Selesai</label>
-                        <input type="date" name="tanggal_selesai" onChange={handleChange} style={styles.input} required />
+                        <input type="date" name="tanggal_selesai" value={formData.tanggal_selesai} onChange={handleChange} style={styles.input} required />
                     </div>
                 </div>
 
@@ -148,13 +201,21 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
                     <label style={styles.label}>Upload Dokumen Pendukung (Proposal/KTP/Surat Pengantar)</label>
                     <div style={styles.fileContainer}>
                         <FileUp size={20} color="#666" />
-                        <input type="file" multiple onChange={handleFileChange} style={{border: 'none', width: '100%'}} />
+                        <input type="file" multiple onChange={handleFileChange} style={{border: 'none', width: '100%'}} required={!revisiId} />
                     </div>
-                    <p style={{fontSize: '11px', color: '#888', marginTop: '5px'}}>*Anda dapat memilih lebih dari 1 file sekaligus.</p>
+                    <p style={{fontSize: '11px', color: '#888', marginTop: '5px'}}>
+                        {revisiId 
+                            ? '*Biarkan kosong jika tidak ada dokumen yang perlu diperbaiki/diubah.' 
+                            : '*Anda dapat memilih lebih dari 1 file sekaligus.'}
+                    </p>
                 </div>
 
-                <button type="submit" style={styles.btnSubmit}>
-                    <Send size={18} style={{marginRight: '8px'}} /> Kirim Pengajuan Ke KAI
+                <button type="submit" style={{...styles.btnSubmit, backgroundColor: revisiId ? '#ff6600' : '#003399'}}>
+                    {revisiId ? (
+                        <><Edit3 size={18} style={{marginRight: '8px'}} /> Kirim Perbaikan Data</>
+                    ) : (
+                        <><Send size={18} style={{marginRight: '8px'}} /> Kirim Pengajuan Ke KAI</>
+                    )}
                 </button>
             </form>
         </div>
@@ -169,7 +230,7 @@ const styles = {
     label: { fontSize: '14px', fontWeight: '600', color: '#444' },
     input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', backgroundColor: '#fcfcfc', fontSize: '14px' },
     fileContainer: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', border: '2px dashed #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' },
-    btnSubmit: { backgroundColor: '#003399', color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '16px', transition: '0.3s' }
+    btnSubmit: { color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '16px', transition: '0.3s' }
 };
 
 export default FormPengajuan;

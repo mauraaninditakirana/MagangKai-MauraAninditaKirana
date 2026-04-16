@@ -42,7 +42,8 @@ const SuperAdminDashboard = () => {
     const fetchData = async () => {
         try {
             const res = await axios.get('http://localhost:5000/api/submissions');
-            const sortedData = (res.data || []).sort((a, b) => 
+            const activeSubmissions = (res.data || []).filter(s => s.status !== 'Selesai (Surat Dirilis)');
+            const sortedData = activeSubmissions.sort((a, b) => 
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
             );
             setSubmissions(sortedData);
