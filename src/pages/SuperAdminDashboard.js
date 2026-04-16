@@ -52,21 +52,57 @@ const SuperAdminDashboard = () => {
         }
     };
 
-    const viewDocs = async (id) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
-            const docs = res.data.documents;
-            if (!docs || docs.length === 0) return Swal.fire('Info', 'Tidak ada dokumen pendukung.', 'info');
+    const viewDetail = async (id) => {
+    try {
+        const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
+        const s = res.data;
+        const docs = s.documents || [];
 
-            let list = '<div style="text-align:left">';
-            docs.forEach((doc, i) => {
-                list += `<p>${i+1}. <a href="http://localhost:5000/${doc.file_path}" target="_blank" style="color:#003399; font-weight:bold;">Lihat ${doc.nama_dokumen || 'File'}</a></p>`;
-            });
-            list += '</div>';
+        // Menyusun tampilan isi form di dalam pop-up
+        let htmlContent = `
+            <div style="text-align:left; font-family: sans-serif; font-size: 14px; color: #333;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; marginBottom: 20px;">
+                    <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">👤 Data Mahasiswa</h4>
+                    <p><b>Nama Lengkap:</b> ${s.nama_lengkap}</p>
+                    <p><b>Asal Instansi:</b> ${s.asal_instansi || '-'}</p>
+                </div>
 
-            Swal.fire({ title: 'Dokumen Persyaratan', html: list, confirmButtonColor: '#003399' });
-        } catch (err) { Swal.fire('Error', 'Gagal memuat dokumen', 'error'); }
-    };
+                <div style="padding: 10px 15px;">
+                    <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">📋 Detail Rencana</h4>
+                    <p><b>Jenis Kegiatan:</b> ${s.nama_jenis}</p>
+                    <p><b>Unit Tujuan:</b> ${s.nama_unit}</p>
+                    <p><b>Judul Project:</b> ${s.judul_atau_tujuan}</p>
+                    <p><b>Kategori:</b> ${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</p>
+                    <p><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: #fff4e5; border-radius: 10px;">
+                    <h4 style="margin-top:0; color: #ff6600;">📁 Dokumen Lampiran</h4>
+                    ${docs.length > 0 ? docs.map((doc, i) => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dotted #ccc;">
+                            <span>${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
+                            <a href="http://localhost:5000/${doc.file_path}" target="_blank" 
+                               style="background: #003399; color: #fff; padding: 4px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: bold;">
+                               👁️ Lihat Dokumen
+                            </a>
+                        </div>
+                    `).join('') : '<p style="color: #999;">Tidak ada dokumen dilampirkan.</p>'}
+                </div>
+            </div>
+        `;
+
+        Swal.fire({
+            title: 'Review Form Pengajuan',
+            html: htmlContent,
+            width: '600px',
+            confirmButtonText: 'Tutup',
+            confirmButtonColor: '#003399',
+            showCloseButton: true
+        });
+    } catch (err) {
+        Swal.fire('Error', 'Gagal memuat detail data.', 'error');
+    }
+};
 
     const handleAction = async (id, type) => {
         const isRevisi = type === 'revisi';
@@ -178,7 +214,7 @@ const SuperAdminDashboard = () => {
                                 <th style={{...styles.th, width:'50px'}}>No</th>
                                 <th style={styles.th}>Data Mahasiswa</th>
                                 <th style={styles.th}>Unit & Jenis</th>
-                                <th style={styles.th}>Dokumen</th>
+                                <th style={styles.th}>Detail Pengajuan</th>
                                 <th style={styles.th}>Status</th>
                                 <th style={{...styles.th, textAlign:'center'}}>Aksi Fase</th>
                             </tr>
@@ -196,9 +232,9 @@ const SuperAdminDashboard = () => {
                                         <div style={{fontSize: '11px', color: '#ff6600', fontWeight:'600'}}>{s.nama_jenis}</div>
                                     </td>
                                     <td style={styles.td}>
-                                        <button onClick={() => viewDocs(s.id)} style={styles.btnDetail}>
-                                            <Eye size={14}/> Cek Berkas
-                                        </button>
+                                    <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}>
+                                        <Eye size={14}/> Lihat Isi Form
+                                    </button>
                                     </td>
                                     <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span>
                                     {s.status === 'Menunggu Verifikasi' && s.catatan && s.catatan.includes('perbaikan') && (

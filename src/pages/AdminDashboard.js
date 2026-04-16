@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { 
-    LayoutDashboard, FileText, LogOut, CheckCircle, Clock, Search, Briefcase
+    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -25,11 +26,43 @@ const AdminDashboard = () => {
 
     const fetchData = async (unitId) => {
         try {
-            // Ambil data yang hanya milik unit ini saja
             const res = await axios.get(`http://localhost:5000/api/submissions?unit_id=${unitId}`);
             setSubmissions(res.data || []);
         } catch (err) {
             console.error("Gagal ambil data unit:", err);
+        }
+    };
+
+    // Setujui / Tolak 
+    const handleAction = async (id, actionType) => {
+        const newStatus = actionType === 'approve' ? 'Disetujui Unit' : 'Ditolak';
+        const confirmText = actionType === 'approve' ? 'Anda yakin ingin menyetujui peserta ini untuk magang di Unit Anda?' : 'Anda yakin ingin menolak peserta ini?';
+        const confirmColor = actionType === 'approve' ? '#28a745' : '#dc3545';
+
+        const result = await Swal.fire({
+            title: 'Konfirmasi Tindakan',
+            text: confirmText,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: confirmColor,
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: actionType === 'approve' ? 'Ya, Setujui' : 'Ya, Tolak',
+            cancelButtonText: 'Batal'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
+                    status: newStatus,
+                    catatan: `Pengajuan ${actionType === 'approve' ? 'disetujui' : 'ditolak'} oleh Kepala Unit.`,
+                    admin_id: userData.id
+                });
+                
+                Swal.fire('Berhasil!', `Status telah diubah menjadi ${newStatus}.`, 'success');
+                fetchData(userData.unit_id); // Refresh data agar tombol langsung hilang
+            } catch (err) {
+                Swal.fire('Gagal', 'Terjadi kesalahan saat memproses status.', 'error');
+            }
         }
     };
 
@@ -59,7 +92,6 @@ const AdminDashboard = () => {
                     <LayoutDashboard size={18}/> Monitoring Tugas
                 </div>
 
-                {/* ✨ MENU BARU: ARSIP UNIT ✨ */}
                 <div 
                     style={activeMenu === 'arsip' ? styles.menuActive : styles.menuItem} 
                     onClick={() => setActiveMenu('arsip')}
@@ -99,6 +131,7 @@ const AdminDashboard = () => {
                                     <>
                                         <th style={styles.th}>Jenis</th>
                                         <th style={styles.th}>Status</th>
+                                        <th style={{...styles.th, textAlign: 'center'}}>Aksi</th>
                                     </>
                                 ) : (
                                     <>
@@ -120,6 +153,23 @@ const AdminDashboard = () => {
                                             <td style={styles.td}>{s.nama_jenis}</td>
                                             <td style={styles.td}>
                                                 <span style={styles.badge}>{s.status}</span>
+                                            </td>
+                                            <td style={{...styles.td, textAlign: 'center'}}>
+                                                {/* ✨ HANYA MUNCUL JIKA STATUS 'Ditinjau Unit' ✨ */}
+                                                {s.status === 'Ditinjau Unit' ? (
+                                                    <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                                                        <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
+                                                            <CheckCircle size={14}/> Setujui
+                                                        </button>
+                                                        <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
+                                                            <XCircle size={14}/> Tolak
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>
+                                                        {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
+                                                    </span>
+                                                )}
                                             </td>
                                         </>
                                     ) : (
@@ -159,7 +209,9 @@ const styles = {
     thRow: { backgroundColor: '#f8f9fa' },
     th: { textAlign: 'left', padding: '15px', fontSize: '12px', color: '#888', textTransform: 'uppercase' },
     td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px' },
-    badge: { padding: '4px 10px', backgroundColor: '#e0f0ff', color: '#0055cc', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }
+    badge: { padding: '4px 10px', backgroundColor: '#e0f0ff', color: '#0055cc', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' },
+    btnApprove: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#e6ffe6', color: '#28a745', border: '1px solid #28a745', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
+    btnReject: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#ffe6e6', color: '#dc3545', border: '1px solid #dc3545', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }
 };
 
 export default AdminDashboard;
