@@ -3,7 +3,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { 
-    Users, ShieldCheck, Search, LogOut, 
+    Users, ShieldCheck, Search, LogOut, RefreshCcw,
     LayoutDashboard, UserCog, Building2, FileText,
     Plus, Edit, Trash2 
 } from 'lucide-react';
@@ -196,7 +196,10 @@ const UserManagement = () => {
                 </div>
                 
                 <div style={styles.menuItem} onClick={() => navigate('/super-admin')}>
-                    <LayoutDashboard size={18}/> Monitoring Pengajuan
+                    <LayoutDashboard size={18}/> Dashboard Utama
+                </div>
+                <div style={styles.menuItem} onClick={() => navigate('/admin/monitoring')}>
+                    <RefreshCcw size={18}/> Monitoring Pengajuan
                 </div>
                 <div style={styles.menuActive}>
                     <UserCog size={18}/> Manajemen Pengguna
@@ -204,7 +207,7 @@ const UserManagement = () => {
                 <div style={styles.menuItem} onClick={() => navigate('/admin/units')}>
                     <Building2 size={18}/> Manajemen Unit
                 </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}>
+                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}>    
                     <FileText size={18}/> Arsip Data Peserta
                 </div>
 
@@ -212,7 +215,6 @@ const UserManagement = () => {
                     <LogOut size={18}/> Keluar Sistem
                 </div>
             </div>
-
             {/* KONTEN UTAMA */}
             <div style={styles.main}>
                 <div style={styles.header}>
@@ -391,13 +393,16 @@ const UserManagement = () => {
 };
 
 const styles = {
+    
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
+    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
+    main: { flex: 1, marginLeft: '260px', padding: '40px', overflowY: 'auto', minHeight: '100vh', boxSizing: 'border-box' },
+    
+    // Existing Styles
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', border: '1px solid transparent' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s', ':hover': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' } },
     logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
-    main: { flex: 1, padding: '40px', overflowY: 'auto' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' },
     searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', width: '350px', border: '1px solid #e0e0e0' },
     searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
@@ -431,5 +436,4 @@ const styles = {
     btnCancel: { padding: '10px 20px', backgroundColor: '#f1f1f1', color: '#555', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' },
     btnSubmit: { padding: '10px 20px', backgroundColor: '#003399', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }
 };
-
 export default UserManagement;

@@ -3,7 +3,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { 
-    LayoutDashboard, UserCog, Building2, 
+    LayoutDashboard, UserCog, Building2, RefreshCcw,
     LogOut, PlusCircle, Edit, Trash2, Search, FileText, Archive
 } from 'lucide-react';
 
@@ -150,9 +150,11 @@ const UnitManagement = () => {
                     <small style={{opacity:0.7}}>Sistem Manajemen Magang</small>
                 </div>
                 
-                {/* ✨ FIX: Sekarang mengarah ke /super-admin ✨ */}
                 <div style={styles.menuItem} onClick={() => navigate('/super-admin')}>
-                    <LayoutDashboard size={18}/> Monitoring Pengajuan
+                    <LayoutDashboard size={18}/> Dashboard Utama
+                </div>
+                <div style={styles.menuItem} onClick={() => navigate('/admin/monitoring')}>
+                    <RefreshCcw size={18}/> Monitoring Pengajuan
                 </div>
                 <div style={styles.menuItem} onClick={() => navigate('/admin/users')}>
                     <UserCog size={18}/> Manajemen Pengguna
@@ -233,13 +235,16 @@ const UnitManagement = () => {
 };
 
 const styles = {
+    // KUNCI LAYOUT
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
+    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
+    main: { flex: 1, marginLeft: '260px', padding: '40px', minHeight: '100vh', boxSizing: 'border-box' },
+    
+    // Existing Styles
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s', ':hover': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' } },
     logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
-    main: { flex: 1, padding: '40px', overflowY: 'auto' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' },
     searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', width: '250px', border: '1px solid #e0e0e0' },
     searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },

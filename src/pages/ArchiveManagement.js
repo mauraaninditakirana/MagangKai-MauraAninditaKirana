@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { 
-    LayoutDashboard, UserCog, Building2, Archive, 
+    LayoutDashboard, RefreshCcw, UserCog, Building2, FileText, Archive, 
     LogOut, Search, Eye 
 } from 'lucide-react';
 
@@ -119,7 +119,10 @@ const ArchiveManagement = () => {
                 </div>
                 
                 <div style={styles.menuItem} onClick={() => navigate('/super-admin')}>
-                    <LayoutDashboard size={18}/> Monitoring Pengajuan
+                    <LayoutDashboard size={18}/> Dashboard Utama
+                </div>
+                <div style={styles.menuItem} onClick={() => navigate('/admin/monitoring')}>
+                    <RefreshCcw size={18}/> Monitoring Pengajuan
                 </div>
                 <div style={styles.menuItem} onClick={() => navigate('/admin/users')}>
                     <UserCog size={18}/> Manajemen Pengguna
@@ -128,14 +131,13 @@ const ArchiveManagement = () => {
                     <Building2 size={18}/> Manajemen Unit
                 </div>
                 <div style={styles.menuActive}>
-                    <Archive size={18}/> Arsip Data Peserta
+                    <FileText size={18}/> Arsip Data Peserta
                 </div>
 
                 <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}>
                     <LogOut size={18}/> Keluar Sistem
                 </div>
             </div>
-
             {/* MAIN CONTENT */}
             <div style={styles.main}>
                 <div style={styles.headerArea}>
@@ -215,15 +217,16 @@ const ArchiveManagement = () => {
 };
 
 const styles = {
-    // ✨ FIX LAYOUT: Sidebar dibikin tetap (fixed width & sticky) supaya tidak membesar ✨
-    container: { display: 'flex', height: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', minWidth: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'sticky', top: 0, height: '100vh', boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
+    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
+    sidebar: { width: '260px', minWidth: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
+    main: { flex: 1, marginLeft: '260px', padding: '40px', overflowY: 'auto', minHeight: '100vh', boxSizing: 'border-box' },
+    
+    // Existing Styles
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
     logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
     
-    main: { flex: 1, padding: '40px', overflowY: 'auto' },
     headerArea: { marginBottom: '30px' },
     filterBar: { display: 'flex', gap: '15px', marginBottom: '25px' },
     searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '0 15px', borderRadius: '12px', border: '1px solid #e0e0e0', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' },
@@ -240,5 +243,4 @@ const styles = {
     // Style tombol detail
     btnDetail: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' }
 };
-
 export default ArchiveManagement;

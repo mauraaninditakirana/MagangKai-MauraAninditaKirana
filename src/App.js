@@ -11,6 +11,7 @@ import MySubmissions from './pages/MySubmissions';
 import UnitManagement from './pages/UnitManagement';
 import ArchiveManagement from './pages/ArchiveManagement';
 import Profile from './pages/Profile';
+import MonitoringPengajuan from './pages/MonitoringPengajuan';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/admin/monitoring" element={<MonitoringPengajuan />} />
         
         {/* Dashboard Mahasiswa */}
         <Route path="/dashboard" element={<Dashboard />} />
