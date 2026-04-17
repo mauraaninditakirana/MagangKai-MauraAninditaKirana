@@ -12,12 +12,15 @@ const ArchiveManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterUnit, setFilterUnit] = useState('');
     const [filterDate, setFilterDate] = useState('');
+    const [filterType, setFilterType] = useState(''); 
+    const [types, setTypes] = useState([]);
     const [units, setUnits] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchArchive();
         fetchUnits();
+        fetchTypes();
         window.scrollTo(0, 0);
     }, []);
 
@@ -36,6 +39,12 @@ const ArchiveManagement = () => {
         try {
             const res = await axios.get('http://localhost:5000/api/units');
             setUnits(res.data);
+        } catch (err) { console.error(err); }
+    };
+    const fetchTypes = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/submission-types');
+            setTypes(res.data);
         } catch (err) { console.error(err); }
     };
 
@@ -95,7 +104,9 @@ const ArchiveManagement = () => {
         const matchName = (s.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchUnit = filterUnit === '' || String(s.unit_id) === String(filterUnit);
         const matchDate = filterDate === '' || (s.tanggal_selesai && s.tanggal_selesai.includes(filterDate));
-        return matchName && matchUnit && matchDate;
+        const matchType = filterType === '' || String(s.submission_type_id) === String(filterType); 
+
+        return matchName && matchUnit && matchDate && matchType;
     });
 
     return (
@@ -145,6 +156,10 @@ const ArchiveManagement = () => {
                     <select style={styles.select} onChange={e => setFilterUnit(e.target.value)}>
                         <option value="">Semua Unit</option>
                         {units.map(u => <option key={u.id} value={u.id}>{u.nama_unit}</option>)}
+                    </select>
+                    <select style={styles.select} onChange={e => setFilterType(e.target.value)}>
+                        <option value="">Semua Jenis</option>
+                        {types.map(t => <option key={t.id} value={t.id}>{t.nama_jenis}</option>)}
                     </select>
                     <input type="date" style={styles.select} onChange={e => setFilterDate(e.target.value)} />
                 </div>
