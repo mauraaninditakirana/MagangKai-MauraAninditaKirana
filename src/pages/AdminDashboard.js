@@ -1,17 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { 
-    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, FilePlus
+    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, FilePlus,
+    Edit3, Mail, IdCard, Building, Save, X 
 } from 'lucide-react';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    const [userData, setUserData] = useState(() => {
+        const saved = localStorage.getItem('user');
+        return saved ? JSON.parse(saved) : null;
+    });
+    
     const [submissions, setSubmissions] = useState([]);
-    const [activeMenu, setActiveMenu] = useState('monitoring'); // 'monitoring' atau 'arsip'
+    const [activeMenu, setActiveMenu] = useState(location.state?.activeMenu || 'profile'); // Default ke profil
     const [searchTerm, setSearchTerm] = useState('');
-    const [userData, setUserData] = useState(null);
+    
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({
+        nama_lengkap: '', email: '', nomor_induk: '', asal_instansi: '', password_lama: '', password_baru: ''
+    });
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -21,14 +33,68 @@ const AdminDashboard = () => {
         }
         const parsedUser = JSON.parse(storedUser);
         const role = (parsedUser.role || '').toLowerCase();
-    if (role !== 'admin unit') {
-        navigate('/dashboard'); 
-        return;
-    }
-        setUserData(parsedUser);
+        if (role !== 'admin unit') {
+            navigate('/dashboard'); 
+            return;
+        }
+        
+        // Fungsi Asli
         fetchData(parsedUser.unit_id);
+        
+        // Ambil data profil terbaru
+        fetchProfile(parsedUser.id);
+        
+        // Hapus history state agar refresh tetap ke profil
+        window.history.replaceState({}, document.title);
+        
     }, [navigate]);
 
+    const fetchProfile = async (id) => {
+        try {
+            // 1. Ambil data profil dasar dari backend
+            const res = await axios.get(`http://localhost:5000/api/users/${id}`);
+            let dataUser = res.data;
+
+            // 2. Jika user punya unit_id, kita ambil daftar unit untuk mencari namanya
+            if (dataUser.unit_id) {
+                const resUnit = await axios.get('http://localhost:5000/api/units');
+                const myUnit = resUnit.data.find(u => u.id === dataUser.unit_id);
+                if (myUnit) {
+                    dataUser.nama_unit = myUnit.nama_unit; // Suntikkan nama unit aslinya
+                }
+            }
+
+            // 3. Simpan datanya ke state
+            setUserData(dataUser);
+            setFormData({
+                nama_lengkap: dataUser.nama_lengkap || '',
+                email: dataUser.email || '',
+                nomor_induk: dataUser.nomor_induk || '',
+                asal_instansi: dataUser.asal_instansi || '',
+                password_lama: '',
+                password_baru: ''
+            });
+        } catch (err) {
+            console.error("Gagal mengambil profil:", err);
+        }
+    };
+
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`http://localhost:5000/api/users/${userData.id}/profile`, formData);
+            Swal.fire('Berhasil!', 'Profil diperbarui. Silakan login ulang jika mengubah password.', 'success');
+            setIsEditing(false);
+            
+            const updatedUser = { ...userData, nama_lengkap: formData.nama_lengkap, email: formData.email, nomor_induk: formData.nomor_induk, asal_instansi: formData.asal_instansi };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUserData(updatedUser);
+        } catch (err) {
+            Swal.fire('Gagal', err.response?.data?.message || 'Terjadi kesalahan', 'error');
+        }
+    };
+
+    // FUNGSI ASLI: TIDAK DISENTUH
     const fetchData = async (unitId) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions?unit_id=${unitId}`);
@@ -38,7 +104,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // Setujui / Tolak 
+    // FUNGSI ASLI: TIDAK DISENTUH
     const handleAction = async (id, actionType) => {
         const newStatus = actionType === 'approve' ? 'Disetujui Unit' : 'Ditolak';
         const confirmText = actionType === 'approve' ? 'Anda yakin ingin menyetujui peserta ini untuk magang di Unit Anda?' : 'Anda yakin ingin menolak peserta ini?';
@@ -89,12 +155,10 @@ const AdminDashboard = () => {
                     <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>UNIT</span></h3>
                     <small style={{opacity:0.7}}>{userData.nama_unit || 'Kepala Unit'}</small>
                 </div>
+                
                 <div 
                     style={activeMenu === 'profile' ? styles.menuActive : styles.menuItem} 
-                    onClick={() => {
-                        setActiveMenu('profile');
-                        navigate('/profile');
-                    }}
+                    onClick={() => setActiveMenu('profile')}
                 >
                     <User size={18}/> Profil Saya
                 </div>
@@ -120,104 +184,179 @@ const AdminDashboard = () => {
 
             {/* KONTEN UTAMA */}
             <div style={styles.main}>
-                <div style={styles.header}>
-                    <h2 style={{color:'#003399', margin: 0}}>
-                        {activeMenu === 'monitoring' ? 'Monitoring Peserta Aktif 📋' : 'Arsip Alumni Unit 📂'}
-                    </h2>
-                    <div style={styles.searchBox}>
-                        <Search size={16} color="#888" />
-                        <input 
-                            placeholder="Cari nama peserta..." 
-                            style={styles.searchInput}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div style={styles.card}>
-                    <table style={styles.table}>
-                        <thead>
-                            <tr style={styles.thRow}>
-                                <th style={styles.th}>No</th>
-                                <th style={styles.th}>Nama Peserta</th>
-                                <th style={styles.th}>Nomor Induk</th>
-                                <th style={styles.th}>Asal Instansi</th>
-                                {activeMenu === 'monitoring' ? (
-                                    <>
-                                        <th style={styles.th}>Jenis</th>
-                                        <th style={styles.th}>Status</th>
-                                        <th style={{...styles.th, textAlign: 'center'}}>Aksi</th>
-                                    </>
-                                ) : (
-                                    <>
-                                        <th style={styles.th}>Jenis</th>
-                                        <th style={styles.th}>Tanggal Mulai</th>
-                                        <th style={styles.th}>Tanggal Selesai</th>
-                                    </>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {displayData.filter(s => s.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase())).map((s, i) => (
-                                <tr key={s.id} style={styles.row}>
-                                    <td style={styles.td}>{i + 1}</td>
-                                    <td style={styles.td}><b>{s.nama_lengkap}</b></td>
-                                    <td style={styles.td}>{s.nomor_induk || '-'}</td>
-                                    <td style={styles.td}>{s.asal_instansi || '-'}</td>
-                                    
-                                    {activeMenu === 'monitoring' ? (
-                                        <>
-                                            <td style={styles.td}>{s.nama_jenis}</td>
-                                            <td style={styles.td}>
-                                                <span style={styles.badge}>{s.status}</span>
-                                            </td>
-                                            <td style={{...styles.td, textAlign: 'center'}}>
-                                                {s.status === 'Ditinjau Unit' ? (
-                                                    <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                                                        <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
-                                                            <CheckCircle size={14}/> Setujui
-                                                        </button>
-                                                        <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
-                                                            <XCircle size={14}/> Tolak
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>
-                                                        {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td style={styles.td}>{s.nama_jenis}</td>
-                                            <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
-                                            <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
-                                        </>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {displayData.length === 0 && (
-                        <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>
-                            Tidak ada data untuk ditampilkan.
+                
+                {activeMenu === 'profile' ? (
+                    <div style={styles.profileContainer}>
+                        <div style={styles.profileHeader}>
+                            <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0)}</div>
+                            <h2 style={{margin: '10px 0 5px 0', color: '#003399'}}>{userData.nama_lengkap}</h2>
+                            <span style={styles.roleBadge}>Admin Unit</span>
+                            
+                            {!isEditing && (
+                                <button style={styles.btnEditAvatar} onClick={() => setIsEditing(true)}>
+                                    <Edit3 size={14} /> Edit Profil & Password
+                                </button>
+                            )}
                         </div>
-                    )}
-                </div>
+
+                        {!isEditing ? (
+                            <div style={styles.infoGrid}>
+                                <div style={styles.infoItem}>
+                                    <Mail size={18} color="#003399" />
+                                    <div><small style={styles.label}>Email Sistem</small><p style={styles.val}>{userData.email}</p></div>
+                                </div>
+                                <div style={styles.infoItem}>
+                                    <Building size={18} color="#003399" />
+                                    <div><small style={styles.label}>Nama Unit Penempatan</small><p style={styles.val}>{userData.nama_unit || '-'}</p></div>
+                                </div>
+                                <div style={styles.infoItem}>
+                                    <IdCard size={18} color="#003399" />
+                                    <div><small style={styles.label}>Nomor Induk Pegawai (NIPP)</small><p style={styles.val}>{userData.nomor_induk || '-'}</p></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleUpdateProfile} style={styles.form}>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Nama Lengkap</label>
+                                    <input style={styles.input} required value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
+                                </div>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Email Sistem</label>
+                                    <input style={styles.input} type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                </div>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Nomor Induk Pegawai (NIPP)</label>
+                                    <input style={styles.input} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
+                                </div>
+                                
+                                <hr style={{margin: '15px 0', border: '0.5px solid #eee'}} />
+                                <p style={{fontSize: '12px', color: '#ff6600', fontWeight: 'bold', margin: 0}}>Ganti Password (Kosongkan jika tidak ingin mengubah)</p>
+                                
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Password Lama</label>
+                                    <input type="password" style={styles.input} placeholder="Masukkan password saat ini" value={formData.password_lama} onChange={e => setFormData({...formData, password_lama: e.target.value})} />
+                                </div>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Password Baru</label>
+                                    <input type="password" style={styles.input} placeholder="Masukkan password baru" value={formData.password_baru} onChange={e => setFormData({...formData, password_baru: e.target.value})} />
+                                </div>
+                                
+                                <div style={styles.btnArea}>
+                                    <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
+                                    <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan Perubahan</button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
+
+                ) : (
+                    <>
+                        <div style={styles.header}>
+                            <h2 style={{color:'#003399', margin: 0}}>
+                                {activeMenu === 'monitoring' ? 'Monitoring Peserta Aktif 📋' : 'Arsip Alumni Unit 📂'}
+                            </h2>
+                            <div style={styles.searchBox}>
+                                <Search size={16} color="#888" />
+                                <input 
+                                    placeholder="Cari nama peserta..." 
+                                    style={styles.searchInput}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={styles.card}>
+                            <table style={styles.table}>
+                                <thead>
+                                    <tr style={styles.thRow}>
+                                        <th style={styles.th}>No</th>
+                                        <th style={styles.th}>Nama Peserta</th>
+                                        <th style={styles.th}>Nomor Induk</th>
+                                        <th style={styles.th}>Asal Instansi</th>
+                                        {activeMenu === 'monitoring' ? (
+                                            <>
+                                                <th style={styles.th}>Jenis</th>
+                                                <th style={styles.th}>Status</th>
+                                                <th style={{...styles.th, textAlign: 'center'}}>Aksi</th>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <th style={styles.th}>Jenis</th>
+                                                <th style={styles.th}>Tanggal Mulai</th>
+                                                <th style={styles.th}>Tanggal Selesai</th>
+                                            </>
+                                        )}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {displayData.filter(s => s.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase())).map((s, i) => (
+                                        <tr key={s.id} style={styles.row}>
+                                            <td style={styles.td}>{i + 1}</td>
+                                            <td style={styles.td}><b>{s.nama_lengkap}</b></td>
+                                            <td style={styles.td}>{s.nomor_induk || '-'}</td>
+                                            <td style={styles.td}>{s.asal_instansi || '-'}</td>
+                                            
+                                            {activeMenu === 'monitoring' ? (
+                                                <>
+                                                    <td style={styles.td}>{s.nama_jenis}</td>
+                                                    <td style={styles.td}>
+                                                        <span style={styles.badge}>{s.status}</span>
+                                                    </td>
+                                                    <td style={{...styles.td, textAlign: 'center'}}>
+                                                        {s.status === 'Ditinjau Unit' ? (
+                                                            <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                                                                <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
+                                                                    <CheckCircle size={14}/> Setujui
+                                                                </button>
+                                                                <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
+                                                                    <XCircle size={14}/> Tolak
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>
+                                                                {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <td style={styles.td}>{s.nama_jenis}</td>
+                                                    <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
+                                                    <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
+                                                </>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {displayData.length === 0 && (
+                                <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>
+                                    Tidak ada data untuk ditampilkan.
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+
             </div>
         </div>
     );
 };
 
 const styles = {
-    container: { display: 'flex', height: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxShadow: '2px 0 10px rgba(0,0,0,0.1)', position: 'sticky', top: 0, height: '100vh', boxSizing: 'border-box' },
+    // LAYOUT DASAR
+    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8', fontFamily: 'sans-serif' },
+    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxShadow: '2px 0 10px rgba(0,0,0,0.1)', position: 'fixed', top: 0, left: 0, height: '100vh', boxSizing: 'border-box', zIndex: 100 },
+    main: { flex: 1, padding: '40px', overflowY: 'auto', marginLeft: '260px', minHeight: '100vh', boxSizing: 'border-box' },
+    
+    // SIDEBAR
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
-    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
-    main: { flex: 1, padding: '40px', overflowY: 'auto' },
+    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px', fontWeight: 'bold' },
+    
+    // TABLE & MONITORING
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
     searchBox: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '8px 15px', borderRadius: '20px', border: '1px solid #ddd' },
     searchInput: { border: 'none', outline: 'none', fontSize: '13px' },
@@ -228,7 +367,25 @@ const styles = {
     td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px' },
     badge: { padding: '4px 10px', backgroundColor: '#e0f0ff', color: '#0055cc', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' },
     btnApprove: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#e6ffe6', color: '#28a745', border: '1px solid #28a745', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
-    btnReject: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#ffe6e6', color: '#dc3545', border: '1px solid #dc3545', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }
+    btnReject: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#ffe6e6', color: '#dc3545', border: '1px solid #dc3545', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
+
+    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
+    profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
+    avatarLarge: { width: '90px', height: '90px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
+    roleBadge: { backgroundColor: '#fff4e5', color: '#d35400', padding: '4px 15px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' },
+    btnEditAvatar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' },
+    
+    infoGrid: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' },
+    label: { color: '#888', margin: 0, fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' },
+    val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '14px' },
+    
+    form: { display: 'flex', flexDirection: 'column', gap: '12px' },
+    inputGroup: { display: 'flex', flexDirection: 'column' },
+    input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px', backgroundColor: '#fcfcfc' },
+    btnArea: { display: 'flex', gap: '10px', marginTop: '15px' },
+    btnSave: { flex: 2, padding: '12px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+    btnCancel: { flex: 1, padding: '12px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
 };
 
 export default AdminDashboard;
