@@ -12,12 +12,12 @@ const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [units, setUnits] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterRole, setFilterRole] = useState('');
     const navigate = useNavigate();
     
     // Ambil data user dari localStorage dengan aman
     const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
-    // ✨ STATE UNTUK MODAL TAMBAH/EDIT ✨
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [formData, setFormData] = useState({
@@ -175,10 +175,16 @@ const UserManagement = () => {
         }
     };
 
-    const filteredUsers = users.filter(u => 
-        (u.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsers = users.filter(u => {
+        // Cek apakah nama atau email cocok dengan kata kunci pencarian
+        const matchSearch = (u.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+        
+        // Cek apakah role cocok dengan filter dropdown (jika kosong, tampilkan semua)
+        const matchRole = filterRole === '' || (u.role || '').toLowerCase() === filterRole.toLowerCase();
+        
+        return matchSearch && matchRole;
+    });
 
     return (
         <div style={styles.container}>
@@ -223,6 +229,19 @@ const UserManagement = () => {
                                 style={styles.searchInput} 
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
+                        </div>
+                        <div style={styles.selectWrapper}>
+                            <ShieldCheck size={16} color="#003399" />
+                            <select 
+                                style={styles.select} 
+                                value={filterRole} 
+                                onChange={e => setFilterRole(e.target.value)}
+                            >
+                                <option value="">Semua Role</option>
+                                <option value="super admin">Super Admin</option>
+                                <option value="admin unit">Admin Unit</option>
+                                <option value="user">User (Mahasiswa)</option>
+                            </select>
                         </div>
                       
                         <button style={styles.btnAdd} onClick={handleAdd}>
@@ -382,6 +401,9 @@ const styles = {
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' },
     searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', width: '350px', border: '1px solid #e0e0e0' },
     searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
+    selectWrapper: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0', width: '200px' },
+    select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px', color: '#333', cursor: 'pointer' },
+
     card: { backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' },
     table: { width: '100%', borderCollapse: 'collapse' },
     thRow: { backgroundColor: '#f8f9fa' },
