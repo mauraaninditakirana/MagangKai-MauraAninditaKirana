@@ -4,16 +4,23 @@ import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, FileText, CheckCircle, XCircle, 
-    ArrowRight, Upload, Search, LogOut, Eye, RefreshCcw, Edit3, UserCog, Building2
+    ArrowRight, Upload, Search, LogOut, Eye, RefreshCcw, Edit3, UserCog, Building2, Briefcase
 } from 'lucide-react';
 
 const SuperAdminDashboard = () => {
     const [submissions, setSubmissions] = useState([]);
+    const [units, setUnits] = useState([]); 
+    const [types, setTypes] = useState([]); 
+    
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterUnit, setFilterUnit] = useState('');
+    const [filterType, setFilterType] = useState('');
+
     const navigate = useNavigate();
     
     // Ambil data user dari localStorage
     const user = JSON.parse(localStorage.getItem('user')) || {};
+    
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
         
@@ -26,18 +33,20 @@ const SuperAdminDashboard = () => {
         const parsedUser = JSON.parse(storedUser);
         
         // 2. Jika role bukan admin/super admin
-        if (parsedUser.role !== 'Super Admin' && parsedUser.role !== 'admin') { 
+        if (parsedUser.role !== 'Super Admin' && parsedUser.role !== 'admin' && parsedUser.role !== 'super admin') { 
             navigate('/'); 
             return; 
         }
 
         // 3. Jika lolos sensor, baru ambil data
         fetchData();
+        fetchUnits();
+        fetchTypes();
         
         // Memastikan halaman selalu mulai dari atas saat pindah menu
         window.scrollTo(0, 0);
 
-    }, [navigate]); // Cukup navigate sebagai dependency agar stabil
+    }, [navigate]); 
 
     const fetchData = async () => {
         try {
@@ -49,62 +58,85 @@ const SuperAdminDashboard = () => {
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
             );
             setSubmissions(sortedData);
+
+            const uniqueTypes = [];
+            const typeIds = new Set();
+            res.data.forEach(s => {
+                if (s.submission_type_id && !typeIds.has(s.submission_type_id)) {
+                    typeIds.add(s.submission_type_id);
+                    uniqueTypes.push({ id: s.submission_type_id, nama_jenis: s.nama_jenis });
+                }
+            });
+            setTypes(uniqueTypes);
         } catch (err) { 
             console.error("Gagal mengambil data:", err); 
         }
     };
 
+    const fetchUnits = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/units');
+            setUnits(res.data || []);
+        } catch (err) { console.error("Gagal ambil unit:", err); }
+    };
+
+    const fetchTypes = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/submission-types');
+            setTypes(res.data || []);
+        } catch (err) { console.error("Gagal ambil jenis:", err); }
+    };
+
     const viewDetail = async (id) => {
-    try {
-        const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
-        const s = res.data;
-        const docs = s.documents || [];
+        try {
+            const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
+            const s = res.data;
+            const docs = s.documents || [];
 
-        // Menyusun tampilan isi form di dalam pop-up
-        let htmlContent = `
-            <div style="text-align:left; font-family: sans-serif; font-size: 14px; color: #333;">
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; marginBottom: 20px;">
-                    <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">👤 Data Mahasiswa</h4>
-                    <p><b>Nama Lengkap:</b> ${s.nama_lengkap}</p>
-                    <p><b>Asal Instansi:</b> ${s.asal_instansi || '-'}</p>
+            let htmlContent = `
+                <div style="text-align:left; font-family: sans-serif; font-size: 14px; color: #333;">
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; marginBottom: 20px;">
+                        <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">👤 Data Mahasiswa</h4>
+                        <p><b>Nama Lengkap:</b> ${s.nama_lengkap}</p>
+                        <p><b>Asal Instansi:</b> ${s.asal_instansi || '-'}</p>
+                    </div>
+
+                    <div style="padding: 10px 15px;">
+                        <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">📋 Detail Rencana</h4>
+                        <p><b>Jenis Kegiatan:</b> ${s.nama_jenis}</p>
+                        <p><b>Unit Tujuan:</b> ${s.nama_unit}</p>
+                        <p><b>Judul Project:</b> ${s.judul_atau_tujuan}</p>
+                        <p><b>Kategori:</b> ${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</p>
+                        <p><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: #fff4e5; border-radius: 10px;">
+                        <h4 style="margin-top:0; color: #ff6600;">📁 Dokumen Lampiran</h4>
+                        ${docs.length > 0 ? docs.map((doc, i) => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dotted #ccc;">
+                                <span>${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
+                                <a href="http://localhost:5000/${doc.file_path}" target="_blank" 
+                                   style="background: #003399; color: #fff; padding: 4px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: bold;">
+                                   Lihat Dokumen
+                                </a>
+                            </div>
+                        `).join('') : '<p style="color: #999;">Tidak ada dokumen dilampirkan.</p>'}
+                    </div>
                 </div>
+            `;
 
-                <div style="padding: 10px 15px;">
-                    <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">📋 Detail Rencana</h4>
-                    <p><b>Jenis Kegiatan:</b> ${s.nama_jenis}</p>
-                    <p><b>Unit Tujuan:</b> ${s.nama_unit}</p>
-                    <p><b>Judul Project:</b> ${s.judul_atau_tujuan}</p>
-                    <p><b>Kategori:</b> ${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</p>
-                    <p><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
-                </div>
-
-                <div style="margin-top: 20px; padding: 15px; background: #fff4e5; border-radius: 10px;">
-                    <h4 style="margin-top:0; color: #ff6600;">📁 Dokumen Lampiran</h4>
-                    ${docs.length > 0 ? docs.map((doc, i) => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dotted #ccc;">
-                            <span>${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
-                            <a href="http://localhost:5000/${doc.file_path}" target="_blank" 
-                               style="background: #003399; color: #fff; padding: 4px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: bold;">
-                               👁️ Lihat Dokumen
-                            </a>
-                        </div>
-                    `).join('') : '<p style="color: #999;">Tidak ada dokumen dilampirkan.</p>'}
-                </div>
-            </div>
-        `;
-
-        Swal.fire({
-            title: 'Review Form Pengajuan',
-            html: htmlContent,
-            width: '600px',
-            confirmButtonText: 'Tutup',
-            confirmButtonColor: '#003399',
-            showCloseButton: true
-        });
-    } catch (err) {
-        Swal.fire('Error', 'Gagal memuat detail data.', 'error');
-    }
-};
+            Swal.fire({
+                title: 'Review Form Pengajuan',
+                html: htmlContent,
+                width: '600px',
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#003399',
+                showCloseButton: true
+            });
+        } catch (err) {
+            Swal.fire('Error', 'Gagal memuat detail data.', 'error');
+        }
+    };
 
     const handleAction = async (id, type) => {
         const isRevisi = type === 'revisi';
@@ -160,6 +192,16 @@ const SuperAdminDashboard = () => {
         }
     };
 
+    //filter
+    const filteredData = submissions.filter(s => {
+        const matchName = (s.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (s.asal_instansi || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchUnit = filterUnit === '' || String(s.unit_id) === String(filterUnit);
+        const matchType = filterType === '' || String(s.submission_type_id) === String(filterType);
+
+        return matchName && matchUnit && matchType;
+    });
+
     return (
         <div style={styles.container}>
             {/* SIDEBAR */}
@@ -169,19 +211,15 @@ const SuperAdminDashboard = () => {
                     <small style={{opacity:0.7}}>Sistem Manajemen Magang</small>
                 </div>
                 
-                {/* Menu Monitoring (Active) */}
                 <div style={styles.menuActive} onClick={() => navigate('/super-admin')}>
                     <LayoutDashboard size={18}/> Monitoring Pengajuan
                 </div>
-
                 <div style={styles.menuItem} onClick={() => navigate('/admin/users')}>
                     <UserCog size={18}/> Manajemen Pengguna
                 </div>
-
                 <div style={styles.menuItem} onClick={() => navigate('/admin/units')}>
                     <Building2 size={18}/> Manajemen Unit
                 </div>
-                
                 <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}>    
                     <FileText size={18}/> Arsip Data Peserta
                 </div>
@@ -198,14 +236,33 @@ const SuperAdminDashboard = () => {
                         <h2 style={{margin:0, color:'#003399'}}>Monitoring Verifikasi 🚄</h2>
                         <p style={{color:'#666', fontSize:'14px'}}>Fase screening berkas dan validasi data mahasiswa</p>
                     </div>
-                    
-                    <div style={styles.searchContainer}>
+                </div>
+
+                {/* ✨ BARIS FILTER BARU ✨ */}
+                <div style={styles.filterBar}>
+                    <div style={styles.searchBox}>
                         <Search size={18} color="#003399" />
                         <input 
-                            placeholder="Cari nama.." 
-                            style={styles.searchInput} 
+                            placeholder="Cari nama lengkap..." 
+                            style={styles.input} 
                             onChange={e => setSearchTerm(e.target.value)}
                         />
+                    </div>
+                    
+                    <div style={styles.selectWrapper}>
+                        <Building2 size={16} color="#003399" />
+                        <select style={styles.select} value={filterUnit} onChange={e => setFilterUnit(e.target.value)}>
+                            <option value="">Semua Unit</option>
+                            {units.map(u => <option key={u.id} value={u.id}>{u.nama_unit}</option>)}
+                        </select>
+                    </div>
+
+                    <div style={styles.selectWrapper}>
+                        <Briefcase size={16} color="#003399" />
+                        <select style={styles.select} value={filterType} onChange={e => setFilterType(e.target.value)}>
+                            <option value="">Semua Jenis Pengajuan</option>
+                            {types.map(t => <option key={t.id} value={t.id}>{t.nama_jenis}</option>)}
+                        </select>
                     </div>
                 </div>
 
@@ -222,7 +279,8 @@ const SuperAdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {submissions.filter(s => (s.nama_lengkap || '').toLowerCase().includes((searchTerm || '').toLowerCase())).map((s, index) => (
+                            {/* ✨ Gunakan filteredData di sini ✨ */}
+                            {filteredData.length > 0 ? filteredData.map((s, index) => (
                                 <tr key={s.id} style={styles.row}>
                                     <td style={styles.td}>{index + 1}</td>
                                     <td style={styles.td}>
@@ -272,7 +330,11 @@ const SuperAdminDashboard = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan="6" style={{textAlign:'center', padding:'30px', color: '#aaa'}}>Tidak ada data yang sesuai filter.</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -288,10 +350,17 @@ const styles = {
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
     logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
+    
     main: { flex: 1, padding: '40px', overflowY: 'auto' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' },
-    searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', width: '350px', border: '1px solid #e0e0e0' },
-    searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }, // Margin sedikit dikurangi
+    
+
+    filterBar: { display: 'flex', gap: '15px', marginBottom: '30px' },
+    searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
+    selectWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
+    input: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
+    select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px', color: '#333', cursor: 'pointer' },
+    
     card: { backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' },
     table: { width: '100%', borderCollapse: 'collapse' },
     thRow: { backgroundColor: '#f8f9fa' },
