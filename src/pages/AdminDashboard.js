@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { 
-    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle
+    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, FilePlus
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -89,7 +89,16 @@ const AdminDashboard = () => {
                     <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>UNIT</span></h3>
                     <small style={{opacity:0.7}}>{userData.nama_unit || 'Kepala Unit'}</small>
                 </div>
-                
+                <div 
+                    style={activeMenu === 'profile' ? styles.menuActive : styles.menuItem} 
+                    onClick={() => {
+                        setActiveMenu('profile');
+                        navigate('/profile');
+                    }}
+                >
+                    <User size={18}/> Profil Saya
+                </div>
+
                 <div 
                     style={activeMenu === 'monitoring' ? styles.menuActive : styles.menuItem} 
                     onClick={() => setActiveMenu('monitoring')}

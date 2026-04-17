@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { 
     Users, ShieldCheck, Search, LogOut, 
-    LayoutDashboard, UserCog, Building2, Archive, FileText,
+    LayoutDashboard, UserCog, Building2, FileText,
     Plus, Edit, Trash2 
 } from 'lucide-react';
 

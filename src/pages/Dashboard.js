@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import FormPengajuan from '../components/FormPengajuan';
-import { FilePlus, History, LogOut, AlertTriangle, CheckCircle } from 'lucide-react';
+import { FilePlus, History, LogOut, AlertTriangle, CheckCircle, User } from 'lucide-react';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -69,7 +69,10 @@ const Dashboard = () => {
                     <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>MAGANG</span></h3>
                     <small style={{opacity:0.7}}>Portal Mahasiswa</small>
                 </div>
-                
+                <div style={styles.menuItem} onClick={() => navigate('/profile')}>
+                    <User size={18}/> Profil Saya
+                </div>
+
                 <div style={styles.menuActive}>
                     <FilePlus size={18}/> Buat Pengajuan
                 </div>

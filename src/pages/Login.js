@@ -35,9 +35,11 @@ const Login = () => {
             }
 
         } catch (err) {
-            console.error(err);
-            Swal.fire('Gagal!', 'Email atau password salah', 'error');
-        }
+            console.log("FULL ERROR RESP:", err.response); 
+    
+            const pesanError = err.response?.data?.message || "Terjadi kesalahan";
+            Swal.fire('Gagal!', pesanError, 'error');
+    }
     };
 
     return (

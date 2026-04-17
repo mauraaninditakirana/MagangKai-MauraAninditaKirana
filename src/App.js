@@ -10,6 +10,7 @@ import UserManagement from './pages/UserManagement';
 import MySubmissions from './pages/MySubmissions';
 import UnitManagement from './pages/UnitManagement';
 import ArchiveManagement from './pages/ArchiveManagement';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
 
         <Route path="/admin/archive" element={<ArchiveManagement />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );
