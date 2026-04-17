@@ -202,7 +202,7 @@ const SuperAdminDashboard = () => {
                     <div style={styles.searchContainer}>
                         <Search size={18} color="#003399" />
                         <input 
-                            placeholder="Cari nama atau instansi..." 
+                            placeholder="Cari nama.." 
                             style={styles.searchInput} 
                             onChange={e => setSearchTerm(e.target.value)}
                         />

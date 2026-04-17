@@ -157,6 +157,7 @@ const ArchiveManagement = () => {
                                 <th style={styles.th}>No</th>
                                 <th style={styles.th}>Nama Mahasiswa</th>
                                 <th style={styles.th}>Unit Magang</th>
+                                <th style={styles.th}>Jenis</th>
                                 <th style={styles.th}>Tanggal Mulai</th>
                                 <th style={styles.th}>Tanggal Selesai</th>
                                 <th style={styles.th}>Detail Dokumen</th>
@@ -169,6 +170,7 @@ const ArchiveManagement = () => {
                                     <td style={styles.td}>{index + 1}</td>
                                     <td style={styles.td}><b>{s.nama_lengkap}</b></td>
                                     <td style={styles.td}>{s.nama_unit}</td>
+                                    <td style={styles.td}>{s.nama_jenis}</td>
                                     <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
                                     <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
                                     <td style={styles.td}>

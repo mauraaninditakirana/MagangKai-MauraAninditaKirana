@@ -20,6 +20,11 @@ const AdminDashboard = () => {
             return;
         }
         const parsedUser = JSON.parse(storedUser);
+        const role = (parsedUser.role || '').toLowerCase();
+    if (role !== 'admin unit') {
+        navigate('/dashboard'); 
+        return;
+    }
         setUserData(parsedUser);
         fetchData(parsedUser.unit_id);
     }, [navigate]);
@@ -126,6 +131,7 @@ const AdminDashboard = () => {
                             <tr style={styles.thRow}>
                                 <th style={styles.th}>No</th>
                                 <th style={styles.th}>Nama Peserta</th>
+                                <th style={styles.th}>Nomor Induk</th>
                                 <th style={styles.th}>Asal Instansi</th>
                                 {activeMenu === 'monitoring' ? (
                                     <>
@@ -135,6 +141,7 @@ const AdminDashboard = () => {
                                     </>
                                 ) : (
                                     <>
+                                        <th style={styles.th}>Jenis</th>
                                         <th style={styles.th}>Tanggal Mulai</th>
                                         <th style={styles.th}>Tanggal Selesai</th>
                                     </>
@@ -146,6 +153,7 @@ const AdminDashboard = () => {
                                 <tr key={s.id} style={styles.row}>
                                     <td style={styles.td}>{i + 1}</td>
                                     <td style={styles.td}><b>{s.nama_lengkap}</b></td>
+                                    <td style={styles.td}>{s.nomor_induk || '-'}</td>
                                     <td style={styles.td}>{s.asal_instansi || '-'}</td>
                                     
                                     {activeMenu === 'monitoring' ? (
@@ -155,7 +163,6 @@ const AdminDashboard = () => {
                                                 <span style={styles.badge}>{s.status}</span>
                                             </td>
                                             <td style={{...styles.td, textAlign: 'center'}}>
-                                                {/* ✨ HANYA MUNCUL JIKA STATUS 'Ditinjau Unit' ✨ */}
                                                 {s.status === 'Ditinjau Unit' ? (
                                                     <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
                                                         <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
@@ -174,6 +181,7 @@ const AdminDashboard = () => {
                                         </>
                                     ) : (
                                         <>
+                                            <td style={styles.td}>{s.nama_jenis}</td>
                                             <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
                                             <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
                                         </>

@@ -19,20 +19,20 @@ const Login = () => {
 
         Swal.fire('Berhasil Login!', 'Selamat datang kembali', 'success');
 
-        const role = userData.role;
+        const role = (userData.role || '').toLowerCase();
 
-        if (role === 'Super Admin') {
-            // Lempar HC Pusat ke SuperAdminDashboard
-            navigate('/super-admin'); 
-        } 
-        else if (role === 'Admin Unit' || role === 'admin') {
-            // Lempar Kepala Unit ke AdminDashboard
-            navigate('/admin'); 
-        }
-        else {
-            // Lempar mahasiswa ke halaman User
-            navigate('/dashboard'); 
-        }
+        if (role === 'super admin' || role === 'admin') {
+                // Lempar HC Pusat ke SuperAdminDashboard
+                navigate('/super-admin'); 
+            } 
+            else if (role === 'admin unit') {
+                // Lempar Kepala Unit ke AdminDashboard
+                navigate('/admin'); 
+            }
+            else {
+                // Lempar mahasiswa ke halaman User
+                navigate('/dashboard'); 
+            }
 
         } catch (err) {
             console.error(err);
