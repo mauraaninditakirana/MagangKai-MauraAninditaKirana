@@ -45,6 +45,17 @@ const Dashboard = () => {
         
         window.scrollTo(0, 0);
     }, [navigate]);
+    const [revisiData, setRevisiData] = useState(location.state?.revisiData || null);
+
+    useEffect(() => {
+        // Jika ada state baru masuk saat Dashboard sudah terbuka
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab);
+            if (location.state.revisiData) {
+                setRevisiData(location.state.revisiData);
+            }
+        }
+    }, [location.state]);
 
     //  Ambil Data Profil Terbaru 
     const fetchProfile = async (id) => {
@@ -260,6 +271,7 @@ const Dashboard = () => {
                                         <FormPengajuan 
                                             userId={userData.id} 
                                             onDocsUploaded={() => navigate('/riwayat')} 
+                                            initialData={location.state?.initialData}
                                         />
                                     </div>
                                 )}

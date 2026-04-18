@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Download, Clock, CheckCircle, AlertCircle, Edit3 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 
 const TabelPengajuan = ({ userId }) => {
+    const navigate = useNavigate();
     const [data, setData] = useState([]);
 
     useEffect(() => {
@@ -21,7 +23,6 @@ const TabelPengajuan = ({ userId }) => {
         }
     };
 
-    // ✨ FITUR BARU: Lihat Catatan Revisi ✨
     const showCatatan = (catatan) => {
         Swal.fire({
             title: 'Catatan Revisi',
@@ -71,25 +72,29 @@ const TabelPengajuan = ({ userId }) => {
                                 </td>
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                     
-                                    {/* ✨ LOGIKA TOMBOL REVISI ✨ */}
+                                    {/* TOMBOL REVISI  */}
                                     {s.status === 'Revisi' && (
-                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                            <button 
-                                                onClick={() => showCatatan(s.catatan)}
-                                                style={styles.btnInfo}
-                                                title="Lihat alasan revisi"
-                                            >
-                                                Lihat Catatan
-                                            </button>
-                                            <button 
-                                                onClick={() => window.location.href = `/dashboard?revisi=${s.id}`}
-                                                style={styles.btnEdit}
-                                            >
-                                                <Edit3 size={14} /> Perbaiki Data
-                                            </button>
-                                        </div>
-                                    )}
-
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                        <button 
+                                            onClick={() => showCatatan(s.catatan)}
+                                            style={styles.btnInfo}
+                                            title="Lihat alasan revisi"
+                                        >
+                                            Lihat Catatan
+                                        </button>
+                                        <button 
+                                            style={styles.btnRevisi} 
+                                            onClick={() => navigate(`/dashboard?revisi=${s.id}`, { 
+                                                state: { 
+                                                    activeTab: 'pengajuan', 
+                                                    initialData: s // ✨ PAKAI 's' KARENA DI .map KAMU PAKAI (s)
+                                                } 
+                                            })}
+                                        >
+                                            Perbaiki Data
+                                        </button>
+                                    </div>
+                                )}
                                     {s.status === 'Selesai (Surat Dirilis)' && (
                                         <button 
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download`, '_blank')}
@@ -127,7 +132,20 @@ const styles = {
     btnDownload: { display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' },
     btnEdit: { display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' },
     btnInfo: { backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #d0dfff', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
-    textWait: { color: '#bbb', fontStyle: 'italic', fontSize: '12px' }
+    textWait: { color: '#bbb', fontStyle: 'italic', fontSize: '12px' },
+    btnRevisi: { 
+    backgroundColor: '#ff6600', 
+    color: '#fff', 
+    border: 'none', 
+    padding: '8px 12px', 
+    borderRadius: '8px', 
+    cursor: 'pointer', 
+    fontSize: '11px', 
+    fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px'
+}
 };
 
 export default TabelPengajuan;

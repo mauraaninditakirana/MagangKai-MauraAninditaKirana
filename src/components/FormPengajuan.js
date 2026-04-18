@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { useLocation } from 'react-router-dom'; 
 import { Send, FileUp, ClipboardList, Edit3 } from 'lucide-react'; 
 
-const FormPengajuan = ({ userId, onDocsUploaded }) => {
+const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     // UBAH/TAMBAH: Ambil parameter ?revisi= dari URL
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -25,7 +25,7 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
     const [files, setFiles] = useState([]);
 
     useEffect(() => {
-        // Ambil data unit (tambahkan penangkal cache agar kuota selalu update)
+        // 1. Ambil data unit (tetap sama)
         axios.get(`http://localhost:5000/api/units?_t=${Date.now()}`)
             .then(res => setUnits(res.data))
             .catch(err => console.error(err));
@@ -37,31 +37,46 @@ const FormPengajuan = ({ userId, onDocsUploaded }) => {
             { id: 4, nama: 'Tugas Akhir / Skripsi' }
         ]);
 
-        // Jika Mode Revisi (Ambil data lama)
         if (revisiId) {
-            axios.get(`http://localhost:5000/api/submissions/${revisiId}`)
-                .then(res => {
-                    const dataLama = res.data;
-                    // Masukkan data lama ke dalam form agar user tidak perlu ngetik ulang
-                    setFormData({
-                        submission_type_id: dataLama.submission_type_id || '',
-                        unit_id: dataLama.unit_id || '',
-                        judul_atau_tujuan: dataLama.judul_atau_tujuan || '',
-                        kategori_pendaftar: dataLama.kategori_pendaftar || 'Individu',
-                        jumlah_anggota: dataLama.jumlah_anggota || 1,
-                        tanggal_mulai: dataLama.tanggal_mulai ? dataLama.tanggal_mulai.split('T')[0] : '',
-                        tanggal_selesai: dataLama.tanggal_selesai ? dataLama.tanggal_selesai.split('T')[0] : ''
-                    });
-                })
-                .catch(err => console.error("Gagal load data revisi:", err));
+            // Cek apakah ada data titipan (initialData) dari halaman Riwayat
+            if (initialData) {
+                console.log("Menggunakan data titipan dari Riwayat");
+                setFormData({
+                    submission_type_id: initialData.submission_type_id || '',
+                    unit_id: initialData.unit_id || '',
+                    judul_atau_tujuan: initialData.judul_atau_tujuan || '',
+                    kategori_pendaftar: initialData.kategori_pendaftar || 'Individu',
+                    jumlah_anggota: initialData.jumlah_anggota || 1,
+                    asal_instansi: initialData.asal_instansi || '', // ✨ Tambahkan ini
+                    tanggal_mulai: initialData.tanggal_mulai ? initialData.tanggal_mulai.split('T')[0] : '',
+                    tanggal_selesai: initialData.tanggal_selesai ? initialData.tanggal_selesai.split('T')[0] : ''
+                });
+            } else {
+                // Jika tidak ada initialData, baru ambil dari API (cadangan)
+                axios.get(`http://localhost:5000/api/submissions/${revisiId}`)
+                    .then(res => {
+                        const dataLama = res.data;
+                        setFormData({
+                            submission_type_id: dataLama.submission_type_id || '',
+                            unit_id: dataLama.unit_id || '',
+                            judul_atau_tujuan: dataLama.judul_atau_tujuan || '',
+                            kategori_pendaftar: dataLama.kategori_pendaftar || 'Individu',
+                            jumlah_anggota: dataLama.jumlah_anggota || 1,
+                            asal_instansi: dataLama.asal_instansi || '', // ✨ Tambahkan ini
+                            tanggal_mulai: dataLama.tanggal_mulai ? dataLama.tanggal_mulai.split('T')[0] : '',
+                            tanggal_selesai: dataLama.tanggal_selesai ? dataLama.tanggal_selesai.split('T')[0] : ''
+                        });
+                    })
+                    .catch(err => console.error("Gagal load data revisi:", err));
+            }
         } else {
-            // Bersihkan form jika bukan mode revisi (daftar baru)
+            // Bersihkan form jika bukan mode revisi
             setFormData({
-                submission_type_id: '', unit_id: '', judul_atau_tujuan: '',
+                submission_type_id: '', unit_id: '', judul_atau_tujuan: '', asal_instansi: '',
                 kategori_pendaftar: 'Individu', jumlah_anggota: 1, tanggal_mulai: '', tanggal_selesai: ''
             });
         }
-    }, [revisiId]); // Efek akan berjalan ulang jika URL (revisiId) berubah
+    }, [revisiId, initialData]); 
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
