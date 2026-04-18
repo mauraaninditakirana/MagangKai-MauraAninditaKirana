@@ -127,6 +127,7 @@ const MonitoringPengajuan = () => {
             const formData = new FormData();
             formData.append('final_docs', file); // Menggunakan key 'final_docs'
             formData.append('status', 'Selesai (Surat Dirilis)');
+            formData.append('admin_id', user.id);
 
             try {
                 // Route ini akan kita buat di backend setelah ini

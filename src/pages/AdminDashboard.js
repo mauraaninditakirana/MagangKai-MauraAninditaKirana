@@ -302,22 +302,37 @@ const AdminDashboard = () => {
                                                     <td style={styles.td}>
                                                         <span style={styles.badge}>{s.status}</span>
                                                     </td>
-                                                    <td style={{...styles.td, textAlign: 'center'}}>
-                                                        {s.status === 'Ditinjau Unit' ? (
-                                                            <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                                                                <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
-                                                                    <CheckCircle size={14}/> Setujui
-                                                                </button>
-                                                                <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
-                                                                    <XCircle size={14}/> Tolak
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>
-                                                                {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
-                                                            </span>
-                                                        )}
-                                                    </td>
+                                                    {/* ✨ GANTI JADI INI ✨ */}
+<td style={{...styles.td, textAlign: 'center'}}>
+    <div style={{display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center'}}>
+        
+        {/* TOMBOL LIHAT BERKAS (BARU) */}
+        <button 
+            onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/view-docs`, '_blank')} 
+            style={styles.btnDocs}
+            title="Lihat proposal mahasiswa"
+        >
+            <FileText size={14} style={{marginRight: '5px'}}/> Lihat Berkas
+        </button>
+
+        {/* TOMBOL SETUJUI DAN TOLAK */}
+        {s.status === 'Ditinjau Unit' ? (
+            <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
+                    <CheckCircle size={14}/> Setujui
+                </button>
+                <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
+                    <XCircle size={14}/> Tolak
+                </button>
+            </div>
+        ) : (
+            <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>
+                {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
+            </span>
+        )}
+        
+    </div>
+</td>
                                                 </>
                                             ) : (
                                                 <>
@@ -385,6 +400,20 @@ const styles = {
     input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px', backgroundColor: '#fcfcfc' },
     btnArea: { display: 'flex', gap: '10px', marginTop: '15px' },
     btnSave: { flex: 2, padding: '12px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+    btnDocs: { 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    backgroundColor: '#e0f0ff', 
+    color: '#0055cc', 
+    border: '1px solid #cce0ff', 
+    padding: '6px 12px', 
+    borderRadius: '6px', 
+    cursor: 'pointer', 
+    fontSize: '12px', 
+    fontWeight: 'bold', 
+    width: '100%' 
+    },
     btnCancel: { flex: 1, padding: '12px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
 };
 
