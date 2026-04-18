@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, FileText, Search, LogOut, Eye, 
     RefreshCcw, Edit3, UserCog, Building2, Briefcase, 
-    ArrowRight, ChevronDown, User 
+    ArrowRight, ChevronDown, User, FilePlus, UploadCloud 
 } from 'lucide-react';
 
 const MonitoringPengajuan = () => {
@@ -13,7 +13,6 @@ const MonitoringPengajuan = () => {
     const [submissions, setSubmissions] = useState([]);
     const [units, setUnits] = useState([]); 
     const [types, setTypes] = useState([]); 
-    const [showProfileMenu, setShowProfileMenu] = useState(false);
     
     const [searchTerm, setSearchTerm] = useState('');
     const [filterUnit, setFilterUnit] = useState('');
@@ -112,6 +111,36 @@ const MonitoringPengajuan = () => {
         }
     };
 
+    // ✨ FUNGSI BARU: Upload Dokumen Final (Surat & ID Card) ✨
+    const handleUploadFinal = async (submissionId) => {
+        const { value: file } = await Swal.fire({
+            title: 'Upload Dokumen Final',
+            text: 'Pilih Surat Pengantar & Template ID Card (Gabungkan dalam 1 ZIP atau PDF)',
+            input: 'file',
+            inputAttributes: { 'accept': 'application/pdf,application/zip', 'aria-label': 'Upload dokumen final' },
+            showCancelButton: true,
+            confirmButtonText: 'Upload & Rilis',
+            confirmButtonColor: '#28a745'
+        });
+
+        if (file) {
+            const formData = new FormData();
+            formData.append('final_docs', file); // Menggunakan key 'final_docs'
+            formData.append('status', 'Selesai (Surat Dirilis)');
+
+            try {
+                // Route ini akan kita buat di backend setelah ini
+                await axios.put(`http://localhost:5000/api/submissions/${submissionId}/release`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                Swal.fire('Berhasil!', 'Surat telah dirilis ke Mahasiswa.', 'success');
+                fetchData(); 
+            } catch (err) {
+                Swal.fire('Gagal', 'Gagal mengunggah dokumen.', 'error');
+            }
+        }
+    };
+
     const filteredData = submissions.filter(s => {
         const matchName = (s.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (s.asal_instansi || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -152,8 +181,6 @@ const MonitoringPengajuan = () => {
 
             {/* AREA UTAMA */}
             <div style={styles.main}>
-                
-
                 <div style={styles.contentScroll}>
                     <div style={{marginBottom: '25px'}}>
                         <h2 style={{margin:0, color:'#003399'}}>Monitoring Verifikasi 🚄</h2>
@@ -188,7 +215,7 @@ const MonitoringPengajuan = () => {
                                     <th style={{...styles.th, width:'50px'}}>No</th>
                                     <th style={styles.th}>Data Mahasiswa</th>
                                     <th style={styles.th}>Unit & Jenis</th>
-                                    <th style={styles.th}>Detail</th>
+                                    <th style={{...styles.th, textAlign:'center'}}>Detail / Berkas</th>
                                     <th style={styles.th}>Status</th>
                                     <th style={{...styles.th, textAlign:'center'}}>Aksi</th>
                                 </tr>
@@ -205,18 +232,36 @@ const MonitoringPengajuan = () => {
                                             <div style={{fontSize: '13px'}}>{s.nama_unit}</div>
                                             <div style={{fontSize: '11px', color: '#ff6600', fontWeight:'600'}}>{s.nama_jenis}</div>
                                         </td>
-                                        <td style={styles.td}>
-                                            <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}><Eye size={14}/></button>
+                                        <td style={{...styles.td, textAlign:'center'}}>
+                                            <div style={{display: 'flex', gap: '5px', justifyContent: 'center'}}>
+                                                <button onClick={() => viewDetail(s.id)} style={styles.btnDetail} title="Lihat Detail Form">
+                                                    <Eye size={14}/>
+                                                </button>
+                                                {/* ✨ TOMBOL LIHAT BERKAS (BARU) ✨ */}
+                                                <button onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/view-docs`, '_blank')} style={styles.btnDocs} title="Lihat Berkas Mahasiswa">
+                                                    <FilePlus size={14}/>
+                                                </button>
+                                            </div>
                                         </td>
                                         <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
                                         <td style={styles.td}>
                                             <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                                                
+                                                {/* AKSI JIKA MASIH MENUNGGU VERIFIKASI */}
                                                 {s.status === 'Menunggu Verifikasi' && (
                                                     <>
-                                                        <button onClick={() => handleAction(s.id, 'forward')} style={styles.btnForward}><ArrowRight size={16}/></button>
-                                                        <button onClick={() => handleAction(s.id, 'revisi')} style={styles.btnRevisi}><Edit3 size={16}/></button>
+                                                        <button onClick={() => handleAction(s.id, 'forward')} style={styles.btnForward} title="Teruskan ke Unit"><ArrowRight size={16}/></button>
+                                                        <button onClick={() => handleAction(s.id, 'revisi')} style={styles.btnRevisi} title="Minta Revisi"><Edit3 size={16}/></button>
                                                     </>
                                                 )}
+
+                                                {/* ✨ AKSI JIKA SUDAH DISETUJUI UNIT (RILIS SURAT) ✨ */}
+                                                {s.status === 'Disetujui Unit' && (
+                                                    <button onClick={() => handleUploadFinal(s.id)} style={styles.btnRelease}>
+                                                        <UploadCloud size={14} style={{marginRight: '5px'}}/> Rilis Surat
+                                                    </button>
+                                                )}
+
                                             </div>
                                         </td>
                                     </tr>
@@ -231,30 +276,14 @@ const MonitoringPengajuan = () => {
 };
 
 const styles = {
-    // KUNCI LAYOUT
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
     sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
     main: { flex: 1, marginLeft: '260px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
-    
-    // Header
-    topHeader: { height: '70px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', borderBottom: '1px solid #e0e0e0', position: 'sticky', top: 0, zIndex: 5 },
-    profileTrigger: { display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', position: 'relative' },
-    avatar: { width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '16px' },
-    profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right' },
-    profileName: { fontSize: '14px', fontWeight: 'bold', color: '#333' },
-    profileRole: { fontSize: '11px', color: '#888', textTransform: 'capitalize' },
-    dropdownBox: { position: 'absolute', top: '50px', right: 0, width: '160px', backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #eee', overflow: 'hidden' },
-    dropdownItem: { padding: '12px 15px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', color: '#444', transition: '0.2s', '&:hover': { backgroundColor: '#f8f9fa' } },
-
     contentScroll: { padding: '40px', flex: 1 },
-    
-    // Sidebar Menu Styles
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
     logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
-    
-    // Table & Filter Styles
     filterBar: { display: 'flex', gap: '15px', marginBottom: '30px', marginTop: '20px' },
     searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
     selectWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
@@ -273,8 +302,10 @@ const styles = {
         return { padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', backgroundColor: bg, color: color };
     },
     btnDetail: { backgroundColor: '#f0f4ff', color: '#003399', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
+    btnDocs: { backgroundColor: '#e0f0ff', color: '#0055cc', border: '1px solid #cce0ff', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
     btnForward: { backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
-    btnRevisi: { backgroundColor: '#fff', color: '#e74c3c', border: '1px solid #e74c3c', padding: '8px', borderRadius: '8px', cursor: 'pointer' }
+    btnRevisi: { backgroundColor: '#fff', color: '#e74c3c', border: '1px solid #e74c3c', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
+    btnRelease: { display: 'flex', alignItems: 'center', backgroundColor: '#e1f7e7', color: '#27ae60', border: '1px solid #27ae60', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }
 };
 
 export default MonitoringPengajuan;
