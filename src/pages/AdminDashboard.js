@@ -3,9 +3,9 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { 
-    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, FilePlus,
-    Edit3, Mail, IdCard, Building, Save, X 
-} from 'lucide-react';
+    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, 
+    Edit3, Mail, IdCard, Building, Save, X, Eye 
+} from 'lucide-react'; // ✨ Tambah import 'Eye'
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -17,7 +17,7 @@ const AdminDashboard = () => {
     });
     
     const [submissions, setSubmissions] = useState([]);
-    const [activeMenu, setActiveMenu] = useState(location.state?.activeMenu || 'profile'); // Default ke profil
+    const [activeMenu, setActiveMenu] = useState(location.state?.activeMenu || 'profile'); 
     const [searchTerm, setSearchTerm] = useState('');
     
     const [isEditing, setIsEditing] = useState(false);
@@ -38,33 +38,22 @@ const AdminDashboard = () => {
             return;
         }
         
-        // Fungsi Asli
         fetchData(parsedUser.unit_id);
-        
-        // Ambil data profil terbaru
         fetchProfile(parsedUser.id);
-        
-        // Hapus history state agar refresh tetap ke profil
         window.history.replaceState({}, document.title);
-        
     }, [navigate]);
 
     const fetchProfile = async (id) => {
         try {
-            // 1. Ambil data profil dasar dari backend
             const res = await axios.get(`http://localhost:5000/api/users/${id}`);
             let dataUser = res.data;
-
-            // 2. Jika user punya unit_id, kita ambil daftar unit untuk mencari namanya
             if (dataUser.unit_id) {
                 const resUnit = await axios.get('http://localhost:5000/api/units');
                 const myUnit = resUnit.data.find(u => u.id === dataUser.unit_id);
                 if (myUnit) {
-                    dataUser.nama_unit = myUnit.nama_unit; // Suntikkan nama unit aslinya
+                    dataUser.nama_unit = myUnit.nama_unit; 
                 }
             }
-
-            // 3. Simpan datanya ke state
             setUserData(dataUser);
             setFormData({
                 nama_lengkap: dataUser.nama_lengkap || '',
@@ -94,7 +83,6 @@ const AdminDashboard = () => {
         }
     };
 
-    // FUNGSI ASLI: TIDAK DISENTUH
     const fetchData = async (unitId) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions?unit_id=${unitId}`);
@@ -104,7 +92,6 @@ const AdminDashboard = () => {
         }
     };
 
-    // FUNGSI ASLI: TIDAK DISENTUH
     const handleAction = async (id, actionType) => {
         const newStatus = actionType === 'approve' ? 'Disetujui Unit' : 'Ditolak';
         const confirmText = actionType === 'approve' ? 'Anda yakin ingin menyetujui peserta ini untuk magang di Unit Anda?' : 'Anda yakin ingin menolak peserta ini?';
@@ -130,21 +117,80 @@ const AdminDashboard = () => {
                 });
                 
                 Swal.fire('Berhasil!', `Status telah diubah menjadi ${newStatus}.`, 'success');
-                fetchData(userData.unit_id); // Refresh data agar tombol langsung hilang
+                fetchData(userData.unit_id); 
             } catch (err) {
                 Swal.fire('Gagal', 'Terjadi kesalahan saat memproses status.', 'error');
             }
         }
     };
 
+    // ✨ FUNGSI BARU: viewDetail (Lihat Detail & Berkas) ✨
+    const viewDetail = async (id) => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
+            const s = res.data;
+
+            let berkasHtml = '';
+            if (s.documents && s.documents.length > 0) {
+                berkasHtml = s.documents.map((doc, index) => {
+                    const justFileName = doc.file_path.split(/[\\/]/).pop();
+                    const pathFile = `http://localhost:5000/api/preview/${justFileName}`;
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e0e0e0;">
+                            <span style="font-size: 13px; color: #444; font-weight: 500;">
+                                ${index + 1}. ${doc.nama_dokumen === 'files' ? 'Dokumen Pengajuan' : doc.nama_dokumen}
+                            </span>
+                            <a href="${pathFile}" target="_blank" rel="noopener noreferrer" 
+                               style="background-color: #0055cc; color: white; padding: 5px 12px; border-radius: 5px; text-decoration: none; font-size: 11px; font-weight: bold; transition: 0.2s;">
+                               📄 Lihat File
+                            </a>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                berkasHtml = '<p style="color: #999; font-style: italic; text-align: center;">Tidak ada berkas yang dilampirkan.</p>';
+            }
+
+            let htmlContent = `
+                <div style="text-align:left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
+                    <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                        <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">👤 Profil Mahasiswa</h4>
+                        <p style="margin: 5px 0;"><b>Nama:</b> ${s.nama_lengkap}</p>
+                        <p style="margin: 5px 0;"><b>Instansi:</b> ${s.asal_instansi || '-'}</p>
+                    </div>
+
+                    <div style="padding: 0 10px 20px 10px;">
+                        <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">📋 Rencana Kegiatan</h4>
+                        <p style="margin: 5px 0;"><b>Judul:</b> ${s.judul_atau_tujuan}</p>
+                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                    </div>
+                    
+                    <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
+                        <h4 style="margin-top:0; color: #003399; font-size: 15px; margin-bottom: 15px;">📂 Berkas Lampiran</h4>
+                        ${berkasHtml}
+                    </div>
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'Detail Pengajuan Magang',
+                html: htmlContent,
+                width: '600px',
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#666',
+                showCloseButton: true
+            });
+
+        } catch (err) {
+            Swal.fire('Error', 'Gagal memuat detail data.', 'error');
+        }
+    };
+
     if (!userData) return null;
 
-    // Filter data untuk Monitoring (Yang sedang berjalan)
     const monitoringData = submissions.filter(s => s.status !== 'Selesai (Surat Dirilis)' && s.status !== 'Ditolak');
-
-    // Filter data untuk Arsip (Yang sudah selesai saja)
     const archiveData = submissions.filter(s => s.status === 'Selesai (Surat Dirilis)');
-
     const displayData = activeMenu === 'monitoring' ? monitoringData : archiveData;
 
     return (
@@ -156,24 +202,13 @@ const AdminDashboard = () => {
                     <small style={{opacity:0.7}}>{userData.nama_unit || 'Kepala Unit'}</small>
                 </div>
                 
-                <div 
-                    style={activeMenu === 'profile' ? styles.menuActive : styles.menuItem} 
-                    onClick={() => setActiveMenu('profile')}
-                >
+                <div style={activeMenu === 'profile' ? styles.menuActive : styles.menuItem} onClick={() => setActiveMenu('profile')}>
                     <User size={18}/> Profil Saya
                 </div>
-
-                <div 
-                    style={activeMenu === 'monitoring' ? styles.menuActive : styles.menuItem} 
-                    onClick={() => setActiveMenu('monitoring')}
-                >
+                <div style={activeMenu === 'monitoring' ? styles.menuActive : styles.menuItem} onClick={() => setActiveMenu('monitoring')}>
                     <LayoutDashboard size={18}/> Monitoring Tugas
                 </div>
-
-                <div 
-                    style={activeMenu === 'arsip' ? styles.menuActive : styles.menuItem} 
-                    onClick={() => setActiveMenu('arsip')}
-                >
+                <div style={activeMenu === 'arsip' ? styles.menuActive : styles.menuItem} onClick={() => setActiveMenu('arsip')}>
                     <FileText size={18}/> Arsip Peserta Unit
                 </div>
 
@@ -302,37 +337,35 @@ const AdminDashboard = () => {
                                                     <td style={styles.td}>
                                                         <span style={styles.badge}>{s.status}</span>
                                                     </td>
-                                                    {/* ✨ GANTI JADI INI ✨ */}
-<td style={{...styles.td, textAlign: 'center'}}>
-    <div style={{display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center'}}>
-        
-        {/* TOMBOL LIHAT BERKAS (BARU) */}
-        <button 
-            onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/view-docs`, '_blank')} 
-            style={styles.btnDocs}
-            title="Lihat proposal mahasiswa"
-        >
-            <FileText size={14} style={{marginRight: '5px'}}/> Lihat Berkas
-        </button>
+                                                    {/* ✨ BAGIAN TOMBOL AKSI YANG BARU ✨ */}
+                                                    <td style={{...styles.td, textAlign: 'center'}}>
+                                                        <div style={{display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center'}}>
+                                                            
+                                                            <button 
+                                                                onClick={() => viewDetail(s.id)} 
+                                                                style={styles.btnDetail}
+                                                                title="Lihat Detail Form & Berkas"
+                                                            >
+                                                                <Eye size={14} style={{marginRight: '5px'}}/> Detail & Berkas
+                                                            </button>
 
-        {/* TOMBOL SETUJUI DAN TOLAK */}
-        {s.status === 'Ditinjau Unit' ? (
-            <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
-                    <CheckCircle size={14}/> Setujui
-                </button>
-                <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
-                    <XCircle size={14}/> Tolak
-                </button>
-            </div>
-        ) : (
-            <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>
-                {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
-            </span>
-        )}
-        
-    </div>
-</td>
+                                                            {s.status === 'Ditinjau Unit' ? (
+                                                                <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                                                                    <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
+                                                                        <CheckCircle size={14}/> Setujui
+                                                                    </button>
+                                                                    <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
+                                                                        <XCircle size={14}/> Tolak
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic', marginTop: '5px'}}>
+                                                                    {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
+                                                                </span>
+                                                            )}
+                                                            
+                                                        </div>
+                                                    </td>
                                                 </>
                                             ) : (
                                                 <>
@@ -360,18 +393,13 @@ const AdminDashboard = () => {
 };
 
 const styles = {
-    // LAYOUT DASAR
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8', fontFamily: 'sans-serif' },
     sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxShadow: '2px 0 10px rgba(0,0,0,0.1)', position: 'fixed', top: 0, left: 0, height: '100vh', boxSizing: 'border-box', zIndex: 100 },
     main: { flex: 1, padding: '40px', overflowY: 'auto', marginLeft: '260px', minHeight: '100vh', boxSizing: 'border-box' },
-    
-    // SIDEBAR
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
     logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px', fontWeight: 'bold' },
-    
-    // TABLE & MONITORING
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
     searchBox: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '8px 15px', borderRadius: '20px', border: '1px solid #ddd' },
     searchInput: { border: 'none', outline: 'none', fontSize: '13px' },
@@ -379,41 +407,28 @@ const styles = {
     table: { width: '100%', borderCollapse: 'collapse' },
     thRow: { backgroundColor: '#f8f9fa' },
     th: { textAlign: 'left', padding: '15px', fontSize: '12px', color: '#888', textTransform: 'uppercase' },
-    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px' },
+    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px', verticalAlign: 'middle' },
     badge: { padding: '4px 10px', backgroundColor: '#e0f0ff', color: '#0055cc', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' },
+    
+    // Tombol-tombol tabel
     btnApprove: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#e6ffe6', color: '#28a745', border: '1px solid #28a745', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
     btnReject: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#ffe6e6', color: '#dc3545', border: '1px solid #dc3545', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
+    btnDetail: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #d0dfff', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', width: '100%' },
 
     profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
     profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
     avatarLarge: { width: '90px', height: '90px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
     roleBadge: { backgroundColor: '#fff4e5', color: '#d35400', padding: '4px 15px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' },
     btnEditAvatar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' },
-    
     infoGrid: { display: 'flex', flexDirection: 'column', gap: '15px' },
     infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' },
     label: { color: '#888', margin: 0, fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' },
     val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '14px' },
-    
     form: { display: 'flex', flexDirection: 'column', gap: '12px' },
     inputGroup: { display: 'flex', flexDirection: 'column' },
     input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px', backgroundColor: '#fcfcfc' },
     btnArea: { display: 'flex', gap: '10px', marginTop: '15px' },
     btnSave: { flex: 2, padding: '12px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
-    btnDocs: { 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: '#e0f0ff', 
-    color: '#0055cc', 
-    border: '1px solid #cce0ff', 
-    padding: '6px 12px', 
-    borderRadius: '6px', 
-    cursor: 'pointer', 
-    fontSize: '12px', 
-    fontWeight: 'bold', 
-    width: '100%' 
-    },
     btnCancel: { flex: 1, padding: '12px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
 };
 

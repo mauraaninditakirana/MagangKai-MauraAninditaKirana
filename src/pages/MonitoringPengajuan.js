@@ -67,28 +67,71 @@ const MonitoringPengajuan = () => {
     };
 
     const viewDetail = async (id) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
-            const s = res.data;
-            let htmlContent = `
-                <div style="text-align:left; font-family: sans-serif; font-size: 14px; color: #333;">
-                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; marginBottom: 20px;">
-                        <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">👤 Data Mahasiswa</h4>
-                        <p><b>Nama Lengkap:</b> ${s.nama_lengkap}</p>
-                        <p><b>Asal Instansi:</b> ${s.asal_instansi || '-'}</p>
+    try {
+        const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
+        const s = res.data; 
+
+        let berkasHtml = '';
+        if (s.documents && s.documents.length > 0) {
+            berkasHtml = s.documents.map((doc, index) => {
+                // Mengambil nama filenya saja dari path (menghapus folder 'uploads/')
+                const justFileName = doc.file_path.split(/[\\/]/).pop();
+                
+                const pathFile = `http://localhost:5000/api/preview/${justFileName}`;
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e0e0e0;">
+                        <span style="font-size: 13px; color: #444; font-weight: 500;">
+                            ${index + 1}. ${doc.nama_dokumen === 'files' ? 'Dokumen Pengajuan' : doc.nama_dokumen}
+                        </span>
+                        <a href="${pathFile}" target="_blank" rel="noopener noreferrer" 
+                           style="background-color: #0055cc; color: white; padding: 5px 12px; border-radius: 5px; text-decoration: none; font-size: 11px; font-weight: bold; transition: 0.2s;">
+                           📄 Lihat File
+                        </a>
                     </div>
-                    <div style="padding: 10px 15px;">
-                        <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">📋 Detail Rencana</h4>
-                        <p><b>Jenis Kegiatan:</b> ${s.nama_jenis}</p>
-                        <p><b>Unit Tujuan:</b> ${s.nama_unit}</p>
-                        <p><b>Judul Project:</b> ${s.judul_atau_tujuan}</p>
-                        <p><b>Kategori:</b> ${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</p>
-                        <p><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
-                    </div>
+                `;
+            }).join('');
+        } else {
+            berkasHtml = '<p style="color: #999; font-style: italic; text-align: center;">Tidak ada berkas yang dilampirkan.</p>';
+        }
+
+        // 2. Susun konten lengkap SweetAlert
+        let htmlContent = `
+            <div style="text-align:left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
+                <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                    <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">👤 Data Mahasiswa</h4>
+                    <p style="margin: 5px 0;"><b>Nama:</b> ${s.nama_lengkap}</p>
+                    <p style="margin: 5px 0;"><b>Instansi:</b> ${s.asal_instansi || '-'}</p>
                 </div>
-            `;
-            Swal.fire({ title: 'Review Form Pengajuan', html: htmlContent, width: '600px', confirmButtonText: 'Tutup', confirmButtonColor: '#003399' });
-        } catch (err) { Swal.fire('Error', 'Gagal memuat detail.', 'error'); }
+
+                <div style="padding: 0 10px 20px 10px;">
+                    <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">📋 Detail Kegiatan</h4>
+                    <p style="margin: 5px 0;"><b>Jenis:</b> ${s.nama_jenis}</p>
+                    <p style="margin: 5px 0;"><b>Unit:</b> ${s.nama_unit}</p>
+                    <p style="margin: 5px 0;"><b>Judul:</b> ${s.judul_atau_tujuan}</p>
+                    <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} - ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                </div>
+                
+                <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
+                    <h4 style="margin-top:0; color: #003399; font-size: 15px; margin-bottom: 15px;">📂 Berkas Lampiran</h4>
+                    ${berkasHtml}
+                </div>
+            </div>
+        `;
+
+        Swal.fire({
+            title: 'Detail Pengajuan Magang',
+            html: htmlContent,
+            width: '600px',
+            confirmButtonText: 'Tutup',
+            confirmButtonColor: '#666',
+            showCloseButton: true
+        });
+
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Gagal mengambil detail data.', 'error');
+    }
     };
 
     const handleAction = async (id, type) => {
@@ -111,7 +154,7 @@ const MonitoringPengajuan = () => {
         }
     };
 
-    // ✨ FUNGSI BARU: Upload Dokumen Final (Surat & ID Card) ✨
+
     const handleUploadFinal = async (submissionId) => {
         const { value: file } = await Swal.fire({
             title: 'Upload Dokumen Final',
@@ -216,7 +259,7 @@ const MonitoringPengajuan = () => {
                                     <th style={{...styles.th, width:'50px'}}>No</th>
                                     <th style={styles.th}>Data Mahasiswa</th>
                                     <th style={styles.th}>Unit & Jenis</th>
-                                    <th style={{...styles.th, textAlign:'center'}}>Detail / Berkas</th>
+                                    <th style={{...styles.th, textAlign:'center'}}>Detail</th>
                                     <th style={styles.th}>Status</th>
                                     <th style={{...styles.th, textAlign:'center'}}>Aksi</th>
                                 </tr>
@@ -238,10 +281,6 @@ const MonitoringPengajuan = () => {
                                                 <button onClick={() => viewDetail(s.id)} style={styles.btnDetail} title="Lihat Detail Form">
                                                     <Eye size={14}/>
                                                 </button>
-                                                {/* ✨ TOMBOL LIHAT BERKAS (BARU) ✨ */}
-                                                <button onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/view-docs`, '_blank')} style={styles.btnDocs} title="Lihat Berkas Mahasiswa">
-                                                    <FilePlus size={14}/>
-                                                </button>
                                             </div>
                                         </td>
                                         <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
@@ -256,7 +295,6 @@ const MonitoringPengajuan = () => {
                                                     </>
                                                 )}
 
-                                                {/* ✨ AKSI JIKA SUDAH DISETUJUI UNIT (RILIS SURAT) ✨ */}
                                                 {s.status === 'Disetujui Unit' && (
                                                     <button onClick={() => handleUploadFinal(s.id)} style={styles.btnRelease}>
                                                         <UploadCloud size={14} style={{marginRight: '5px'}}/> Rilis Surat
@@ -303,7 +341,6 @@ const styles = {
         return { padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', backgroundColor: bg, color: color };
     },
     btnDetail: { backgroundColor: '#f0f4ff', color: '#003399', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
-    btnDocs: { backgroundColor: '#e0f0ff', color: '#0055cc', border: '1px solid #cce0ff', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
     btnForward: { backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
     btnRevisi: { backgroundColor: '#fff', color: '#e74c3c', border: '1px solid #e74c3c', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
     btnRelease: { display: 'flex', alignItems: 'center', backgroundColor: '#e1f7e7', color: '#27ae60', border: '1px solid #27ae60', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }
