@@ -17,14 +17,13 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         judul_atau_tujuan: '',
         kategori_pendaftar: 'Individu',
         jumlah_anggota: 1,
-        asal_instansi: '', // Akan diisi otomatis dari database
+        asal_instansi: '', 
         tanggal_mulai: '',
         tanggal_selesai: ''
     });
     const [files, setFiles] = useState([]);
 
     useEffect(() => {
-        // ✨ Gunakan async function agar data terambil berurutan & pasti masuk
         const fetchInitialData = async () => {
             try {
                 // 1. Ambil Data Unit
@@ -39,7 +38,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     { id: 4, nama: 'Tugas Akhir / Skripsi' }
                 ]);
 
-                // 3. ✨ Ambil Data Profil User dari Database (Pasti Akurat & Tidak Kosong)
+                // 3. Ambil Data Profil User dari Database
                 let userInstansi = '';
                 if (userId) {
                     const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
@@ -55,7 +54,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                             judul_atau_tujuan: initialData.judul_atau_tujuan || '',
                             kategori_pendaftar: initialData.kategori_pendaftar || 'Individu',
                             jumlah_anggota: initialData.jumlah_anggota || 1,
-                            asal_instansi: userInstansi, // Kunci dengan data profil
+                            asal_instansi: userInstansi, 
                             tanggal_mulai: initialData.tanggal_mulai ? initialData.tanggal_mulai.split('T')[0] : '',
                             tanggal_selesai: initialData.tanggal_selesai ? initialData.tanggal_selesai.split('T')[0] : ''
                         });
@@ -68,18 +67,27 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                             judul_atau_tujuan: dataLama.judul_atau_tujuan || '',
                             kategori_pendaftar: dataLama.kategori_pendaftar || 'Individu',
                             jumlah_anggota: dataLama.jumlah_anggota || 1,
-                            asal_instansi: userInstansi, // Kunci dengan data profil
+                            asal_instansi: userInstansi, 
                             tanggal_mulai: dataLama.tanggal_mulai ? dataLama.tanggal_mulai.split('T')[0] : '',
                             tanggal_selesai: dataLama.tanggal_selesai ? dataLama.tanggal_selesai.split('T')[0] : ''
                         });
                     }
                 } else {
-                    // Pengajuan Baru
-                    setFormData({
-                        submission_type_id: '', unit_id: '', judul_atau_tujuan: '', 
-                        asal_instansi: userInstansi, // Kunci dengan data profil
-                        kategori_pendaftar: 'Individu', jumlah_anggota: 1, tanggal_mulai: '', tanggal_selesai: ''
-                    });
+                    // CEK DRAFT (Silently Restored)
+                    const savedDraft = localStorage.getItem('draft_form_magang');
+                    if (savedDraft) {
+                        const parsedDraft = JSON.parse(savedDraft);
+                        setFormData({
+                            ...parsedDraft,
+                            asal_instansi: userInstansi 
+                        });
+                    } else {
+                        setFormData({
+                            submission_type_id: '', unit_id: '', judul_atau_tujuan: '', 
+                            asal_instansi: userInstansi, 
+                            kategori_pendaftar: 'Individu', jumlah_anggota: 1, tanggal_mulai: '', tanggal_selesai: ''
+                        });
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -89,8 +97,14 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         fetchInitialData();
     }, [revisiId, initialData, userId]); 
 
+    // ✨ Simpan ke Draft tanpa pemberitahuan di UI
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const updatedData = { ...formData, [e.target.name]: e.target.value };
+        setFormData(updatedData);
+        
+        if (!revisiId) {
+            localStorage.setItem('draft_form_magang', JSON.stringify(updatedData));
+        }
     };
 
     const handleFileChange = (e) => {
@@ -129,6 +143,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
             } else {
                 await axios.post('http://localhost:5000/api/submissions', data);
                 Swal.fire('Berhasil!', 'Pengajuan Anda telah berhasil dikirim.', 'success');
+                localStorage.removeItem('draft_form_magang');
             }
             onDocsUploaded();
         } catch (error) {
@@ -188,7 +203,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                 
                 <div style={styles.inputBox}>
                     <label style={styles.label}>Asal Instansi / Universitas</label>
-                    {/* ✨ INPUT DIKUNCI (READ ONLY) ✨ */}
                     <input 
                         name="asal_instansi" 
                         value={formData.asal_instansi}
