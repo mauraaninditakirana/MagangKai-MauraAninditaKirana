@@ -16,7 +16,16 @@ const Register = () => {
     const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        let { name, value } = e.target;
+        // Paksa email jadi kecil dan buang spasi
+        if (name === 'email') {
+            value = value.toLowerCase().replace(/\s/g, '');
+        }
+        // Buang spasi untuk Nomor Induk dan No Telepon
+        if (name === 'nomor_induk' || name === 'no_telp') {
+            value = value.replace(/\s/g, '');
+        }
+        setFormData({ ...formData, [name]: value });
     };
 
     const handleRegister = async (e) => {

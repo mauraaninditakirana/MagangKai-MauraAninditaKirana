@@ -58,7 +58,7 @@ const Login = () => {
                             placeholder="Email Instansi / Pribadi" 
                             style={styles.input}
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => setEmail(e.target.value.toLowerCase().replace(/\s/g, ''))}
                             required 
                         />
                     </div>
