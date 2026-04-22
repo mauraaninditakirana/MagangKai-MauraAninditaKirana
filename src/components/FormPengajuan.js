@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-// UBAH/TAMBAH: Import useLocation untuk membaca parameter URL
 import { useLocation } from 'react-router-dom'; 
 import { Send, FileUp, ClipboardList, Edit3 } from 'lucide-react'; 
 
 const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
-    // UBAH/TAMBAH: Ambil parameter ?revisi= dari URL
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const revisiId = queryParams.get('revisi');
@@ -19,64 +17,77 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         judul_atau_tujuan: '',
         kategori_pendaftar: 'Individu',
         jumlah_anggota: 1,
+        asal_instansi: '', // Akan diisi otomatis dari database
         tanggal_mulai: '',
         tanggal_selesai: ''
     });
     const [files, setFiles] = useState([]);
 
     useEffect(() => {
-        // 1. Ambil data unit (tetap sama)
-        axios.get(`http://localhost:5000/api/units?_t=${Date.now()}`)
-            .then(res => setUnits(res.data))
-            .catch(err => console.error(err));
+        // ✨ Gunakan async function agar data terambil berurutan & pasti masuk
+        const fetchInitialData = async () => {
+            try {
+                // 1. Ambil Data Unit
+                const unitRes = await axios.get(`http://localhost:5000/api/units?_t=${Date.now()}`);
+                setUnits(unitRes.data);
 
-        setSubmissionTypes([
-            { id: 1, nama: 'Magang / Kerja Praktek' },
-            { id: 2, nama: 'PKL (Praktek Kerja Lapangan)' },
-            { id: 3, nama: 'Penelitian / Riset Data' },
-            { id: 4, nama: 'Tugas Akhir / Skripsi' }
-        ]);
+                // 2. Set Jenis Pengajuan
+                setSubmissionTypes([
+                    { id: 1, nama: 'Magang / Kerja Praktek' },
+                    { id: 2, nama: 'PKL (Praktek Kerja Lapangan)' },
+                    { id: 3, nama: 'Penelitian / Riset Data' },
+                    { id: 4, nama: 'Tugas Akhir / Skripsi' }
+                ]);
 
-        if (revisiId) {
-            // Cek apakah ada data titipan (initialData) dari halaman Riwayat
-            if (initialData) {
-                console.log("Menggunakan data titipan dari Riwayat");
-                setFormData({
-                    submission_type_id: initialData.submission_type_id || '',
-                    unit_id: initialData.unit_id || '',
-                    judul_atau_tujuan: initialData.judul_atau_tujuan || '',
-                    kategori_pendaftar: initialData.kategori_pendaftar || 'Individu',
-                    jumlah_anggota: initialData.jumlah_anggota || 1,
-                    asal_instansi: initialData.asal_instansi || '', // ✨ Tambahkan ini
-                    tanggal_mulai: initialData.tanggal_mulai ? initialData.tanggal_mulai.split('T')[0] : '',
-                    tanggal_selesai: initialData.tanggal_selesai ? initialData.tanggal_selesai.split('T')[0] : ''
-                });
-            } else {
-                // Jika tidak ada initialData, baru ambil dari API (cadangan)
-                axios.get(`http://localhost:5000/api/submissions/${revisiId}`)
-                    .then(res => {
-                        const dataLama = res.data;
+                // 3. ✨ Ambil Data Profil User dari Database (Pasti Akurat & Tidak Kosong)
+                let userInstansi = '';
+                if (userId) {
+                    const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
+                    userInstansi = userRes.data.asal_instansi || '';
+                }
+
+                // 4. Set isi Form
+                if (revisiId) {
+                    if (initialData) {
+                        setFormData({
+                            submission_type_id: initialData.submission_type_id || '',
+                            unit_id: initialData.unit_id || '',
+                            judul_atau_tujuan: initialData.judul_atau_tujuan || '',
+                            kategori_pendaftar: initialData.kategori_pendaftar || 'Individu',
+                            jumlah_anggota: initialData.jumlah_anggota || 1,
+                            asal_instansi: userInstansi, // Kunci dengan data profil
+                            tanggal_mulai: initialData.tanggal_mulai ? initialData.tanggal_mulai.split('T')[0] : '',
+                            tanggal_selesai: initialData.tanggal_selesai ? initialData.tanggal_selesai.split('T')[0] : ''
+                        });
+                    } else {
+                        const resLama = await axios.get(`http://localhost:5000/api/submissions/${revisiId}`);
+                        const dataLama = resLama.data;
                         setFormData({
                             submission_type_id: dataLama.submission_type_id || '',
                             unit_id: dataLama.unit_id || '',
                             judul_atau_tujuan: dataLama.judul_atau_tujuan || '',
                             kategori_pendaftar: dataLama.kategori_pendaftar || 'Individu',
                             jumlah_anggota: dataLama.jumlah_anggota || 1,
-                            asal_instansi: dataLama.asal_instansi || '', // ✨ Tambahkan ini
+                            asal_instansi: userInstansi, // Kunci dengan data profil
                             tanggal_mulai: dataLama.tanggal_mulai ? dataLama.tanggal_mulai.split('T')[0] : '',
                             tanggal_selesai: dataLama.tanggal_selesai ? dataLama.tanggal_selesai.split('T')[0] : ''
                         });
-                    })
-                    .catch(err => console.error("Gagal load data revisi:", err));
+                    }
+                } else {
+                    // Pengajuan Baru
+                    setFormData({
+                        submission_type_id: '', unit_id: '', judul_atau_tujuan: '', 
+                        asal_instansi: userInstansi, // Kunci dengan data profil
+                        kategori_pendaftar: 'Individu', jumlah_anggota: 1, tanggal_mulai: '', tanggal_selesai: ''
+                    });
+                }
+            } catch (err) {
+                console.error("Error fetching data:", err);
             }
-        } else {
-            // Bersihkan form jika bukan mode revisi
-            setFormData({
-                submission_type_id: '', unit_id: '', judul_atau_tujuan: '', asal_instansi: '',
-                kategori_pendaftar: 'Individu', jumlah_anggota: 1, tanggal_mulai: '', tanggal_selesai: ''
-            });
-        }
-    }, [revisiId, initialData]); 
+        };
+
+        fetchInitialData();
+    }, [revisiId, initialData, userId]); 
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -93,7 +104,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
             return Swal.fire('Perhatian', 'Mohon pilih Keperluan dan Unit Tujuan', 'warning');
         }
 
-        // Cek apakah sisa kuota cukup untuk jumlah anggota 
         const selectedUnit = units.find(u => u.id.toString() === formData.unit_id.toString());
         if (selectedUnit && formData.jumlah_anggota > selectedUnit.kuota) {
             return Swal.fire(
@@ -113,9 +123,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
 
         try {
             if (revisiId) {
-                // Beri tahu backend bahwa ini adalah hasil revisi mahasiswa
                 data.append('catatan', 'Mahasiswa telah melakukan perbaikan data/dokumen.');
-                
                 await axios.put(`http://localhost:5000/api/submissions/${revisiId}/revisi`, data);
                 Swal.fire('Berhasil!', 'Perbaikan data Anda telah terkirim.', 'success');
             } else {
@@ -177,16 +185,17 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                         </div>
                     )}
                 </div>
+                
                 <div style={styles.inputBox}>
                     <label style={styles.label}>Asal Instansi / Universitas</label>
+                    {/* ✨ INPUT DIKUNCI (READ ONLY) ✨ */}
                     <input 
                         name="asal_instansi" 
                         value={formData.asal_instansi}
-                        placeholder="Contoh: Universitas Muhammadiyah Yogyakarta" 
-                        onChange={handleChange} 
-                        style={styles.input} 
-                        required 
+                        style={{...styles.input, backgroundColor: '#eee', color: '#666', cursor: 'not-allowed'}} 
+                        readOnly 
                     />
+                    <small style={{color: '#ff6600', marginTop: '-5px'}}>*Data ini dikunci sesuai dengan pendaftaran profil Anda.</small>
                 </div>
 
                 <div style={styles.inputBox}>
