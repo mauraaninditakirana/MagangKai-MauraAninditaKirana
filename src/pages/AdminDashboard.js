@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { 
     LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, 
     Edit3, Mail, IdCard, Building, Save, X, Eye 
-} from 'lucide-react'; // ✨ Tambah import 'Eye'
+} from 'lucide-react';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -93,10 +93,22 @@ const AdminDashboard = () => {
     };
 
     const handleAction = async (id, actionType) => {
-        const newStatus = actionType === 'approve' ? 'Disetujui Unit' : 'Ditolak';
-        const confirmText = actionType === 'approve' ? 'Anda yakin ingin menyetujui peserta ini untuk magang di Unit Anda?' : 'Anda yakin ingin menolak peserta ini?';
-        const confirmColor = actionType === 'approve' ? '#28a745' : '#dc3545';
-
+        let newStatus = '';
+        let confirmText = '';
+        let confirmColor = '';
+        if (actionType === 'approve') {
+            newStatus = 'Disetujui Unit, Menunggu Verifikasi SDM';
+            confirmText = 'Setujui pengajuan ini dan teruskan ke SDM Pusat?';
+            confirmColor = '#28a745';
+        } else if (actionType === 'reject') {
+            newStatus = 'Ditolak Unit';
+            confirmText = 'Anda yakin ingin menolak pengajuan ini?';
+            confirmColor = '#dc3545';
+        } else if (actionType === 'revising') {
+            newStatus = 'Revisi';
+            confirmText = 'Minta mahasiswa untuk memperbaiki dokumen/data?';
+            confirmColor = '#ff6600';
+        }
         const result = await Swal.fire({
             title: 'Konfirmasi Tindakan',
             text: confirmText,
@@ -104,7 +116,7 @@ const AdminDashboard = () => {
             showCancelButton: true,
             confirmButtonColor: confirmColor,
             cancelButtonColor: '#6c757d',
-            confirmButtonText: actionType === 'approve' ? 'Ya, Setujui' : 'Ya, Tolak',
+            confirmButtonText: 'Ya, Proses',
             cancelButtonText: 'Batal'
         });
 
@@ -112,7 +124,7 @@ const AdminDashboard = () => {
             try {
                 await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
                     status: newStatus,
-                    catatan: `Pengajuan ${actionType === 'approve' ? 'disetujui' : 'ditolak'} oleh Kepala Unit.`,
+                    catatan: `Status diubah menjadi ${newStatus} oleh Admin Unit.`,
                     admin_id: userData.id
                 });
                 
@@ -124,7 +136,6 @@ const AdminDashboard = () => {
         }
     };
 
-    // ✨ FUNGSI BARU: viewDetail (Lihat Detail & Berkas) ✨
     const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
@@ -143,7 +154,7 @@ const AdminDashboard = () => {
                             </span>
                             <a href="${pathFile}" target="_blank" rel="noopener noreferrer" 
                                style="background-color: #0055cc; color: white; padding: 5px 12px; border-radius: 5px; text-decoration: none; font-size: 11px; font-weight: bold; transition: 0.2s;">
-                               📄 Lihat File
+                                📄 Lihat File
                             </a>
                         </div>
                     `;
@@ -189,13 +200,26 @@ const AdminDashboard = () => {
 
     if (!userData) return null;
 
-    const monitoringData = submissions.filter(s => s.status !== 'Selesai (Surat Dirilis)' && s.status !== 'Ditolak');
-    const archiveData = submissions.filter(s => s.status === 'Selesai (Surat Dirilis)');
+    const monitoringData = submissions.filter(s => 
+        s.status === 'Menunggu Verifikasi' || 
+        s.status === 'Ditinjau Unit' ||
+        s.status === 'Revisi'
+    );
+
+    const archiveData = submissions.filter(s => 
+        s.status === 'Disetujui Unit, Menunggu Verifikasi SDM' || 
+        s.status === 'Disetujui SDM, Menunggu Surat Pengantar Magang' ||
+        s.status === 'Selesai (Surat Dirilis)' ||
+        s.status === 'Dalam Masa Kegiatan' ||
+        s.status === 'Selesai Kegiatan' ||
+        s.status === 'Ditolak Unit' || 
+        s.status === 'Ditolak SDM'
+    );
+
     const displayData = activeMenu === 'monitoring' ? monitoringData : archiveData;
 
     return (
         <div style={styles.container}>
-            {/* SIDEBAR ADMIN UNIT */}
             <div style={styles.sidebar}>
                 <div style={styles.logoArea}>
                     <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>UNIT</span></h3>
@@ -217,9 +241,7 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* KONTEN UTAMA */}
             <div style={styles.main}>
-                
                 {activeMenu === 'profile' ? (
                     <div style={styles.profileContainer}>
                         <div style={styles.profileHeader}>
@@ -265,7 +287,7 @@ const AdminDashboard = () => {
                                 </div>
                                 
                                 <hr style={{margin: '15px 0', border: '0.5px solid #eee'}} />
-                                <p style={{fontSize: '12px', color: '#ff6600', fontWeight: 'bold', margin: 0}}>Ganti Password (Kosongkan jika tidak ingin mengubah)</p>
+                                <p style={{fontSize: '12px', color: '#ff6600', fontWeight: 'bold', margin: 0}}>Ganti Password</p>
                                 
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>Password Lama</label>
@@ -278,12 +300,11 @@ const AdminDashboard = () => {
                                 
                                 <div style={styles.btnArea}>
                                     <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
-                                    <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan Perubahan</button>
+                                    <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan</button>
                                 </div>
                             </form>
                         )}
                     </div>
-
                 ) : (
                     <>
                         <div style={styles.header}>
@@ -292,11 +313,7 @@ const AdminDashboard = () => {
                             </h2>
                             <div style={styles.searchBox}>
                                 <Search size={16} color="#888" />
-                                <input 
-                                    placeholder="Cari nama peserta..." 
-                                    style={styles.searchInput}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                                <input placeholder="Cari nama peserta..." style={styles.searchInput} onChange={(e) => setSearchTerm(e.target.value)} />
                             </div>
                         </div>
 
@@ -317,8 +334,8 @@ const AdminDashboard = () => {
                                         ) : (
                                             <>
                                                 <th style={styles.th}>Jenis</th>
-                                                <th style={styles.th}>Tanggal Mulai</th>
-                                                <th style={styles.th}>Tanggal Selesai</th>
+                                                <th style={styles.th}>Status Akhir</th>
+                                                <th style={styles.th}>Periode Magang</th>
                                             </>
                                         )}
                                     </tr>
@@ -334,59 +351,43 @@ const AdminDashboard = () => {
                                             {activeMenu === 'monitoring' ? (
                                                 <>
                                                     <td style={styles.td}>{s.nama_jenis}</td>
-                                                    <td style={styles.td}>
-                                                        <span style={styles.badge}>{s.status}</span>
-                                                    </td>
-                                                    {/* ✨ BAGIAN TOMBOL AKSI YANG BARU ✨ */}
+                                                    <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
                                                     <td style={{...styles.td, textAlign: 'center'}}>
                                                         <div style={{display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center'}}>
-                                                            
-                                                            <button 
-                                                                onClick={() => viewDetail(s.id)} 
-                                                                style={styles.btnDetail}
-                                                                title="Lihat Detail Form & Berkas"
-                                                            >
+                                                            <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}>
                                                                 <Eye size={14} style={{marginRight: '5px'}}/> Detail & Berkas
                                                             </button>
-
-                                                            {s.status === 'Ditinjau Unit' ? (
+                                                            {(s.status === 'Menunggu Verifikasi' || s.status === 'Ditinjau Unit') ? (
                                                                 <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                                                                    <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}>
-                                                                        <CheckCircle size={14}/> Setujui
-                                                                    </button>
-                                                                    <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}>
-                                                                        <XCircle size={14}/> Tolak
-                                                                    </button>
+                                                                    <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}><CheckCircle size={14}/> Setuju</button>
+                                                                    <button onClick={() => handleAction(s.id, 'revising')} style={{...styles.btnReject, backgroundColor: '#fff4e5', color: '#ff6600', borderColor: '#ff6600'}}><Edit3 size={14}/> Revisi</button>
+                                                                    <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}><XCircle size={14}/> Tolak</button>
                                                                 </div>
                                                             ) : (
-                                                                <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic', marginTop: '5px'}}>
-                                                                    {s.status === 'Disetujui Unit' ? 'Menunggu Rilis Pusat' : '-'}
-                                                                </span>
+                                                                <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>Diteruskan ke Pusat</span>
                                                             )}
-                                                            
                                                         </div>
                                                     </td>
                                                 </>
                                             ) : (
                                                 <>
                                                     <td style={styles.td}>{s.nama_jenis}</td>
-                                                    <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
-                                                    <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
+                                                    <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
+                                                    <td style={styles.td}>
+                                                        <div style={{fontSize: '12px', fontWeight: '500'}}>
+                                                            {new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}
+                                                        </div>
+                                                    </td> 
                                                 </>
                                             )}
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            {displayData.length === 0 && (
-                                <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>
-                                    Tidak ada data untuk ditampilkan.
-                                </div>
-                            )}
+                            {displayData.length === 0 && <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>Tidak ada data.</div>}
                         </div>
                     </>
                 )}
-
             </div>
         </div>
     );
@@ -394,11 +395,11 @@ const AdminDashboard = () => {
 
 const styles = {
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8', fontFamily: 'sans-serif' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', boxShadow: '2px 0 10px rgba(0,0,0,0.1)', position: 'fixed', top: 0, left: 0, height: '100vh', boxSizing: 'border-box', zIndex: 100 },
-    main: { flex: 1, padding: '40px', overflowY: 'auto', marginLeft: '260px', minHeight: '100vh', boxSizing: 'border-box' },
+    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    main: { flex: 1, padding: '40px', marginLeft: '260px', minHeight: '100vh' },
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
-    menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
+    menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px' },
     logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px', fontWeight: 'bold' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
     searchBox: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '8px 15px', borderRadius: '20px', border: '1px solid #ddd' },
@@ -408,25 +409,31 @@ const styles = {
     thRow: { backgroundColor: '#f8f9fa' },
     th: { textAlign: 'left', padding: '15px', fontSize: '12px', color: '#888', textTransform: 'uppercase' },
     td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px', verticalAlign: 'middle' },
-    badge: { padding: '4px 10px', backgroundColor: '#e0f0ff', color: '#0055cc', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' },
-    
-    // Tombol-tombol tabel
+    badge: (status) => {
+        let bg = '#e0f0ff'; let color = '#0055cc'; 
+        if (status?.includes('Ditolak')) { bg = '#fff0f0'; color = '#e74c3c'; }
+        else if (status === 'Selesai (Surat Dirilis)') { bg = '#e1f7e7'; color = '#27ae60'; }
+        else if (status === 'Dalam Masa Kegiatan') { bg = '#f39c12'; color = '#fff'; }
+        else if (status === 'Selesai Kegiatan') { bg = '#2c3e50'; color = '#fff'; }
+        else if (status === 'Revisi') { bg = '#fff4e5'; color = '#ff6600'; }
+        else if (status?.includes('SDM')) { bg = '#eef2f7'; color = '#34495e'; }
+        return { padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', backgroundColor: bg, color: color, display: 'inline-block' };
+    },
     btnApprove: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#e6ffe6', color: '#28a745', border: '1px solid #28a745', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
     btnReject: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#ffe6e6', color: '#dc3545', border: '1px solid #dc3545', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
     btnDetail: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #d0dfff', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', width: '100%' },
-
     profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
     profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
     avatarLarge: { width: '90px', height: '90px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
     roleBadge: { backgroundColor: '#fff4e5', color: '#d35400', padding: '4px 15px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' },
-    btnEditAvatar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' },
+    btnEditAvatar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
     infoGrid: { display: 'flex', flexDirection: 'column', gap: '15px' },
     infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' },
     label: { color: '#888', margin: 0, fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' },
     val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '14px' },
     form: { display: 'flex', flexDirection: 'column', gap: '12px' },
     inputGroup: { display: 'flex', flexDirection: 'column' },
-    input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px', backgroundColor: '#fcfcfc' },
+    input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px' },
     btnArea: { display: 'flex', gap: '10px', marginTop: '15px' },
     btnSave: { flex: 2, padding: '12px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
     btnCancel: { flex: 1, padding: '12px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }

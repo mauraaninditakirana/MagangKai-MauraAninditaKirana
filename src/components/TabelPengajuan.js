@@ -33,12 +33,17 @@ const TabelPengajuan = ({ userId }) => {
     };
 
     const getStatusStyle = (status) => {
+        if (status === 'Selesai (Surat Dirilis)') return { color: '#27ae60', icon: <CheckCircle size={16} />, bg: '#e1f7e7' };
+        if (status === 'Dalam Masa Kegiatan') return { color: '#f39c12', icon: <Clock size={16} />, bg: '#fff4e5' };
+        if (status === 'Selesai Kegiatan') return { color: '#2c3e50', icon: <CheckCircle size={16} />, bg: '#eef2f7' };
+        
+        // Logika aslimu yang lain tetap biarkan
         switch (status) {
-            case 'Selesai (Surat Dirilis)': return { color: '#27ae60', icon: <CheckCircle size={16} />, bg: '#e1f7e7' };
             case 'Disetujui Unit': return { color: '#0055cc', icon: <Clock size={16} />, bg: '#e0f0ff' };
             case 'Ditinjau Unit': return { color: '#ff6600', icon: <Clock size={16} />, bg: '#fff4e5' };
             case 'Revisi': return { color: '#e67e22', icon: <AlertCircle size={16} />, bg: '#fef5e7' };
-            case 'Ditolak': return { color: '#e74c3c', icon: <AlertCircle size={16} />, bg: '#f9ebea' };
+            case 'Ditolak Unit': 
+            case 'Ditolak SDM': return { color: '#e74c3c', icon: <AlertCircle size={16} />, bg: '#f9ebea' };
             default: return { color: '#7f8c8d', icon: <Clock size={16} />, bg: '#f8f9fa' };
         }
     };
@@ -87,7 +92,7 @@ const TabelPengajuan = ({ userId }) => {
                                             onClick={() => navigate(`/dashboard?revisi=${s.id}`, { 
                                                 state: { 
                                                     activeTab: 'pengajuan', 
-                                                    initialData: s // ✨ PAKAI 's' KARENA DI .map KAMU PAKAI (s)
+                                                    initialData: s //
                                                 } 
                                             })}
                                         >
@@ -95,16 +100,16 @@ const TabelPengajuan = ({ userId }) => {
                                         </button>
                                     </div>
                                 )}
-                                    {s.status === 'Selesai (Surat Dirilis)' && (
+                                    {['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan'].includes(s.status) && (
                                         <button 
-                                            onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download`, '_blank')}
+                                            onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-final`, '_blank')}
                                             style={styles.btnDownload}
                                         >
-                                            <Download size={14} /> Unduh Surat
+                                            <Download size={14} /> Unduh Surat Balasan
                                         </button>
                                     )}
 
-                                    {['Ditinjau Unit', 'Disetujui Unit', 'Menunggu Verifikasi'].includes(s.status) && (
+                                    {['Ditinjau Unit', 'Disetujui Unit, Menunggu Verifikasi SDM', 'Menunggu Verifikasi', 'Disetujui SDM, Menunggu Surat Pengantar Magang'].includes(s.status) && (
                                         <span style={styles.textWait}>Berkas sedang diproses</span>
                                     )}
 

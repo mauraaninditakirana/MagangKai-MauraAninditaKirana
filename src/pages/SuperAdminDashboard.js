@@ -10,10 +10,10 @@ import {
 const SuperAdminDashboard = () => {
     const navigate = useNavigate();
 
-    // ✨ 1. DEFINISIKAN USER DARI LOCALSTORAGE PALING ATAS ✨
+    
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
-    // ✨ 2. BARU DEFINISIKAN STATE (MENGGUNAKAN VARIABEL USER DI ATAS) ✨
+    
     const [stats, setStats] = useState({ active: 0, admins: 0, archive: 0 });
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard'); 
@@ -25,15 +25,17 @@ const SuperAdminDashboard = () => {
         nomor_induk: user.nomor_induk || '', 
         password_baru: ''
     });
-
-    // FUNGSI ASLI: TIDAK DISENTUH
     const fetchStats = async () => {
-        try {
-            const res = await axios.get('http://localhost:5000/api/admin-stats');
-            setStats(res.data);
-        } catch (err) { console.error("Gagal ambil stats:", err); }
-    };
-
+    try {
+        // Panggil endpoint statistik yang sudah kita sesuaikan di Backend tadi
+        const res = await axios.get('http://localhost:5000/api/admin-stats');
+        
+        // Data 'active' sekarang otomatis hanya menghitung status:
+        // 'Disetujui Unit, Menunggu Verifikasi SDM'
+        setStats(res.data);
+    } catch (err) { 
+        console.error("Gagal ambil stats:", err); 
+    }};
     // FUNGSI PROFIL
     const fetchProfile = async (id) => {
         try {

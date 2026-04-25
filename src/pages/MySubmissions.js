@@ -19,6 +19,9 @@ const MySubmissions = () => {
         window.scrollTo(0, 0);
     }, [navigate]);
 
+    const handleDownloadSurat = (id) => {
+        window.open(`http://localhost:5000/api/submissions/${id}/download-final`, '_blank');
+    };
     if (!userData) return null;
 
     return (
@@ -60,6 +63,7 @@ const MySubmissions = () => {
         </div>
     );
 };
+
 
 const styles = {
     // LAYOUT DASAR

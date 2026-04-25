@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, FileText, Search, LogOut, Eye, 
     RefreshCcw, Edit3, UserCog, Building2, Briefcase, 
-    ArrowRight, ChevronDown, User, FilePlus, UploadCloud 
+    ArrowRight, UploadCloud, CheckCircle
 } from 'lucide-react';
 
 const MonitoringPengajuan = () => {
@@ -40,17 +40,24 @@ const MonitoringPengajuan = () => {
     }, [navigate]); 
 
     const fetchData = async () => {
-        try {
-            const res = await axios.get('http://localhost:5000/api/submissions');
-            const activeSubmissions = (res.data || []).filter(s => 
-                s.status !== 'Selesai (Surat Dirilis)' && s.status !== 'Ditolak'
-            );
-            const sortedData = activeSubmissions.sort((a, b) => 
-                new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
-            );
-            setSubmissions(sortedData);
-        } catch (err) { console.error("Gagal mengambil data:", err); }
-    };
+    try {
+        const res = await axios.get('http://localhost:5000/api/submissions');
+        // 1. Filter: Super Admin HANYA melihat yang masih proses (bukan Selesai/Ditolak)
+        const activeSubmissions = (res.data || []).filter(s => 
+            s.status !== 'Selesai' && 
+            s.status !== 'Ditolak Unit' && 
+            s.status !== 'Ditolak SDM'
+        );
+        // 2. Sortir: Urutkan berdasarkan update terbaru
+        const sortedData = activeSubmissions.sort((a, b) => 
+            new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
+        );
+        // 3. Simpan ke State
+        setSubmissions(sortedData);
+        
+    } catch (err) { 
+        console.error("Gagal mengambil data monitoring:", err); 
+    }};
 
     const fetchUnits = async () => {
         try {
@@ -135,23 +142,36 @@ const MonitoringPengajuan = () => {
     };
 
     const handleAction = async (id, type) => {
-        const isRevisi = type === 'revisi';
-        const { value: catatan } = await Swal.fire({
-            title: isRevisi ? 'Berikan Catatan Revisi' : 'Teruskan ke Unit?',
-            input: 'textarea',
+       if (type === 'verify_sdm') {
+        const result = await Swal.fire({
+            title: 'Verifikasi SDM Pusat',
+            text: "Apakah Anda menyetujui pengajuan ini secara final?",
+            icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: isRevisi ? '#f39c12' : '#ff6600',
-            confirmButtonText: isRevisi ? 'Kirim Revisi' : 'Ya, Teruskan'
+            confirmButtonText: 'Setujui',
+            cancelButtonText: 'Tolak',
+            confirmButtonColor: '#27ae60',
+            cancelButtonColor: '#e74c3c'
         });
-        if (catatan !== undefined) {
-            await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
-                status: isRevisi ? 'Revisi' : 'Ditinjau Unit',
-                catatan: catatan || (isRevisi ? 'Berkas kurang lengkap' : 'Diteruskan oleh Pusat'),
-                admin_id: user.id
+
+        if (result.isConfirmed) {
+            // Jika Setuju
+            await axios.put(`http://localhost:5000/api/submissions/${id}/release`, { 
+                action: 'setuju', 
+                admin_id: user.id 
             });
-            Swal.fire('Berhasil!', 'Status diperbarui', 'success');
-            fetchData();
+            Swal.fire('Berhasil!', 'Verifikasi SDM Berhasil. Sekarang Anda bisa merilis surat.', 'success');
+        } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+            // Jika Tolak
+            await axios.put(`http://localhost:5000/api/submissions/${id}/release`, { 
+                action: 'tolak', 
+                admin_id: user.id 
+            });
+            Swal.fire('Ditolak', 'Pengajuan telah ditolak oleh SDM Pusat.', 'error');
         }
+        fetchData();
+        return;
+    }
     };
 
 
@@ -287,17 +307,25 @@ const MonitoringPengajuan = () => {
                                         <td style={styles.td}>
                                             <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
                                                 
-                                                {/* AKSI JIKA MASIH MENUNGGU VERIFIKASI */}
-                                                {s.status === 'Menunggu Verifikasi' && (
+                                                {/* 1. STATUS AWAL: Pusat meneruskan ke Unit */}
+                                                {s.status === 'Menunggu Konfirmasi' && (
                                                     <>
                                                         <button onClick={() => handleAction(s.id, 'forward')} style={styles.btnForward} title="Teruskan ke Unit"><ArrowRight size={16}/></button>
                                                         <button onClick={() => handleAction(s.id, 'revisi')} style={styles.btnRevisi} title="Minta Revisi"><Edit3 size={16}/></button>
                                                     </>
                                                 )}
 
-                                                {s.status === 'Disetujui Unit' && (
+                                                {/* 2. STATUS SETELAH UNIT: Pusat melakukan Verifikasi SDM */}
+                                                {s.status === 'Disetujui Unit, Menunggu Verifikasi SDM' && (
+                                                    <button onClick={() => handleAction(s.id, 'verify_sdm')} style={{...styles.btnRelease, backgroundColor: '#003399', color: '#fff', border:'none'}}>
+                                                        <CheckCircle size={14} style={{marginRight: '5px'}}/> Verifikasi SDM
+                                                    </button>
+                                                )}
+
+                                                {/* 3. STATUS AKHIR: Tombol Upload Surat baru muncul di sini */}
+                                                {s.status === 'Disetujui SDM, Menunggu Surat Pengantar Magang' && (
                                                     <button onClick={() => handleUploadFinal(s.id)} style={styles.btnRelease}>
-                                                        <UploadCloud size={14} style={{marginRight: '5px'}}/> Rilis Surat
+                                                        <UploadCloud size={14} style={{marginRight: '5px'}}/> Upload & Rilis Surat
                                                     </button>
                                                 )}
 

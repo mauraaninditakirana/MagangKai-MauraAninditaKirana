@@ -92,33 +92,43 @@ const Dashboard = () => {
         }
     };
 
-    // FUNGSI ASLI: TIDAK DISENTUH
+    // FUNGSI ASLI: UPDATE STATUS BARU
     const checkUserStatus = async (userId) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/submissions?user_id=${userId}`);
-            const submissions = res.data || [];
-            
-            const active = submissions.find(s => {
-                if (s.status === 'Menunggu Verifikasi' || s.status === 'Ditinjau Unit' || s.status === 'Disetujui Unit') {
-                    return true;
-                }
-                if (s.status === 'Selesai (Surat Dirilis)') {
+    try {
+        const res = await axios.get(`http://localhost:5000/api/submissions?user_id=${userId}`);
+        const submissions = res.data || [];
+        
+        const active = submissions.find(s => {
+            const statusAktif = [
+                'Menunggu Verifikasi', 
+                'Ditinjau Unit', 
+                'Disetujui Unit, Menunggu Verifikasi SDM', 
+                'Disetujui SDM, Menunggu Surat Pengantar Magang',
+                'Selesai (Surat Dirilis)',
+                'Dalam Masa Kegiatan',
+                'Revisi'
+            ];
+
+            if (statusAktif.includes(s.status)) {
+                // Khusus untuk yang sudah rilis surat atau sedang kegiatan, 
+                // cek apakah tanggal selesainya sudah lewat atau belum
+                if (['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan'].includes(s.status)) {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0); 
                     const endDate = new Date(s.tanggal_selesai);
-                    if (endDate >= today) {
-                        return true;
-                    }
+                    return endDate >= today; // Jika belum selesai, maka masih dianggap aktif
                 }
-                return false;
-            });
+                return true; // Status lainnya (Verifikasi/Ditinjau) otomatis dianggap aktif
+            }
+            return false;
+        });
 
-            setActiveSubmission(active);
-        } catch (error) {
-            console.error("Gagal mengecek status:", error);
-        } finally {
-            setIsLoading(false);
-        }
+        setActiveSubmission(active);
+    } catch (error) {
+        console.error("Gagal mengecek status:", error);
+    } finally {
+        setIsLoading(false);
+    }
     };
 
     if (!userData) return null;
