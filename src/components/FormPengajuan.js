@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useLocation } from 'react-router-dom'; 
-import { Send, FileUp, ClipboardList, Edit3 } from 'lucide-react'; 
+import { Send, FileUp, ClipboardList, Edit3, CheckCircle } from 'lucide-react'; 
 
 const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     const location = useLocation();
@@ -22,15 +22,16 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         tanggal_selesai: ''
     });
     const [files, setFiles] = useState([]);
+    
+    // State untuk mendeteksi apakah ini upload berkas final
+    const [isUploadFinal, setIsUploadFinal] = useState(false);
 
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                // 1. Ambil Data Unit
                 const unitRes = await axios.get(`http://localhost:5000/api/units?_t=${Date.now()}`);
                 setUnits(unitRes.data);
 
-                // 2. Set Jenis Pengajuan
                 setSubmissionTypes([
                     { id: 1, nama: 'Magang / Kerja Praktek' },
                     { id: 2, nama: 'PKL (Praktek Kerja Lapangan)' },
@@ -38,16 +39,19 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     { id: 4, nama: 'Tugas Akhir / Skripsi' }
                 ]);
 
-                // 3. Ambil Data Profil User dari Database
                 let userInstansi = '';
                 if (userId) {
                     const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
                     userInstansi = userRes.data.asal_instansi || '';
                 }
 
-                // 4. Set isi Form
                 if (revisiId) {
                     if (initialData) {
+                        // Deteksi mode Upload Final
+                        if (initialData.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') {
+                            setIsUploadFinal(true);
+                        }
+
                         setFormData({
                             submission_type_id: initialData.submission_type_id || '',
                             unit_id: initialData.unit_id || '',
@@ -61,6 +65,11 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     } else {
                         const resLama = await axios.get(`http://localhost:5000/api/submissions/${revisiId}`);
                         const dataLama = resLama.data;
+                        
+                        if (dataLama.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') {
+                            setIsUploadFinal(true);
+                        }
+
                         setFormData({
                             submission_type_id: dataLama.submission_type_id || '',
                             unit_id: dataLama.unit_id || '',
@@ -73,7 +82,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                         });
                     }
                 } else {
-                    // CEK DRAFT (Silently Restored)
                     const savedDraft = localStorage.getItem('draft_form_magang');
                     if (savedDraft) {
                         const parsedDraft = JSON.parse(savedDraft);
@@ -97,7 +105,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         fetchInitialData();
     }, [revisiId, initialData, userId]); 
 
-    // ✨ Simpan ke Draft tanpa pemberitahuan di UI
     const handleChange = (e) => {
         const updatedData = { ...formData, [e.target.name]: e.target.value };
         setFormData(updatedData);
@@ -118,11 +125,16 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
             return Swal.fire('Perhatian', 'Mohon pilih Keperluan dan Unit Tujuan', 'warning');
         }
 
+        // Kalau Upload Final, wajib upload minimal 1 file.
+        if (isUploadFinal && files.length === 0) {
+            return Swal.fire('Perhatian', 'Wajib melampirkan berkas akhir sebelum mengirim.', 'warning');
+        }
+
         const selectedUnit = units.find(u => u.id.toString() === formData.unit_id.toString());
         if (selectedUnit && formData.jumlah_anggota > selectedUnit.kuota) {
             return Swal.fire(
                 'Kuota Tidak Cukup!', 
-                `Maaf, sisa kuota di ${selectedUnit.nama_unit} hanya tinggal ${selectedUnit.kuota} orang. Mohon kurangi anggota atau pilih unit lain.`, 
+                `Maaf, sisa kuota di ${selectedUnit.nama_unit} hanya tinggal ${selectedUnit.kuota} orang.`, 
                 'error'
             );
         }
@@ -137,9 +149,11 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
 
         try {
             if (revisiId) {
-                data.append('catatan', 'Mahasiswa telah melakukan perbaikan data/dokumen.');
+                const pesanLog = isUploadFinal ? 'User mengirimkan berkas final setelah wawancara.' : 'Mahasiswa telah melakukan perbaikan data/dokumen.';
+                data.append('catatan', pesanLog);
                 await axios.put(`http://localhost:5000/api/submissions/${revisiId}/revisi`, data);
-                Swal.fire('Berhasil!', 'Perbaikan data Anda telah terkirim.', 'success');
+                
+                Swal.fire('Berhasil!', isUploadFinal ? 'Berkas Final berhasil dikirim ke Admin Unit.' : 'Perbaikan data Anda telah terkirim.', 'success');
             } else {
                 await axios.post('http://localhost:5000/api/submissions', data);
                 Swal.fire('Berhasil!', 'Pengajuan Anda telah berhasil dikirim.', 'success');
@@ -154,17 +168,23 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     return (
         <div style={styles.card}>
             <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
-                {revisiId ? <Edit3 color="#ff6600" /> : <ClipboardList color="#003399" />}
-                <h3 style={{color: revisiId ? '#ff6600' : '#003399', margin: 0}}>
-                    {revisiId ? 'Form Perbaikan Data (Revisi)' : 'Form Pengajuan Baru'}
+                {isUploadFinal ? <CheckCircle color="#27ae60" size={28}/> : (revisiId ? <Edit3 color="#ff6600" /> : <ClipboardList color="#003399" />)}
+                <h3 style={{color: isUploadFinal ? '#27ae60' : (revisiId ? '#ff6600' : '#003399'), margin: 0}}>
+                    {isUploadFinal ? 'Unggah Berkas Akhir (Pasca Wawancara)' : (revisiId ? 'Form Perbaikan Data (Revisi)' : 'Form Pengajuan Baru')}
                 </h3>
             </div>
+            
+            {isUploadFinal && (
+                <div style={{backgroundColor: '#e1f7e7', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', color: '#1e8449'}}>
+                    <strong>Selamat!</strong> Anda telah menyelesaikan tahap wawancara. Silakan pastikan data di bawah ini sudah benar (Fix) dan unggah dokumen akhir yang diperlukan sebelum dikirim ke SDM Pusat.
+                </div>
+            )}
             
             <form onSubmit={handleSubmit} style={styles.form}>
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Jenis Keperluan</label>
-                        <select name="submission_type_id" value={formData.submission_type_id} onChange={handleChange} style={styles.input} required>
+                        <select name="submission_type_id" value={formData.submission_type_id} onChange={handleChange} style={styles.input} required disabled={isUploadFinal}>
                             <option value="">-- Pilih Keperluan --</option>
                             {submissionTypes.map(type => (
                                 <option key={type.id} value={type.id}>{type.nama}</option>
@@ -174,7 +194,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
 
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Unit Tujuan</label>
-                        <select name="unit_id" value={formData.unit_id} onChange={handleChange} style={styles.input} required>
+                        <select name="unit_id" value={formData.unit_id} onChange={handleChange} style={styles.input} required disabled={isUploadFinal}>
                             <option value="">-- Pilih Unit --</option>
                             {units.map(u => (
                                 <option key={u.id} value={u.id} disabled={u.kuota <= 0}>
@@ -188,7 +208,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Kategori Pendaftar</label>
-                        <select name="kategori_pendaftar" value={formData.kategori_pendaftar} onChange={handleChange} style={styles.input}>
+                        <select name="kategori_pendaftar" value={formData.kategori_pendaftar} onChange={handleChange} style={styles.input} disabled={isUploadFinal}>
                             <option value="Individu">Individu</option>
                             <option value="Kelompok">Kelompok</option>
                         </select>
@@ -196,7 +216,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     {formData.kategori_pendaftar === 'Kelompok' && (
                         <div style={styles.inputBox}>
                             <label style={styles.label}>Jumlah Anggota (Termasuk Anda)</label>
-                            <input type="number" name="jumlah_anggota" value={formData.jumlah_anggota} min="2" onChange={handleChange} style={styles.input} required />
+                            <input type="number" name="jumlah_anggota" value={formData.jumlah_anggota} min="2" onChange={handleChange} style={styles.input} required disabled={isUploadFinal} />
                         </div>
                     )}
                 </div>
@@ -209,7 +229,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                         style={{...styles.input, backgroundColor: '#eee', color: '#666', cursor: 'not-allowed'}} 
                         readOnly 
                     />
-                    <small style={{color: '#ff6600', marginTop: '-5px'}}>*Data ini dikunci sesuai dengan pendaftaran profil Anda.</small>
                 </div>
 
                 <div style={styles.inputBox}>
@@ -236,20 +255,23 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                 </div>
 
                 <div style={styles.inputBox}>
-                    <label style={styles.label}>Upload Dokumen Pendukung (Proposal/KTP/Surat Pengantar)</label>
+                    <label style={styles.label}>Upload Dokumen Pendukung</label>
                     <div style={styles.fileContainer}>
                         <FileUp size={20} color="#666" />
-                        <input type="file" multiple onChange={handleFileChange} style={{border: 'none', width: '100%'}} required={!revisiId} />
+                        <input type="file" multiple onChange={handleFileChange} style={{border: 'none', width: '100%'}} required={!revisiId || isUploadFinal} />
                     </div>
                     <p style={{fontSize: '11px', color: '#888', marginTop: '5px'}}>
-                        {revisiId 
-                            ? '*Biarkan kosong jika tidak ada dokumen yang perlu diperbaiki/diubah.' 
-                            : '*Anda dapat memilih lebih dari 1 file sekaligus.'}
+                        {isUploadFinal 
+                            ? '*Wajib mengunggah berkas/dokumen fix sebelum diajukan ke Pusat.'
+                            : (revisiId ? '*Biarkan kosong jika tidak ada dokumen yang perlu diubah.' : '*Anda dapat memilih lebih dari 1 file.')
+                        }
                     </p>
                 </div>
 
-                <button type="submit" style={{...styles.btnSubmit, backgroundColor: revisiId ? '#ff6600' : '#003399'}}>
-                    {revisiId ? (
+                <button type="submit" style={{...styles.btnSubmit, backgroundColor: isUploadFinal ? '#27ae60' : (revisiId ? '#ff6600' : '#003399')}}>
+                    {isUploadFinal ? (
+                        <><Send size={18} style={{marginRight: '8px'}} /> Kirim Berkas Final</>
+                    ) : revisiId ? (
                         <><Edit3 size={18} style={{marginRight: '8px'}} /> Kirim Perbaikan Data</>
                     ) : (
                         <><Send size={18} style={{marginRight: '8px'}} /> Kirim Pengajuan Ke KAI</>

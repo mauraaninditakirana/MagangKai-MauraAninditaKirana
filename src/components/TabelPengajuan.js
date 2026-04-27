@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Download, Clock, CheckCircle, AlertCircle, Edit3 } from 'lucide-react';
+import { Download, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 
-const TabelPengajuan = ({ userId }) => {
+const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
     const navigate = useNavigate();
     const [data, setData] = useState([]);
 
@@ -25,25 +25,34 @@ const TabelPengajuan = ({ userId }) => {
 
     const showCatatan = (catatan) => {
         Swal.fire({
-            title: 'Catatan Revisi',
-            text: catatan || 'Silakan cek kembali berkas Anda.',
+            title: 'Catatan Sistem',
+            text: catatan || 'Silakan cek kembali berkas atau jadwal Anda.',
             icon: 'info',
-            confirmButtonColor: '#ff6600'
+            confirmButtonColor: '#003399'
         });
     };
 
     const getStatusStyle = (status) => {
+        // Status Akhir & Masa Kegiatan
         if (status === 'Selesai (Surat Dirilis)') return { color: '#27ae60', icon: <CheckCircle size={16} />, bg: '#e1f7e7' };
         if (status === 'Dalam Masa Kegiatan') return { color: '#f39c12', icon: <Clock size={16} />, bg: '#fff4e5' };
         if (status === 'Selesai Kegiatan') return { color: '#2c3e50', icon: <CheckCircle size={16} />, bg: '#eef2f7' };
         
-        // Logika aslimu yang lain tetap biarkan
+        // Status Alur Wawancara & Berkas Akhir
+        if (status === 'Atur Jadwal Wawancara') return { color: '#003399', icon: <Calendar size={16} />, bg: '#f0f4ff' };
+        if (status === 'Jadwal Wawancara Diajukan') return { color: '#8e44ad', icon: <Clock size={16} />, bg: '#f5eeff' };
+        if (status === 'Wawancara Disetujui') return { color: '#27ae60', icon: <CheckCircle size={16} />, bg: '#e1f7e7' };
+        if (status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') return { color: '#0055cc', icon: <AlertCircle size={16} />, bg: '#e0f0ff' };
+        if (status === 'Berkas Akhir Terkirim') return { color: '#d35400', icon: <Clock size={16} />, bg: '#fef5e7' };
+        
+        // Status SDM Pusat & Unit
+        if (status?.includes('Pusat') || status?.includes('SDM')) return { color: '#34495e', icon: <Clock size={16} />, bg: '#eef2f7' };
+
         switch (status) {
-            case 'Disetujui Unit': return { color: '#0055cc', icon: <Clock size={16} />, bg: '#e0f0ff' };
             case 'Ditinjau Unit': return { color: '#ff6600', icon: <Clock size={16} />, bg: '#fff4e5' };
             case 'Revisi': return { color: '#e67e22', icon: <AlertCircle size={16} />, bg: '#fef5e7' };
             case 'Ditolak Unit': 
-            case 'Ditolak SDM': return { color: '#e74c3c', icon: <AlertCircle size={16} />, bg: '#f9ebea' };
+            case 'Ditolak': return { color: '#e74c3c', icon: <AlertCircle size={16} />, bg: '#f9ebea' };
             default: return { color: '#7f8c8d', icon: <Clock size={16} />, bg: '#f8f9fa' };
         }
     };
@@ -74,47 +83,67 @@ const TabelPengajuan = ({ userId }) => {
                                     }}>
                                         {style.icon} {s.status}
                                     </div>
+                                    {s.jadwal_wawancara && (
+                                        <div style={{fontSize: '10px', color: '#666', marginTop: '6px'}}>
+                                            📅 Jadwal: {new Date(s.jadwal_wawancara).toLocaleString('id-ID')}
+                                        </div>
+                                    )}
                                 </td>
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                     
-                                    {/* TOMBOL REVISI  */}
-                                    {s.status === 'Revisi' && (
-                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                    {/* 1. TOMBOL ATUR JADWAL */}
+                                    {s.status === 'Atur Jadwal Wawancara' && (
                                         <button 
-                                            onClick={() => showCatatan(s.catatan)}
-                                            style={styles.btnInfo}
-                                            title="Lihat alasan revisi"
+                                            onClick={() => onAjukanJadwal(s.id)} 
+                                            style={{ ...styles.btnDownload, backgroundColor: '#003399', color: '#fff' }}
                                         >
-                                            Lihat Catatan
+                                            📅 Pilih Jadwal Wawancara
                                         </button>
+                                    )}
+
+                                    {/* 2. TOMBOL DOWNLOAD SURAT UNIT (REKOMENDASI) */}
+                                    {['Disetujui Unit, Menunggu Verifikasi SDM', 'Disetujui SDM, Menunggu Surat Pengantar Magang', 'Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
                                         <button 
-                                            style={styles.btnRevisi} 
-                                            onClick={() => navigate(`/dashboard?revisi=${s.id}`, { 
-                                                state: { 
-                                                    activeTab: 'pengajuan', 
-                                                    initialData: s //
-                                                } 
-                                            })}
+                                            onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-unit`, '_blank')}
+                                            style={{ ...styles.btnDownload, backgroundColor: '#fff', color: '#003399', border: '1px solid #003399', marginRight: '5px', marginBottom: '5px' }}
                                         >
-                                            Perbaiki Data
+                                            📄 Surat Unit
                                         </button>
-                                    </div>
-                                )}
+                                    )}
+
+                                    {/* 3. TOMBOL DOWNLOAD SURAT PUSAT (FINAL) */}
                                     {['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan'].includes(s.status) && (
                                         <button 
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-final`, '_blank')}
-                                            style={styles.btnDownload}
+                                            style={{...styles.btnDownload, marginBottom: '5px'}}
                                         >
-                                            <Download size={14} /> Unduh Surat Balasan
+                                            <Download size={14} /> Surat KAI Pusat
                                         </button>
                                     )}
 
-                                    {['Ditinjau Unit', 'Disetujui Unit, Menunggu Verifikasi SDM', 'Menunggu Verifikasi', 'Disetujui SDM, Menunggu Surat Pengantar Magang'].includes(s.status) && (
-                                        <span style={styles.textWait}>Berkas sedang diproses</span>
+                                    {/* ✨ 4. TOMBOL REVISI ATAU LENGKAPI BERKAS FINAL ✨ */}
+                                    {(s.status === 'Revisi' || s.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') && (
+                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                            <button onClick={() => showCatatan(s.catatan)} style={styles.btnInfo}>Cek Catatan</button>
+                                            <button 
+                                                style={{...styles.btnRevisi, backgroundColor: s.status === 'Revisi' ? '#ff6600' : '#27ae60'}} 
+                                                onClick={() => navigate(`/dashboard?revisi=${s.id}`, { 
+                                                    state: { activeTab: 'pengajuan', initialData: s } 
+                                                })}
+                                            >
+                                                {s.status === 'Revisi' ? 'Perbaiki Data' : 'Lengkapi Berkas'}
+                                            </button>
+                                        </div>
                                     )}
 
-                                    {s.status === 'Ditolak' && (
-                                        <button onClick={() => showCatatan(s.catatan)} style={{...styles.btnInfo, color: '#e74c3c'}}>Lihat Alasan</button>
+                                    {/* 5. TEXT MENUNGGU PROSES */}
+                                    {['Menunggu Verifikasi', 'Ditinjau Unit', 'Jadwal Wawancara Diajukan', 'Wawancara Disetujui', 'Berkas Akhir Terkirim', 'Berkas Disetujui Unit', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
+                                        <div style={styles.textWait}>Sedang diproses internal...</div>
+                                    )}
+
+                                    {/* 6. TOMBOL DITOLAK */}
+                                    {s.status.includes('Ditolak') && (
+                                        <button onClick={() => showCatatan(s.catatan)} style={{...styles.btnInfo, color: '#e74c3c'}}>Lihat Alasan Ditolak</button>
                                     )}
                                 </td>
                             </tr>
@@ -135,22 +164,9 @@ const styles = {
     th: { textAlign: 'left', padding: '15px 12px', color: '#888', fontSize: '12px', textTransform: 'uppercase' },
     td: { padding: '20px 12px', borderBottom: '1px solid #f9f9f9', fontSize: '14px' },
     btnDownload: { display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' },
-    btnEdit: { display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' },
     btnInfo: { backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #d0dfff', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
     textWait: { color: '#bbb', fontStyle: 'italic', fontSize: '12px' },
-    btnRevisi: { 
-    backgroundColor: '#ff6600', 
-    color: '#fff', 
-    border: 'none', 
-    padding: '8px 12px', 
-    borderRadius: '8px', 
-    cursor: 'pointer', 
-    fontSize: '11px', 
-    fontWeight: 'bold',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px'
-}
+    btnRevisi: { color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }
 };
 
 export default TabelPengajuan;

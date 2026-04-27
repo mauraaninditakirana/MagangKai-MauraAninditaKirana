@@ -10,33 +10,33 @@ import {
 const SuperAdminDashboard = () => {
     const navigate = useNavigate();
 
-    
-    const user = JSON.parse(localStorage.getItem('user')) || {};
-
-    
     const [stats, setStats] = useState({ active: 0, admins: 0, archive: 0 });
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard'); 
     const [isEditing, setIsEditing] = useState(false);
-    const [userData, setUserData] = useState(user);
+    
+    const [userData, setUserData] = useState(() => {
+        const saved = localStorage.getItem('user');
+        return saved ? JSON.parse(saved) : {};
+    });
+
     const [formData, setFormData] = useState({
-        nama_lengkap: user.nama_lengkap || '', 
-        email: user.email || '', 
-        nomor_induk: user.nomor_induk || '', 
+        nama_lengkap: userData.nama_lengkap || '', 
+        email: userData.email || '', 
+        nomor_induk: userData.nomor_induk || '', 
         password_baru: ''
     });
+
     const fetchStats = async () => {
-    try {
-        // Panggil endpoint statistik yang sudah kita sesuaikan di Backend tadi
-        const res = await axios.get('http://localhost:5000/api/admin-stats');
-        
-        // Data 'active' sekarang otomatis hanya menghitung status:
-        // 'Disetujui Unit, Menunggu Verifikasi SDM'
-        setStats(res.data);
-    } catch (err) { 
-        console.error("Gagal ambil stats:", err); 
-    }};
-    // FUNGSI PROFIL
+        try {
+            // Panggil endpoint statistik yang sudah disesuaikan di Backend
+            const res = await axios.get('http://localhost:5000/api/admin-stats');
+            setStats(res.data);
+        } catch (err) { 
+            console.error("Gagal ambil stats:", err); 
+        }
+    };
+
     const fetchProfile = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/users/${id}`);
@@ -65,7 +65,6 @@ const SuperAdminDashboard = () => {
         }
     };
 
-    // EFFECT UNTUK VALIDASI ROLE & STATS
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
@@ -73,7 +72,9 @@ const SuperAdminDashboard = () => {
             return;
         }
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser.role !== 'Super Admin' && parsedUser.role !== 'admin' && parsedUser.role !== 'super admin') { 
+        const role = (parsedUser.role || '').toLowerCase();
+        
+        if (role !== 'super admin' && role !== 'admin') { 
             navigate('/'); 
             return; 
         }
@@ -121,7 +122,6 @@ const SuperAdminDashboard = () => {
                 {/* HEADER ATAS */}
                 <div style={styles.topHeader}>
                     <div style={styles.profileTrigger} onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                        {/* ✨ AVATAR DENGAN INISIAL ✨ */}
                         <div style={styles.avatar}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
                         <div style={styles.profileInfoText}>
                             <span style={styles.profileName}>{userData.nama_lengkap}</span>
@@ -284,7 +284,7 @@ const styles = {
     profileName: { fontSize: '14px', fontWeight: 'bold', color: '#333' },
     profileRole: { fontSize: '11px', color: '#888', textTransform: 'capitalize' },
     dropdownBox: { position: 'absolute', top: '50px', right: 0, width: '160px', backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #eee', overflow: 'hidden' },
-    dropdownItem: { padding: '12px 15px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', color: '#444', transition: '0.2s', '&:hover': { backgroundColor: '#f8f9fa' } },
+    dropdownItem: { padding: '12px 15px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', color: '#444', transition: '0.2s', cursor: 'pointer', '&:hover': { backgroundColor: '#f8f9fa' } },
     contentScroll: { padding: '40px', flex: 1 },
     welcomeSection: { marginBottom: '20px' },
     statsGrid: { display: 'flex', gap: '20px', marginTop: '30px' },

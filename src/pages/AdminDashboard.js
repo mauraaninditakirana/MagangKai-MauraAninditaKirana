@@ -92,46 +92,61 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleAction = async (id, actionType) => {
-        let newStatus = '';
-        let confirmText = '';
-        let confirmColor = '';
-        if (actionType === 'approve') {
-            newStatus = 'Disetujui Unit, Menunggu Verifikasi SDM';
-            confirmText = 'Setujui pengajuan ini dan teruskan ke SDM Pusat?';
-            confirmColor = '#28a745';
-        } else if (actionType === 'reject') {
-            newStatus = 'Ditolak Unit';
-            confirmText = 'Anda yakin ingin menolak pengajuan ini?';
-            confirmColor = '#dc3545';
-        } else if (actionType === 'revising') {
-            newStatus = 'Revisi';
-            confirmText = 'Minta mahasiswa untuk memperbaiki dokumen/data?';
-            confirmColor = '#ff6600';
-        }
+    // ✨ FUNGSI UPDATE STATUS BARU DENGAN DROPDOWN ✨
+    const handleUpdateStatus = async (id, newStatus) => {
+        let confirmText = `Ubah status menjadi: ${newStatus}?`;
+        let confirmColor = '#0055cc';
+
+        if (newStatus === 'Atur Jadwal Wawancara') confirmText = 'Terima berkas awal dan minta mahasiswa atur jadwal wawancara?';
+        if (newStatus === 'Wawancara Disetujui') confirmText = 'Setujui jadwal wawancara ini?';
+        if (newStatus === 'Selesai Wawancara (Lengkapi Berkas Akhir)') confirmText = 'Wawancara selesai? Mahasiswa akan diminta upload berkas final.';
+
         const result = await Swal.fire({
-            title: 'Konfirmasi Tindakan',
+            title: 'Konfirmasi Aksi',
             text: confirmText,
-            icon: 'warning',
+            icon: 'question',
             showCancelButton: true,
             confirmButtonColor: confirmColor,
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Proses',
-            cancelButtonText: 'Batal'
+            confirmButtonText: 'Ya, Proses'
         });
 
         if (result.isConfirmed) {
             try {
                 await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
                     status: newStatus,
-                    catatan: `Status diubah menjadi ${newStatus} oleh Admin Unit.`,
+                    catatan: `Status diperbarui oleh Admin Unit: ${newStatus}`,
                     admin_id: userData.id
                 });
-                
-                Swal.fire('Berhasil!', `Status telah diubah menjadi ${newStatus}.`, 'success');
-                fetchData(userData.unit_id); 
+                Swal.fire('Berhasil!', 'Status pengajuan telah diperbarui.', 'success');
+                fetchData(userData.unit_id);
             } catch (err) {
-                Swal.fire('Gagal', 'Terjadi kesalahan saat memproses status.', 'error');
+                Swal.fire('Gagal', 'Gagal memperbarui status.', 'error');
+            }
+        }
+    };
+
+    // Fungsi Tolak & Revisi tetap menggunakan modal karena butuh catatan manual
+    const handleRejection = async (id, type) => {
+        const { value: text } = await Swal.fire({
+            title: type === 'revisi' ? 'Berikan Catatan Revisi' : 'Alasan Penolakan',
+            input: 'textarea',
+            inputPlaceholder: 'Tuliskan detail di sini...',
+            showCancelButton: true,
+            confirmButtonColor: type === 'revisi' ? '#ff6600' : '#d33'
+        });
+
+        if (text) {
+            try {
+                const status = type === 'revisi' ? 'Revisi' : 'Ditolak Unit';
+                await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
+                    status: status,
+                    catatan: text,
+                    admin_id: userData.id
+                });
+                Swal.fire('Berhasil', 'Status diperbarui.', 'success');
+                fetchData(userData.unit_id);
+            } catch (err) {
+                Swal.fire('Error', 'Gagal memproses.', 'error');
             }
         }
     };
@@ -164,19 +179,13 @@ const AdminDashboard = () => {
             }
 
             let htmlContent = `
-                <div style="text-align:left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
+                <div style="text-align:left; font-family: sans-serif; color: #333;">
                     <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
                         <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">👤 Profil Mahasiswa</h4>
                         <p style="margin: 5px 0;"><b>Nama:</b> ${s.nama_lengkap}</p>
                         <p style="margin: 5px 0;"><b>Instansi:</b> ${s.asal_instansi || '-'}</p>
+                        ${s.jadwal_wawancara ? `<p style="margin: 5px 0; color: #ff6600;"><b>Jadwal Wawancara:</b> ${new Date(s.jadwal_wawancara).toLocaleString('id-ID')}</p>` : ''}
                     </div>
-
-                    <div style="padding: 0 10px 20px 10px;">
-                        <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">📋 Rencana Kegiatan</h4>
-                        <p style="margin: 5px 0;"><b>Judul:</b> ${s.judul_atau_tujuan}</p>
-                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
-                    </div>
-                    
                     <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
                         <h4 style="margin-top:0; color: #003399; font-size: 15px; margin-bottom: 15px;">📂 Berkas Lampiran</h4>
                         ${berkasHtml}
@@ -185,12 +194,11 @@ const AdminDashboard = () => {
             `;
 
             Swal.fire({
-                title: 'Detail Pengajuan Magang',
+                title: 'Detail Pengajuan',
                 html: htmlContent,
                 width: '600px',
                 confirmButtonText: 'Tutup',
-                confirmButtonColor: '#666',
-                showCloseButton: true
+                confirmButtonColor: '#666'
             });
 
         } catch (err) {
@@ -200,20 +208,13 @@ const AdminDashboard = () => {
 
     if (!userData) return null;
 
+    // ✨ FILTER MONITORING: Fokus pada alur internal Unit ✨
     const monitoringData = submissions.filter(s => 
-        s.status === 'Menunggu Verifikasi' || 
-        s.status === 'Ditinjau Unit' ||
-        s.status === 'Revisi'
+        ['Menunggu Verifikasi', 'Atur Jadwal Wawancara', 'Jadwal Wawancara Diajukan', 'Wawancara Disetujui', 'Selesai Wawancara (Lengkapi Berkas Akhir)', 'Berkas Akhir Terkirim', 'Revisi'].includes(s.status)
     );
 
     const archiveData = submissions.filter(s => 
-        s.status === 'Disetujui Unit, Menunggu Verifikasi SDM' || 
-        s.status === 'Disetujui SDM, Menunggu Surat Pengantar Magang' ||
-        s.status === 'Selesai (Surat Dirilis)' ||
-        s.status === 'Dalam Masa Kegiatan' ||
-        s.status === 'Selesai Kegiatan' ||
-        s.status === 'Ditolak Unit' || 
-        s.status === 'Ditolak SDM'
+        ['Berkas Disetujui Unit', 'Disetujui Unit, Menunggu Verifikasi SDM', 'Menunggu Verifikasi SDM', 'Selesai (Surat Dirilis)', 'Ditolak Unit', 'Ditolak SDM'].includes(s.status)
     );
 
     const displayData = activeMenu === 'monitoring' ? monitoringData : archiveData;
@@ -248,27 +249,21 @@ const AdminDashboard = () => {
                             <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0)}</div>
                             <h2 style={{margin: '10px 0 5px 0', color: '#003399'}}>{userData.nama_lengkap}</h2>
                             <span style={styles.roleBadge}>Admin Unit</span>
-                            
                             {!isEditing && (
                                 <button style={styles.btnEditAvatar} onClick={() => setIsEditing(true)}>
-                                    <Edit3 size={14} /> Edit Profil & Password
+                                    <Edit3 size={14} /> Edit Profil
                                 </button>
                             )}
                         </div>
-
                         {!isEditing ? (
                             <div style={styles.infoGrid}>
                                 <div style={styles.infoItem}>
                                     <Mail size={18} color="#003399" />
-                                    <div><small style={styles.label}>Email Sistem</small><p style={styles.val}>{userData.email}</p></div>
+                                    <div><small style={styles.label}>Email</small><p style={styles.val}>{userData.email}</p></div>
                                 </div>
                                 <div style={styles.infoItem}>
                                     <Building size={18} color="#003399" />
-                                    <div><small style={styles.label}>Nama Unit Penempatan</small><p style={styles.val}>{userData.nama_unit || '-'}</p></div>
-                                </div>
-                                <div style={styles.infoItem}>
-                                    <IdCard size={18} color="#003399" />
-                                    <div><small style={styles.label}>Nomor Induk Pegawai (NIPP)</small><p style={styles.val}>{userData.nomor_induk || '-'}</p></div>
+                                    <div><small style={styles.label}>Unit</small><p style={styles.val}>{userData.nama_unit || '-'}</p></div>
                                 </div>
                             </div>
                         ) : (
@@ -277,27 +272,6 @@ const AdminDashboard = () => {
                                     <label style={styles.label}>Nama Lengkap</label>
                                     <input style={styles.input} required value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
                                 </div>
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Email Sistem</label>
-                                    <input style={styles.input} type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                </div>
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Nomor Induk Pegawai (NIPP)</label>
-                                    <input style={styles.input} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
-                                </div>
-                                
-                                <hr style={{margin: '15px 0', border: '0.5px solid #eee'}} />
-                                <p style={{fontSize: '12px', color: '#ff6600', fontWeight: 'bold', margin: 0}}>Ganti Password</p>
-                                
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Password Lama</label>
-                                    <input type="password" style={styles.input} placeholder="Masukkan password saat ini" value={formData.password_lama} onChange={e => setFormData({...formData, password_lama: e.target.value})} />
-                                </div>
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Password Baru</label>
-                                    <input type="password" style={styles.input} placeholder="Masukkan password baru" value={formData.password_baru} onChange={e => setFormData({...formData, password_baru: e.target.value})} />
-                                </div>
-                                
                                 <div style={styles.btnArea}>
                                     <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
                                     <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan</button>
@@ -309,11 +283,11 @@ const AdminDashboard = () => {
                     <>
                         <div style={styles.header}>
                             <h2 style={{color:'#003399', margin: 0}}>
-                                {activeMenu === 'monitoring' ? 'Monitoring Peserta Aktif 📋' : 'Arsip Alumni Unit 📂'}
+                                {activeMenu === 'monitoring' ? 'Monitoring Unit 📋' : 'Arsip Unit 📂'}
                             </h2>
                             <div style={styles.searchBox}>
                                 <Search size={16} color="#888" />
-                                <input placeholder="Cari nama peserta..." style={styles.searchInput} onChange={(e) => setSearchTerm(e.target.value)} />
+                                <input placeholder="Cari nama..." style={styles.searchInput} onChange={(e) => setSearchTerm(e.target.value)} />
                             </div>
                         </div>
 
@@ -323,21 +297,9 @@ const AdminDashboard = () => {
                                     <tr style={styles.thRow}>
                                         <th style={styles.th}>No</th>
                                         <th style={styles.th}>Nama Peserta</th>
-                                        <th style={styles.th}>Nomor Induk</th>
-                                        <th style={styles.th}>Asal Instansi</th>
-                                        {activeMenu === 'monitoring' ? (
-                                            <>
-                                                <th style={styles.th}>Jenis</th>
-                                                <th style={styles.th}>Status</th>
-                                                <th style={{...styles.th, textAlign: 'center'}}>Aksi</th>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <th style={styles.th}>Jenis</th>
-                                                <th style={styles.th}>Status Akhir</th>
-                                                <th style={styles.th}>Periode Magang</th>
-                                            </>
-                                        )}
+                                        <th style={styles.th}>Instansi</th>
+                                        <th style={styles.th}>Status</th>
+                                        <th style={{...styles.th, textAlign: 'center'}}>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -345,46 +307,52 @@ const AdminDashboard = () => {
                                         <tr key={s.id} style={styles.row}>
                                             <td style={styles.td}>{i + 1}</td>
                                             <td style={styles.td}><b>{s.nama_lengkap}</b></td>
-                                            <td style={styles.td}>{s.nomor_induk || '-'}</td>
                                             <td style={styles.td}>{s.asal_instansi || '-'}</td>
-                                            
-                                            {activeMenu === 'monitoring' ? (
-                                                <>
-                                                    <td style={styles.td}>{s.nama_jenis}</td>
-                                                    <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
-                                                    <td style={{...styles.td, textAlign: 'center'}}>
-                                                        <div style={{display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center'}}>
-                                                            <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}>
-                                                                <Eye size={14} style={{marginRight: '5px'}}/> Detail & Berkas
-                                                            </button>
-                                                            {(s.status === 'Menunggu Verifikasi' || s.status === 'Ditinjau Unit') ? (
-                                                                <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                                                                    <button onClick={() => handleAction(s.id, 'approve')} style={styles.btnApprove}><CheckCircle size={14}/> Setuju</button>
-                                                                    <button onClick={() => handleAction(s.id, 'revising')} style={{...styles.btnReject, backgroundColor: '#fff4e5', color: '#ff6600', borderColor: '#ff6600'}}><Edit3 size={14}/> Revisi</button>
-                                                                    <button onClick={() => handleAction(s.id, 'reject')} style={styles.btnReject}><XCircle size={14}/> Tolak</button>
-                                                                </div>
-                                                            ) : (
-                                                                <span style={{color: '#999', fontSize: '12px', fontStyle: 'italic'}}>Diteruskan ke Pusat</span>
+                                            <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
+                                            <td style={{...styles.td, textAlign: 'center'}}>
+                                                <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                                                    <button onClick={() => viewDetail(s.id)} style={styles.btnActionIcon} title="Detail"><Eye size={16}/></button>
+                                                    
+                                                    {/* ✨ DROPDOWN AKSI DINAMIS ✨ */}
+                                                    {activeMenu === 'monitoring' && (
+                                                        <select 
+                                                            style={styles.dropdown}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === 'revisi' || val === 'tolak') handleRejection(s.id, val);
+                                                                else if (val) handleUpdateStatus(s.id, val);
+                                                            }}
+                                                            value=""
+                                                        >
+                                                            <option value="" disabled>Pilih Tindakan</option>
+                                                            
+                                                            {s.status === 'Menunggu Verifikasi' && (
+                                                                <option value="Atur Jadwal Wawancara">Terima & Atur Wawancara</option>
                                                             )}
-                                                        </div>
-                                                    </td>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <td style={styles.td}>{s.nama_jenis}</td>
-                                                    <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
-                                                    <td style={styles.td}>
-                                                        <div style={{fontSize: '12px', fontWeight: '500'}}>
-                                                            {new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}
-                                                        </div>
-                                                    </td> 
-                                                </>
-                                            )}
+                                                            
+                                                            {s.status === 'Jadwal Wawancara Diajukan' && (
+                                                                <option value="Wawancara Disetujui">Setujui Jadwal Wawancara</option>
+                                                            )}
+                                                            
+                                                            {s.status === 'Wawancara Disetujui' && (
+                                                                <option value="Selesai Wawancara (Lengkapi Berkas Akhir)">Selesaikan Wawancara</option>
+                                                            )}
+
+                                                            {s.status === 'Berkas Akhir Terkirim' && (
+                                                                <option value="Berkas Disetujui Unit">Terima Berkas Final</option>
+                                                            )}
+
+                                                            <option value="revisi">Minta Revisi</option>
+                                                            <option value="tolak">Tolak Pengajuan</option>
+                                                        </select>
+                                                    )}
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            {displayData.length === 0 && <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>Tidak ada data.</div>}
+                            {displayData.length === 0 && <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>Tidak ada data pengajuan.</div>}
                         </div>
                     </>
                 )}
@@ -409,34 +377,31 @@ const styles = {
     thRow: { backgroundColor: '#f8f9fa' },
     th: { textAlign: 'left', padding: '15px', fontSize: '12px', color: '#888', textTransform: 'uppercase' },
     td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px', verticalAlign: 'middle' },
+    dropdown: { padding: '6px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '12px', outline: 'none', cursor: 'pointer', backgroundColor: '#f9f9f9' },
+    btnActionIcon: { padding: '6px', backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #d0dfff', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
     badge: (status) => {
         let bg = '#e0f0ff'; let color = '#0055cc'; 
-        if (status?.includes('Ditolak')) { bg = '#fff0f0'; color = '#e74c3c'; }
-        else if (status === 'Selesai (Surat Dirilis)') { bg = '#e1f7e7'; color = '#27ae60'; }
-        else if (status === 'Dalam Masa Kegiatan') { bg = '#f39c12'; color = '#fff'; }
-        else if (status === 'Selesai Kegiatan') { bg = '#2c3e50'; color = '#fff'; }
-        else if (status === 'Revisi') { bg = '#fff4e5'; color = '#ff6600'; }
-        else if (status?.includes('SDM')) { bg = '#eef2f7'; color = '#34495e'; }
-        return { padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', backgroundColor: bg, color: color, display: 'inline-block' };
+        if (status?.includes('Ditolak')) { bg = '#ffe6e6'; color = '#dc3545'; }
+        else if (status?.includes('Revisi')) { bg = '#fff4e5'; color = '#ff6600'; }
+        else if (status?.includes('Wawancara')) { bg = '#f5eeff'; color = '#8e44ad'; }
+        else if (status?.includes('Selesai')) { bg = '#e1f7e7'; color = '#27ae60'; }
+        return { padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 'bold', backgroundColor: bg, color: color };
     },
-    btnApprove: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#e6ffe6', color: '#28a745', border: '1px solid #28a745', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
-    btnReject: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#ffe6e6', color: '#dc3545', border: '1px solid #dc3545', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
-    btnDetail: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #d0dfff', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', width: '100%' },
     profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
     profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
-    avatarLarge: { width: '90px', height: '90px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
-    roleBadge: { backgroundColor: '#fff4e5', color: '#d35400', padding: '4px 15px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' },
-    btnEditAvatar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
-    infoGrid: { display: 'flex', flexDirection: 'column', gap: '15px' },
-    infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' },
-    label: { color: '#888', margin: 0, fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' },
+    avatarLarge: { width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '32px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
+    roleBadge: { backgroundColor: '#fff4e5', color: '#d35400', padding: '4px 15px', borderRadius: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' },
+    btnEditAvatar: { marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f0f4f8', color: '#003399', border: 'none', padding: '6px 15px', borderRadius: '20px', cursor: 'pointer', fontSize: '11px' },
+    infoGrid: { display: 'flex', flexDirection: 'column', gap: '12px' },
+    infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px', backgroundColor: '#f9f9f9', borderRadius: '10px' },
+    label: { color: '#888', fontSize: '11px', fontWeight: 'bold' },
     val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '14px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '12px' },
+    form: { display: 'flex', flexDirection: 'column', gap: '10px' },
     inputGroup: { display: 'flex', flexDirection: 'column' },
-    input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px' },
-    btnArea: { display: 'flex', gap: '10px', marginTop: '15px' },
-    btnSave: { flex: 2, padding: '12px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
-    btnCancel: { flex: 1, padding: '12px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
+    input: { padding: '10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '14px' },
+    btnArea: { display: 'flex', gap: '10px', marginTop: '10px' },
+    btnSave: { flex: 1, padding: '10px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' },
+    btnCancel: { flex: 1, padding: '10px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }
 };
 
 export default AdminDashboard;
