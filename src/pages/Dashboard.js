@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import FormPengajuan from '../components/FormPengajuan';
 import { 
     FilePlus, History, LogOut, AlertTriangle, CheckCircle, 
-    User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock
+    User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock, Bell
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -19,10 +19,7 @@ const Dashboard = () => {
     
     const [activeSubmission, setActiveSubmission] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    
-    // ✨ STATE BARU: Untuk membuka form khusus perpanjangan
     const [isExtending, setIsExtending] = useState(false);
-    
     const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'profile');
     
     useEffect(() => {
@@ -120,7 +117,6 @@ const Dashboard = () => {
 
     if (!userData) return null;
 
-    // ✨ LOGIKA HITUNG SISA HARI ✨
     let daysRemaining = null;
     if (activeSubmission && ['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan'].includes(activeSubmission.status)) {
         const today = new Date();
@@ -168,64 +164,87 @@ const Dashboard = () => {
                     <>
                         {activeTab === 'profile' ? (
                             <div style={styles.profileContainer}>
-                                <div style={styles.profileHeader}>
-                                    <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0)}</div>
-                                    <h2 style={{margin: '10px 0 5px 0', color: '#003399'}}>{userData.nama_lengkap}</h2>
-                                    <span style={styles.roleBadge}>Mahasiswa Magang</span>
-                                    
-                                    {!isEditing && (
-                                        <button style={styles.btnEditAvatar} onClick={() => setIsEditing(true)}>
-                                            <Edit3 size={14} /> Edit Profil & Password
-                                        </button>
-                                    )}
-                                </div>
-
-                                {!isEditing ? (
-                                    <div style={styles.infoGrid}>
-                                        <div style={styles.infoItem}>
-                                            <Mail size={18} color="#003399" />
-                                            <div><small style={styles.label}>Email Sistem</small><p style={styles.val}>{userData.email}</p></div>
-                                        </div>
-                                        <div style={styles.infoItem}>
-                                            <IdCard size={18} color="#003399" />
-                                            <div><small style={styles.label}>Nomor Induk (NIM/NIS)</small><p style={styles.val}>{userData.nomor_induk || '-'}</p></div>
-                                        </div>
-                                        <div style={styles.infoItem}>
-                                            <Building size={18} color="#003399" />
-                                            <div><small style={styles.label}>Asal Instansi / Universitas</small><p style={styles.val}>{userData.asal_instansi || '-'}</p></div>
+                                {/* ✨ HEADER LANDSCAPE BARU ✨ */}
+                                <div style={styles.landscapeHeader}>
+                                    <div style={{display: 'flex', alignItems: 'center', gap: '25px'}}>
+                                        <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
+                                        <div>
+                                            <h2 style={{margin: '0 0 5px 0', color: '#003399', fontSize: '24px'}}>{userData.nama_lengkap}</h2>
+                                            <span style={styles.roleBadge}>Mahasiswa Magang</span>
                                         </div>
                                     </div>
+                                    
+                                    {/* Icon Notifikasi di Kanan Atas */}
+                                    <div style={styles.notifIconWrapper} title="Notifikasi Sistem">
+                                        <Bell size={22} color="#ff6600" />
+                                        {/* Dot merah tanda ada notif (opsional, bisa dibuat dinamis nanti) */}
+                                        <span style={styles.notifDot}></span>
+                                    </div>
+                                </div>
+
+                                <hr style={{border: '0.5px solid #eee', margin: '25px 0'}} />
+
+                                {!isEditing ? (
+                                    <>
+                                        <div style={styles.infoGrid}>
+                                            <div style={styles.infoItem}>
+                                                <Mail size={18} color="#003399" />
+                                                <div><small style={styles.label}>Email Sistem</small><p style={styles.val}>{userData.email}</p></div>
+                                            </div>
+                                            <div style={styles.infoItem}>
+                                                <IdCard size={18} color="#003399" />
+                                                <div><small style={styles.label}>Nomor Induk (NIM/NIS)</small><p style={styles.val}>{userData.nomor_induk || '-'}</p></div>
+                                            </div>
+                                            <div style={styles.infoItem}>
+                                                <Building size={18} color="#003399" />
+                                                <div><small style={styles.label}>Asal Instansi / Universitas</small><p style={styles.val}>{userData.asal_instansi || '-'}</p></div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{marginTop: '30px'}}>
+                                            <button style={styles.btnEditAvatar} onClick={() => setIsEditing(true)}>
+                                                <Edit3 size={16} /> Edit Profil & Password
+                                            </button>
+                                        </div>
+                                    </>
                                 ) : (
                                     <form onSubmit={handleUpdateProfile} style={styles.form}>
                                         <div style={styles.inputGroup}>
                                             <label style={styles.label}>Nama Lengkap</label>
                                             <input style={styles.input} required value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
                                         </div>
-                                        <div style={styles.inputGroup}>
-                                            <label style={styles.label}>Email Sistem</label>
-                                            <input style={styles.input} type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                        </div>
-                                        <div style={styles.inputGroup}>
-                                            <label style={styles.label}>Nomor Induk (NIM/NIS)</label>
-                                            <input style={styles.input} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
+                                        <div style={styles.rowForm}>
+                                            <div style={styles.inputGroup}>
+                                                <label style={styles.label}>Email Sistem</label>
+                                                <input style={styles.input} type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                            </div>
+                                            <div style={styles.inputGroup}>
+                                                <label style={styles.label}>Nomor Induk (NIM/NIS)</label>
+                                                <input style={styles.input} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
+                                            </div>
                                         </div>
                                         <div style={styles.inputGroup}>
                                             <label style={styles.label}>Asal Instansi</label>
                                             <input style={styles.input} value={formData.asal_instansi} onChange={e => setFormData({...formData, asal_instansi: e.target.value})} />
                                         </div>
-                                        <hr style={{margin: '15px 0', border: '0.5px solid #eee'}} />
-                                        <p style={{fontSize: '12px', color: '#ff6600', fontWeight: 'bold', margin: 0}}>Ganti Password</p>
-                                        <div style={styles.inputGroup}>
-                                            <label style={styles.label}>Password Lama</label>
-                                            <input type="password" style={styles.input} placeholder="Kosongkan jika tidak ubah" value={formData.password_lama} onChange={e => setFormData({...formData, password_lama: e.target.value})} />
+                                        
+                                        <hr style={{margin: '20px 0', border: '0.5px solid #eee'}} />
+                                        
+                                        <p style={{fontSize: '14px', color: '#ff6600', fontWeight: 'bold', margin: '0 0 10px 0'}}>Ganti Password (Opsional)</p>
+                                        <div style={styles.rowForm}>
+                                            <div style={styles.inputGroup}>
+                                                <label style={styles.label}>Password Lama</label>
+                                                <input type="password" style={styles.input} placeholder="Kosongkan jika tidak diubah" value={formData.password_lama} onChange={e => setFormData({...formData, password_lama: e.target.value})} />
+                                            </div>
+                                            <div style={styles.inputGroup}>
+                                                <label style={styles.label}>Password Baru</label>
+                                                <input type="password" style={styles.input} placeholder="Kosongkan jika tidak diubah" value={formData.password_baru} onChange={e => setFormData({...formData, password_baru: e.target.value})} />
+                                            </div>
                                         </div>
-                                        <div style={styles.inputGroup}>
-                                            <label style={styles.label}>Password Baru</label>
-                                            <input type="password" style={styles.input} placeholder="Kosongkan jika tidak ubah" value={formData.password_baru} onChange={e => setFormData({...formData, password_baru: e.target.value})} />
-                                        </div>
+                                        
                                         <div style={styles.btnArea}>
                                             <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
-                                            <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan</button>
+                                            <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan Perubahan</button>
                                         </div>
                                     </form>
                                 )}
@@ -241,10 +260,8 @@ const Dashboard = () => {
                                     </p>
                                 </div>
                                 
-                                {/* ✨ LOGIKA RENDER TAMPILAN: Jika punya pengajuan aktif DAN tidak sedang klik perpanjang ✨ */}
                                 {activeSubmission && !location.state?.initialData && !isExtending ? (
                                     <div style={styles.alertCard}>
-                                        
                                         {['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan'].includes(activeSubmission.status) ? (
                                             <>
                                                 <CheckCircle size={40} color="#27ae60" style={{marginBottom: '15px'}} />
@@ -252,8 +269,6 @@ const Dashboard = () => {
                                                 <p style={{color: '#555', lineHeight: '1.5'}}>
                                                     Sistem mendeteksi bahwa Anda sedang aktif melaksanakan <b>{activeSubmission.nama_jenis}</b> hingga <b>{new Date(activeSubmission.tanggal_selesai).toLocaleDateString('id-ID')}</b>. 
                                                 </p>
-
-                                                {/* ✨ NOTIFIKASI SISA HARI & TOMBOL PERPANJANG ✨ */}
                                                 {daysRemaining !== null && daysRemaining <= 7 && daysRemaining >= 0 && (
                                                     <div style={{marginTop: '20px', padding: '15px', backgroundColor: '#fff4e5', borderRadius: '10px', border: '1px solid #ffe0b2'}}>
                                                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#d35400', marginBottom: '8px'}}>
@@ -339,21 +354,29 @@ const styles = {
     alertCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '40px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', maxWidth: '600px', margin: '0 auto', borderTop: '5px solid #f39c12' },
     badgeWarning: { display: 'inline-block', backgroundColor: '#fff3cd', color: '#856404', padding: '6px 15px', borderRadius: '20px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px' },
     btnRiwayat: { backgroundColor: '#003399', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: '0.3s' },
-    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
-    profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
-    avatarLarge: { width: '90px', height: '90px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
-    roleBadge: { backgroundColor: '#e0f0ff', color: '#0055cc', padding: '4px 15px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' },
-    btnEditAvatar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' },
+    
+    // ✨ STYLES BARU UNTUK PROFIL LANDSCAPE ✨
+    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '800px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
+    landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    avatarLarge: { width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '32px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 4px 10px rgba(255, 102, 0, 0.3)' },
+    roleBadge: { display: 'inline-block', backgroundColor: '#e0f0ff', color: '#0055cc', padding: '4px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
+    notifIconWrapper: { position: 'relative', cursor: 'pointer', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center' },
+    notifDot: { position: 'absolute', top: '8px', right: '10px', width: '8px', height: '8px', backgroundColor: '#e74c3c', borderRadius: '50%', border: '2px solid #fff' },
+    
+    btnEditAvatar: { width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', transition: '0.2s' },
+    
     infoGrid: { display: 'flex', flexDirection: 'column', gap: '15px' },
-    infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' },
+    infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 20px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' },
     label: { color: '#888', margin: 0, fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' },
-    val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '14px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '12px' },
-    inputGroup: { display: 'flex', flexDirection: 'column' },
-    input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px', backgroundColor: '#fcfcfc' },
-    btnArea: { display: 'flex', gap: '10px', marginTop: '15px' },
-    btnSave: { flex: 2, padding: '12px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
-    btnCancel: { flex: 1, padding: '12px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
+    val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '15px' },
+    
+    form: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    rowForm: { display: 'flex', gap: '20px' },
+    inputGroup: { flex: 1, display: 'flex', flexDirection: 'column' },
+    input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '14px', backgroundColor: '#fcfcfc', marginTop: '5px' },
+    btnArea: { display: 'flex', gap: '15px', marginTop: '15px' },
+    btnSave: { flex: 2, padding: '14px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '15px' },
+    btnCancel: { flex: 1, padding: '14px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '15px' }
 };
 
 export default Dashboard;

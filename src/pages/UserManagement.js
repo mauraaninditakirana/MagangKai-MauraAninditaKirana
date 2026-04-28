@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     Users, ShieldCheck, Search, LogOut, RefreshCcw,
     LayoutDashboard, UserCog, Building2, FileText,
-    Plus, Edit, Trash2 
+    Plus, Edit, Trash2, ChevronDown, ClipboardCheck, Archive, Bell
 } from 'lucide-react';
 
 const UserManagement = () => {
@@ -15,6 +15,9 @@ const UserManagement = () => {
     const [filterRole, setFilterRole] = useState('');
     const navigate = useNavigate();
     
+    // State untuk Sidebar Dropdown
+    const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
+
     // Ambil data user dari localStorage dengan aman
     const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
@@ -32,14 +35,14 @@ const UserManagement = () => {
         }
 
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser.role !== 'super admin' && parsedUser.role !== 'Super Admin' && parsedUser.role !== 'admin') {
+        const role = (parsedUser.role || '').toLowerCase();
+        if (role !== 'super admin' && role !== 'admin') {
             navigate('/');
             return;
         }
 
         fetchUsers();
         fetchUnits();
-        
         window.scrollTo(0, 0);
     }, [navigate]);
 
@@ -114,7 +117,6 @@ const UserManagement = () => {
         }
     };
 
-    // ✨ FUNGSI BARU UNTUK CRUD ✨
     const handleAdd = () => {
         setIsEdit(false);
         setFormData({ id: '', nama_lengkap: '', email: '', password: '', role: 'user', unit_id: '', nomor_induk: '', asal_instansi: '' });
@@ -127,7 +129,7 @@ const UserManagement = () => {
             id: user.id,
             nama_lengkap: user.nama_lengkap || '',
             email: user.email || '',
-            password: '', // Kosongkan password saat edit
+            password: '', 
             role: user.role || 'user',
             unit_id: user.unit_id || '',
             nomor_induk: user.nomor_induk || '',
@@ -160,7 +162,6 @@ const UserManagement = () => {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Ya, Hapus!'
         });
 
@@ -176,235 +177,281 @@ const UserManagement = () => {
     };
 
     const filteredUsers = users.filter(u => {
-        // Cek apakah nama atau email cocok dengan kata kunci pencarian
         const matchSearch = (u.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                             (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-        
-        // Cek apakah role cocok dengan filter dropdown (jika kosong, tampilkan semua)
         const matchRole = filterRole === '' || (u.role || '').toLowerCase() === filterRole.toLowerCase();
-        
         return matchSearch && matchRole;
     });
 
     return (
         <div style={styles.container}>
-            {/* SIDEBAR */}
+            {/* ✨ SIDEBAR PREMIUM STYLE ✨ */}
             <div style={styles.sidebar}>
-                <div style={styles.logoArea}>
-                    <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>PUSAT</span></h3>
-                    <small style={{opacity:0.7}}>Sistem Manajemen Magang</small>
-                </div>
-                
-                <div style={styles.menuItem} onClick={() => navigate('/super-admin')}>
-                    <LayoutDashboard size={18}/> Dashboard Utama
-                </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/monitoring')}>
-                    <RefreshCcw size={18}/> Monitoring Pengajuan
-                </div>
-                <div style={styles.menuActive}>
-                    <UserCog size={18}/> Manajemen Pengguna
-                </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/units')}>
-                    <Building2 size={18}/> Manajemen Unit
-                </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}>    
-                    <FileText size={18}/> Arsip Data Peserta
+                <div style={styles.sidebarBrand}>
+                    <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
+                    <p style={styles.brandSubtitle}>SISTEM MANAJEMEN MAGANG</p>
                 </div>
 
-                <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}>
-                    <LogOut size={18}/> Keluar Sistem
+                <div style={styles.sidebarNav}>
+                    <div style={styles.navGroup}>
+                        <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
+                            <div style={styles.navLinkContent}>
+                                <LayoutDashboard size={20} />
+                                <span>Dashboard Utama</span>
+                            </div>
+                            <ChevronDown size={16} style={{ 
+                                transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: '0.3s'
+                            }} />
+                        </div>
+                        
+                        {isDashboardMenuOpen && (
+                            <div style={styles.dropdownWrapper}>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'dashboard' } })}>
+                                    <div style={styles.dotIndicator} /> Ringkasan & Pantauan
+                                </div>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'peserta_aktif' } })}>
+                                    <div style={styles.dotIndicator} /> Monitoring Peserta
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/monitoring')}>
+                        <div style={styles.navLinkContent}><RefreshCcw size={20} /> <span>Monitoring Pengajuan</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'requirements' } })}>
+                        <div style={styles.navLinkContent}><ClipboardCheck size={20} /> <span>Syarat Dokumen</span></div>
+                    </div>
+
+                    <div style={styles.navItemActive}>
+                        <div style={styles.navLinkContent}><UserCog size={20} /> <span>Manajemen Pengguna</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/units')}>
+                        <div style={styles.navLinkContent}><Building2 size={20} /> <span>Manajemen Unit</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/archive')}>
+                        <div style={styles.navLinkContent}><Archive size={20} /> <span>Arsip Data Peserta</span></div>
+                    </div>
+                </div>
+
+                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                    <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
                 </div>
             </div>
-            {/* KONTEN UTAMA */}
-            <div style={styles.main}>
-                <div style={styles.header}>
-                    <div>
-                        <h2 style={{margin:0, color:'#003399'}}>Manajemen Pengguna 👥</h2>
-                        <p style={{color:'#666', fontSize:'14px'}}>Atur hak akses dan penempatan unit Admin</p>
-                    </div>
-                    
-                    <div style={{display: 'flex', gap: '15px', alignItems: 'center'}}>
-                        <div style={styles.searchContainer}>
-                            <Search size={18} color="#003399" />
-                            <input 
-                                placeholder="Cari nama pengguna..." 
-                                style={styles.searchInput} 
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div style={styles.selectWrapper}>
-                            <ShieldCheck size={16} color="#003399" />
-                            <select 
-                                style={styles.select} 
-                                value={filterRole} 
-                                onChange={e => setFilterRole(e.target.value)}
-                            >
-                                <option value="">Semua Role</option>
-                                <option value="super admin">Super Admin</option>
-                                <option value="admin unit">Admin Unit</option>
-                                <option value="user">User (Mahasiswa)</option>
-                            </select>
-                        </div>
-                      
-                        <button style={styles.btnAdd} onClick={handleAdd}>
-                            <Plus size={16} /> Tambah User
-                        </button>
-                    </div>
-                </div>
 
-                <div style={styles.card}>
-                    <table style={styles.table}>
-                        <thead>
-                            <tr style={styles.thRow}>
-                                <th style={{...styles.th, width: '50px'}}>No</th>
-                                <th style={styles.th}>Nama & Email</th>
-                                <th style={styles.th}>Nomor Induk</th>
-                                <th style={styles.th}>Role Saat Ini</th>
-                                <th style={{...styles.th, textAlign:'center'}}>Ubah Akses</th>
-                                <th style={{...styles.th, textAlign:'center'}}>Aksi Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredUsers.length > 0 ? filteredUsers.map((u, index) => (
-                                <tr key={u.id} style={styles.row}>
-                                    <td style={styles.td}>{index + 1}</td>
-                                    <td style={styles.td}>
-                                        <div style={{fontWeight: 'bold', color: '#333'}}>{u.nama_lengkap}</div>
-                                        <div style={{fontSize: '12px', color: '#888'}}>{u.email}</div>
-                                    </td>
-                                    <td style={styles.td}>{u.nomor_induk || '-'}</td>
-                                    <td style={styles.td}>
-                                        <span style={styles.badge(u.role)}>
-                                            {u.role === 'admin unit' && u.nama_unit ? `Admin: ${u.nama_unit}` : u.role.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td style={styles.td}>
-                                        {u.id !== currentUser?.id ? (
-                                            <div style={{display:'flex', gap:'8px', justifyContent:'center'}}>
-                                                <button 
-                                                    onClick={() => handleUpdateRole(u, 'admin unit')}
-                                                    style={{...styles.btnRole, backgroundColor:'#f39c12'}}
-                                                >
-                                                    <ShieldCheck size={16}/> Unit
+            {/* AREA UTAMA */}
+            <div style={styles.main}>
+            
+                <div style={styles.contentScroll}>
+                    <div style={styles.header}>
+                        <div>
+                            <h2 style={{margin:0, color:'#003399'}}>Manajemen Pengguna</h2>
+                            <p style={{color:'#666', fontSize:'14px'}}>Atur hak akses dan penempatan unit Admin</p>
+                        </div>
+                        
+                        <div style={{display: 'flex', gap: '15px', alignItems: 'center'}}>
+                            <div style={styles.searchContainer}>
+                                <Search size={18} color="#003399" />
+                                <input 
+                                    placeholder="Cari nama pengguna..." 
+                                    style={styles.searchInput} 
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div style={styles.selectWrapper}>
+                                <ShieldCheck size={16} color="#003399" />
+                                <select 
+                                    style={styles.select} 
+                                    value={filterRole} 
+                                    onChange={e => setFilterRole(e.target.value)}
+                                >
+                                    <option value="">Semua Role</option>
+                                    <option value="super admin">Super Admin</option>
+                                    <option value="admin unit">Admin Unit</option>
+                                    <option value="user">User (Mahasiswa)</option>
+                                </select>
+                            </div>
+                          
+                            <button style={styles.btnAdd} onClick={handleAdd}>
+                                <Plus size={16} /> Tambah User
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={styles.card}>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr style={styles.thRow}>
+                                    <th style={{...styles.th, width: '50px'}}>No</th>
+                                    <th style={styles.th}>Nama & Email</th>
+                                    <th style={styles.th}>Nomor Induk</th>
+                                    <th style={styles.th}>Role Saat Ini</th>
+                                    <th style={{...styles.th, textAlign:'center'}}>Ubah Akses</th>
+                                    <th style={{...styles.th, textAlign:'center'}}>Aksi Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredUsers.length > 0 ? filteredUsers.map((u, index) => (
+                                    <tr key={u.id} style={styles.row}>
+                                        <td style={styles.td}>{index + 1}</td>
+                                        <td style={styles.td}>
+                                            <div style={{fontWeight: 'bold', color: '#333'}}>{u.nama_lengkap}</div>
+                                            <div style={{fontSize: '12px', color: '#888'}}>{u.email}</div>
+                                        </td>
+                                        <td style={styles.td}>{u.nomor_induk || '-'}</td>
+                                        <td style={styles.td}>
+                                            <span style={styles.badge(u.role)}>
+                                                {u.role === 'admin unit' && u.nama_unit ? `Admin: ${u.nama_unit}` : u.role.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td style={styles.td}>
+                                            {u.id !== currentUser?.id ? (
+                                                <div style={{display:'flex', gap:'8px', justifyContent:'center'}}>
+                                                    <button 
+                                                        onClick={() => handleUpdateRole(u, 'admin unit')}
+                                                        style={{...styles.btnRole, backgroundColor:'#f39c12'}}
+                                                    >
+                                                        <ShieldCheck size={16}/> Unit
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleUpdateRole(u, 'user')}
+                                                        style={{...styles.btnRole, backgroundColor:'#3498db'}}
+                                                    >
+                                                        <Users size={16}/> User
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div style={{textAlign: 'center', color: '#aaa', fontSize: '11px', fontStyle: 'italic'}}>Akun Anda</div>
+                                            )}
+                                        </td>
+                                        <td style={styles.td}>
+                                            <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                                                <button onClick={() => handleEdit(u)} style={styles.btnEdit} title="Edit User">
+                                                    <Edit size={14}/>
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleUpdateRole(u, 'user')}
-                                                    style={{...styles.btnRole, backgroundColor:'#3498db'}}
+                                                    onClick={() => handleDelete(u.id)} 
+                                                    style={{...styles.btnDelete, opacity: u.id === currentUser?.id ? 0.3 : 1}} 
+                                                    disabled={u.id === currentUser?.id}
+                                                    title={u.id === currentUser?.id ? "Tidak bisa hapus diri sendiri" : "Hapus User"}
                                                 >
-                                                    <Users size={16}/> User
+                                                    <Trash2 size={14}/>
                                                 </button>
                                             </div>
-                                        ) : (
-                                            <div style={{textAlign: 'center', color: '#aaa', fontSize: '11px', fontStyle: 'italic'}}>Akun Anda</div>
-                                        )}
-                                    </td>
-                                    <td style={{...styles.td, textAlign:'center'}}>
-                                        <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                                            <button onClick={() => handleEdit(u)} style={styles.btnEdit} title="Edit User">
-                                                <Edit size={14}/>
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDelete(u.id)} 
-                                                style={{...styles.btnDelete, opacity: u.id === currentUser?.id ? 0.3 : 1}} 
-                                                disabled={u.id === currentUser?.id}
-                                                title={u.id === currentUser?.id ? "Tidak bisa hapus diri sendiri" : "Hapus User"}
-                                            >
-                                                <Trash2 size={14}/>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="6" style={{textAlign:'center', padding:'30px', color: '#aaa'}}>Data pengguna tidak ditemukan.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {showModal && (
-                <div style={styles.modalOverlay}>
-                    <div style={styles.modalBox}>
-                        <h3 style={{color: '#003399', marginTop: 0}}>{isEdit ? '✏️ Edit Pengguna' : '➕ Tambah Pengguna Baru'}</h3>
-                        <form onSubmit={handleSubmit}>
-                            <div style={styles.formGroup}>
-                                <label style={styles.label}>Nama Lengkap</label>
-                                <input required type="text" style={styles.formInput} value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
-                            </div>
-                            
-                            <div style={{display: 'flex', gap: '15px'}}>
-                                <div style={{...styles.formGroup, flex: 1}}>
-                                    <label style={styles.label}>Email (Username)</label>
-                                    <input required type="email" style={styles.formInput} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                </div>
-                                <div style={{...styles.formGroup, flex: 1}}>
-                                    <label style={styles.label}>{isEdit ? 'Password (Opsional)' : 'Password'}</label>
-                                    <input required={!isEdit} type="password" placeholder={isEdit ? "Kosongkan jika tak diubah" : ""} style={styles.formInput} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                                </div>
-                            </div>
-
-                            <div style={{display: 'flex', gap: '15px'}}>
-                                <div style={{...styles.formGroup, flex: 1}}>
-                                    <label style={styles.label}>Hak Akses (Role)</label>
-                                    <select style={styles.formInput} value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                                        <option value="user">User (Mahasiswa)</option>
-                                        <option value="admin unit">Admin Unit</option>
-                                        <option value="super admin">Super Admin</option>
-                                    </select>
-                                </div>
-                                
-                                {formData.role === 'admin unit' && (
-                                    <div style={{...styles.formGroup, flex: 1}}>
-                                        <label style={styles.label}>Pilih Unit</label>
-                                        <select required style={styles.formInput} value={formData.unit_id} onChange={e => setFormData({...formData, unit_id: e.target.value})}>
-                                            <option value="">-- Pilih Unit --</option>
-                                            {units.map(u => <option key={u.id} value={u.id}>{u.nama_unit}</option>)}
-                                        </select>
-                                    </div>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="6" style={{textAlign:'center', padding:'30px', color: '#aaa'}}>Data pengguna tidak ditemukan.</td>
+                                    </tr>
                                 )}
-                            </div>
-
-                            {/* Tampilkan Asal Instansi & Nomor Induk khusus untuk Role User */}
-                            {formData.role === 'user' && (
-                                <div style={{display: 'flex', gap: '15px'}}>
-                                    <div style={{...styles.formGroup, flex: 1}}>
-                                        <label style={styles.label}>Nomor Induk (NIM/NIS)</label>
-                                        <input required type="text" style={styles.formInput} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
-                                    </div>
-                                    <div style={{...styles.formGroup, flex: 1}}>
-                                        <label style={styles.label}>Asal Instansi</label>
-                                        <input required type="text" style={styles.formInput} value={formData.asal_instansi} onChange={e => setFormData({...formData, asal_instansi: e.target.value})} />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px'}}>
-                                <button type="button" onClick={() => setShowModal(false)} style={styles.btnCancel}>Batal</button>
-                                <button type="submit" style={styles.btnSubmit}>Simpan Data</button>
-                            </div>
-                        </form>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            )}
+
+                {showModal && (
+                    <div style={styles.modalOverlay}>
+                        <div style={styles.modalBox}>
+                            <h3 style={{color: '#003399', marginTop: 0}}>{isEdit ? '✏️ Edit Pengguna' : '➕ Tambah Pengguna Baru'}</h3>
+                            <form onSubmit={handleSubmit}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>Nama Lengkap</label>
+                                    <input required type="text" style={styles.formInput} value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
+                                </div>
+                                
+                                <div style={{display: 'flex', gap: '15px'}}>
+                                    <div style={{...styles.formGroup, flex: 1}}>
+                                        <label style={styles.label}>Email (Username)</label>
+                                        <input required type="email" style={styles.formInput} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                    </div>
+                                    <div style={{...styles.formGroup, flex: 1}}>
+                                        <label style={styles.label}>{isEdit ? 'Password (Opsional)' : 'Password'}</label>
+                                        <input required={!isEdit} type="password" placeholder={isEdit ? "Kosongkan jika tak diubah" : ""} style={styles.formInput} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                                    </div>
+                                </div>
+
+                                <div style={{display: 'flex', gap: '15px'}}>
+                                    <div style={{...styles.formGroup, flex: 1}}>
+                                        <label style={styles.label}>Hak Akses (Role)</label>
+                                        <select style={styles.formInput} value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                                            <option value="user">User (Mahasiswa)</option>
+                                            <option value="admin unit">Admin Unit</option>
+                                            <option value="super admin">Super Admin</option>
+                                        </select>
+                                    </div>
+                                    
+                                    {formData.role === 'admin unit' && (
+                                        <div style={{...styles.formGroup, flex: 1}}>
+                                            <label style={styles.label}>Pilih Unit</label>
+                                            <select required style={styles.formInput} value={formData.unit_id} onChange={e => setFormData({...formData, unit_id: e.target.value})}>
+                                                <option value="">-- Pilih Unit --</option>
+                                                {units.map(u => <option key={u.id} value={u.id}>{u.nama_unit}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {formData.role === 'user' && (
+                                    <div style={{display: 'flex', gap: '15px'}}>
+                                        <div style={{...styles.formGroup, flex: 1}}>
+                                            <label style={styles.label}>Nomor Induk (NIM/NIS)</label>
+                                            <input required type="text" style={styles.formInput} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
+                                        </div>
+                                        <div style={{...styles.formGroup, flex: 1}}>
+                                            <label style={styles.label}>Asal Instansi</label>
+                                            <input required type="text" style={styles.formInput} value={formData.asal_instansi} onChange={e => setFormData({...formData, asal_instansi: e.target.value})} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px'}}>
+                                    <button type="button" onClick={() => setShowModal(false)} style={styles.btnCancel}>Batal</button>
+                                    <button type="submit" style={styles.btnSubmit}>Simpan Data</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
 const styles = {
+    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
     
-    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
-    main: { flex: 1, marginLeft: '260px', padding: '40px', overflowY: 'auto', minHeight: '100vh', boxSizing: 'border-box' },
-    
-    // Existing Styles
-    logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
-    menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', border: '1px solid transparent' },
-    menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s', ':hover': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' } },
-    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
+    // SIDEBAR LOOK (MATCHING KAI)
+    sidebar: { width: '280px', backgroundColor: '#132a71', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
+    brandSubtitle: { margin: '5px 0 0 0', fontSize: '10px', opacity: 0.5, fontWeight: 'bold' },
+    sidebarNav: { flex: 1, padding: '20px 15px', overflowY: 'auto' },
+    navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', transition: '0.3s', color: 'rgba(255,255,255,0.7)' },
+    navItemActive: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', backgroundColor: '#ff6600', color: '#fff', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(255, 102, 0, 0.3)' },
+    navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
+    dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
+    dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
+    dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
+    sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
+    logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+
+    // AREA UTAMA
+    main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh' },
+    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
+    avatarSmall: { width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
+    profileTrigger: { display: 'flex', alignItems: 'center', gap: '12px' },
+    profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right' },
+    profileNameSmall: { fontSize: '14px', fontWeight: 'bold', color: '#1b263b' },
+    profileRoleSmall: { fontSize: '11px', color: '#778da9' },
+
+    contentScroll: { padding: '40px', flex: 1 },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' },
-    searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', width: '350px', border: '1px solid #e0e0e0' },
+    searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', width: '300px', border: '1px solid #e0e0e0' },
     searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
     selectWrapper: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0', width: '200px' },
     select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px', color: '#333', cursor: 'pointer' },
@@ -424,10 +471,9 @@ const styles = {
         };
     },
     btnRole: { color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', display:'flex', alignItems:'center', gap:'5px', fontSize:'12px', fontWeight:'bold', transition: '0.2s' },
-    
     btnAdd: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: '#ff6600', color: '#fff', border: 'none', borderRadius: '30px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(255,102,0,0.2)' },
-    btnEdit: { padding: '8px', backgroundColor: '#f0f8ff', color: '#0055cc', border: '1px solid #cce0ff', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    btnDelete: { padding: '8px', backgroundColor: '#fff0f0', color: '#cc0000', border: '1px solid #ffcccc', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    btnEdit: { padding: '8px', backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #cce0ff', borderRadius: '8px', cursor: 'pointer' },
+    btnDelete: { padding: '8px', backgroundColor: '#fff0f0', color: '#cc0000', border: '1px solid #ffcccc', borderRadius: '8px', cursor: 'pointer' },
     modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
     modalBox: { backgroundColor: '#fff', width: '600px', padding: '30px', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' },
     formGroup: { marginBottom: '15px' },
@@ -436,4 +482,5 @@ const styles = {
     btnCancel: { padding: '10px 20px', backgroundColor: '#f1f1f1', color: '#555', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' },
     btnSubmit: { padding: '10px 20px', backgroundColor: '#003399', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }
 };
+
 export default UserManagement;

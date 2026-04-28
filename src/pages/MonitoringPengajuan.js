@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, FileText, Search, LogOut, Eye, 
     RefreshCcw, UserCog, Building2, Briefcase, 
-    UploadCloud
+    ChevronDown, ClipboardCheck, Archive, Bell
 } from 'lucide-react';
 
 const MonitoringPengajuan = () => {
@@ -18,6 +18,9 @@ const MonitoringPengajuan = () => {
     const [filterUnit, setFilterUnit] = useState('');
     const [filterType, setFilterType] = useState('');
 
+    // State untuk Sidebar Dropdown
+    const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
+
     const user = JSON.parse(localStorage.getItem('user')) || {};
     
     useEffect(() => {
@@ -28,7 +31,8 @@ const MonitoringPengajuan = () => {
         }
 
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser.role !== 'Super Admin' && parsedUser.role !== 'admin' && parsedUser.role !== 'super admin') { 
+        const role = (parsedUser.role || '').toLowerCase();
+        if (role !== 'super admin' && role !== 'admin') { 
             navigate('/'); 
             return; 
         }
@@ -39,10 +43,18 @@ const MonitoringPengajuan = () => {
         window.scrollTo(0, 0);
     }, [navigate]); 
 
+    // ✨ UPDATE: Filter data agar SAMA dengan kotak "Pengajuan ke SDM" di Dashboard ✨
     const fetchData = async () => {
         try {
+            // Kita panggil API dengan role superadmin agar backend memfilter status yang relevan untuk SDM
             const res = await axios.get('http://localhost:5000/api/submissions?role=superadmin');
-            const sortedData = (res.data || []).sort((a, b) => 
+            
+            // Filter tambahan di frontend untuk memastikan hanya data "Active" (bukan arsip) yang masuk monitoring ini
+            const activeSubmissions = (res.data || []).filter(s => 
+                !['Selesai (Surat Dirilis)', 'Ditolak SDM', 'Selesai Kegiatan'].includes(s.status)
+            );
+
+            const sortedData = activeSubmissions.sort((a, b) => 
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
             );
             setSubmissions(sortedData);
@@ -65,7 +77,6 @@ const MonitoringPengajuan = () => {
         } catch (err) { console.error("Gagal ambil jenis:", err); }
     };
 
-    // ✨ UPDATE: Tambah Info Pembimbing di Modal Detail ✨
     const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
@@ -103,13 +114,10 @@ const MonitoringPengajuan = () => {
 
                     <div style="background: #fff4e5; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
                         <h4 style="margin-top:0; color: #d35400; border-bottom: 2px solid #d35400; padding-bottom: 5px; font-size: 15px;">📋 Detail Kegiatan</h4>
-                        <p style="margin: 5px 0;"><b>Jenis Kegiatan:</b> ${s.nama_jenis}</p>
-                        <p style="margin: 5px 0;"><b>Unit Magang:</b> ${s.nama_unit}</p>
-                        <p style="margin: 5px 0;"><b>Judul/Kegiatan:</b> ${s.judul_atau_tujuan}</p>
-                        <p style="margin: 5px 0;"><b>Kategori:</b> ${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</p>
-                        <p style="margin: 5px 0;"><b>Dosen/Guru Pembimbing:</b> ${s.nama_pembimbing || '-'}</p>
-                        <p style="margin: 5px 0;"><b>Kontak Pembimbing:</b> ${s.kontak_pembimbing || '-'}</p>
-                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                        <p style="margin: 5px 0;"><b>Jenis:</b> ${s.nama_jenis}</p>
+                        <p style="margin: 5px 0;"><b>Judul:</b> ${s.judul_atau_tujuan}</p>
+                        <p style="margin: 5px 0;"><b>Pembimbing:</b> ${s.nama_pembimbing || '-'}</p>
+                        <p style="margin: 5px 0;"><b>Kontak:</b> ${s.kontak_pembimbing || '-'}</p>
                     </div>
                     
                     <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
@@ -124,10 +132,8 @@ const MonitoringPengajuan = () => {
                 html: htmlContent,
                 width: '600px',
                 confirmButtonText: 'Tutup',
-                confirmButtonColor: '#666',
-                showCloseButton: true
+                confirmButtonColor: '#666'
             });
-
         } catch (err) {
             Swal.fire('Error', 'Gagal mengambil detail data.', 'error');
         }
@@ -158,7 +164,6 @@ const MonitoringPengajuan = () => {
                 inputValidator: (value) => { if (!value) return 'Tanggal wajib diisi!' }
             });
             if (date) sendStatusUpdate(id, newStatus, { tgl_kirim_pusat: date, catatan: `Berkas dikirim ke Pusat pada ${date}` }, 'Status diubah ke Dikirim ke Pusat');
-        
         } else if (newStatus === 'Surat Telah Masuk dari Pusat') {
             const { value: date } = await Swal.fire({
                 title: 'Surat Masuk',
@@ -169,7 +174,6 @@ const MonitoringPengajuan = () => {
                 inputValidator: (value) => { if (!value) return 'Tanggal wajib diisi!' }
             });
             if (date) sendStatusUpdate(id, newStatus, { tgl_terima_pusat: date, catatan: `Surat diterima dari Pusat pada ${date}` }, 'Status diubah ke Surat Masuk dari Pusat');
-        
         } else {
             const result = await Swal.fire({
                 title: 'Konfirmasi',
@@ -192,7 +196,6 @@ const MonitoringPengajuan = () => {
             showCancelButton: true,
             confirmButtonColor: '#d33'
         });
-
         if (alasan) {
             try {
                 await axios.put(`http://localhost:5000/api/submissions/${id}/release`, { 
@@ -211,7 +214,7 @@ const MonitoringPengajuan = () => {
             title: 'Upload Dokumen Final',
             text: 'Upload Surat Pengantar / Surat Balasan dari Pusat',
             input: 'file',
-            inputAttributes: { 'accept': 'application/pdf,application/zip', 'aria-label': 'Upload dokumen final' },
+            inputAttributes: { 'accept': 'application/pdf,application/zip' },
             showCancelButton: true,
             confirmButtonText: 'Upload & Rilis',
             confirmButtonColor: '#28a745'
@@ -236,8 +239,7 @@ const MonitoringPengajuan = () => {
     };
 
     const filteredData = submissions.filter(s => {
-        const matchName = (s.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (s.asal_instansi || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchName = (s.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchUnit = filterUnit === '' || String(s.unit_id) === String(filterUnit);
         const matchType = filterType === '' || String(s.submission_type_id) === String(filterType);
         return matchName && matchUnit && matchType;
@@ -245,46 +247,74 @@ const MonitoringPengajuan = () => {
 
     return (
         <div style={styles.container}>
-            {/* SIDEBAR */}
             <div style={styles.sidebar}>
-                <div style={styles.logoArea}>
-                    <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>PUSAT</span></h3>
-                    <small style={{opacity:0.7}}>Sistem Manajemen Magang</small>
-                </div>
-                
-                <div style={styles.menuItem} onClick={() => navigate('/super-admin')}>
-                    <LayoutDashboard size={18}/> Dashboard Utama
-                </div>
-                <div style={styles.menuActive}>
-                    <RefreshCcw size={18}/> Monitoring Pengajuan
-                </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/users')}>
-                    <UserCog size={18}/> Manajemen Pengguna
-                </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/units')}>
-                    <Building2 size={18}/> Manajemen Unit
-                </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}>    
-                    <FileText size={18}/> Arsip Data Peserta
+                <div style={styles.sidebarBrand}>
+                    <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
+                    <p style={styles.brandSubtitle}>SISTEM MANAJEMEN MAGANG</p>
                 </div>
 
-                <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}>
-                    <LogOut size={18}/> Keluar Sistem
+                <div style={styles.sidebarNav}>
+                    <div style={styles.navGroup}>
+                        <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
+                            <div style={styles.navLinkContent}>
+                                <LayoutDashboard size={20} />
+                                <span>Dashboard Utama</span>
+                            </div>
+                            <ChevronDown size={16} style={{ transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s'}} />
+                        </div>
+                        {isDashboardMenuOpen && (
+                            <div style={styles.dropdownWrapper}>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'dashboard' } })}>
+                                    <div style={styles.dotIndicator} /> Ringkasan & Pantauan
+                                </div>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'peserta_aktif' } })}>
+                                    <div style={styles.dotIndicator} /> Monitoring Peserta
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={styles.navItemActive}>
+                        <div style={styles.navLinkContent}><RefreshCcw size={20} /> <span>Monitoring Pengajuan</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'requirements' } })}>
+                        <div style={styles.navLinkContent}><ClipboardCheck size={20} /> <span>Syarat Dokumen</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/users')}>
+                        <div style={styles.navLinkContent}><UserCog size={20} /> <span>Manajemen Pengguna</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/units')}>
+                        <div style={styles.navLinkContent}><Building2 size={20} /> <span>Manajemen Unit</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/archive')}>
+                        <div style={styles.navLinkContent}><Archive size={20} /> <span>Arsip Data Peserta</span></div>
+                    </div>
+                </div>
+
+                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                    <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
                 </div>
             </div>
 
             {/* AREA UTAMA */}
             <div style={styles.main}>
+                
+
                 <div style={styles.contentScroll}>
                     <div style={{marginBottom: '25px'}}>
                         <h2 style={{margin:0, color:'#003399'}}>Monitoring Verifikasi 🚄</h2>
                         <p style={{color:'#666', fontSize:'14px'}}>Fase tracking dokumen dan rilis surat pengantar KAI Pusat</p>
                     </div>
 
+                    {/* Filter Bar */}
                     <div style={styles.filterBar}>
                         <div style={styles.searchBox}>
                             <Search size={18} color="#003399" />
-                            <input placeholder="Cari nama lengkap..." style={styles.input} onChange={e => setSearchTerm(e.target.value)} />
+                            <input placeholder="Cari nama..." style={styles.input} onChange={e => setSearchTerm(e.target.value)} />
                         </div>
                         <div style={styles.selectWrapper}>
                             <Building2 size={16} color="#003399" />
@@ -293,15 +323,9 @@ const MonitoringPengajuan = () => {
                                 {units.map(u => <option key={u.id} value={u.id}>{u.nama_unit}</option>)}
                             </select>
                         </div>
-                        <div style={styles.selectWrapper}>
-                            <Briefcase size={16} color="#003399" />
-                            <select style={styles.select} value={filterType} onChange={e => setFilterType(e.target.value)}>
-                                <option value="">Semua Jenis</option>
-                                {types.map(t => <option key={t.id} value={t.id}>{t.nama_jenis}</option>)}
-                            </select>
-                        </div>
                     </div>
 
+                    {/* Tabel Data */}
                     <div style={styles.card}>
                         <table style={styles.table}>
                             <thead>
@@ -315,7 +339,7 @@ const MonitoringPengajuan = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredData.map((s, index) => (
+                                {filteredData.length > 0 ? filteredData.map((s, index) => (
                                     <tr key={s.id} style={styles.row}>
                                         <td style={styles.td}>{index + 1}</td>
                                         <td style={styles.td}>
@@ -327,18 +351,10 @@ const MonitoringPengajuan = () => {
                                             <div style={{fontSize: '11px', color: '#ff6600', fontWeight:'600'}}>{s.nama_jenis}</div>
                                         </td>
                                         <td style={{...styles.td, textAlign:'center'}}>
-                                            <button onClick={() => viewDetail(s.id)} style={styles.btnDetail} title="Lihat Detail Form">
-                                                <Eye size={14}/>
-                                            </button>
+                                            <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}><Eye size={14}/></button>
                                         </td>
                                         <td style={styles.td}>
                                             <span style={styles.badge(s.status)}>{s.status}</span>
-                                            {s.tgl_kirim_pusat && s.status === 'Pengajuan Telah Dikirim ke Pusat' && (
-                                                <div style={{fontSize: '10px', color: '#666', marginTop: '5px'}}>Dikirim: {new Date(s.tgl_kirim_pusat).toLocaleDateString('id-ID')}</div>
-                                            )}
-                                            {s.tgl_terima_pusat && s.status === 'Surat Telah Masuk dari Pusat' && (
-                                                <div style={{fontSize: '10px', color: '#666', marginTop: '5px'}}>Diterima: {new Date(s.tgl_terima_pusat).toLocaleDateString('id-ID')}</div>
-                                            )}
                                         </td>
                                         <td style={styles.td}>
                                             <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
@@ -355,41 +371,30 @@ const MonitoringPengajuan = () => {
                                                     value=""
                                                 >
                                                     <option value="" disabled>Pilih Tindakan</option>
-
                                                     {(s.status === 'Disetujui Unit, Menunggu Verifikasi SDM' || s.status === 'Menunggu Verifikasi SDM') && (
-                                                        <>
-                                                            <option value="Sedang Ditinjau SDM">Mulai Tinjau Berkas</option>
-                                                            <option value="tolak">Tolak Pengajuan</option>
-                                                        </>
+                                                        <><option value="Sedang Ditinjau SDM">Mulai Tinjau Berkas</option><option value="tolak">Tolak Pengajuan</option></>
                                                     )}
-
                                                     {s.status === 'Sedang Ditinjau SDM' && (
-                                                        <>
-                                                            <option value="Setujui, Tunggu Pengajuan Dikirim ke Pusat">Setujui & Siapkan Kirim</option>
-                                                            <option value="tolak">Tolak Pengajuan</option>
-                                                        </>
+                                                        <><option value="Setujui, Tunggu Pengajuan Dikirim ke Pusat">Setujui & Siapkan Kirim</option><option value="tolak">Tolak Pengajuan</option></>
                                                     )}
-
                                                     {s.status === 'Setujui, Tunggu Pengajuan Dikirim ke Pusat' && (
                                                         <option value="Pengajuan Telah Dikirim ke Pusat">Tandai Dikirim ke Pusat (Input Tgl)</option>
                                                     )}
-
                                                     {s.status === 'Pengajuan Telah Dikirim ke Pusat' && (
                                                         <option value="Surat Telah Masuk dari Pusat">Surat Turun dari Pusat (Input Tgl)</option>
                                                     )}
-
                                                     {s.status === 'Surat Telah Masuk dari Pusat' && (
                                                         <option value="upload_final">Upload & Rilis Surat Final</option>
                                                     )}
                                                 </select>
-
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                )) : (
+                                    <tr><td colSpan="6" style={{padding: '40px', textAlign: 'center', color: '#999'}}>Tidak ada data aktif untuk diproses.</td></tr>
+                                )}
                             </tbody>
                         </table>
-                        {filteredData.length === 0 && <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>Tidak ada data untuk diproses.</div>}
                     </div>
                 </div>
             </div>
@@ -398,25 +403,38 @@ const MonitoringPengajuan = () => {
 };
 
 const styles = {
-    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
-    main: { flex: 1, marginLeft: '260px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
+    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    sidebar: { width: '280px', backgroundColor: '#132a71', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
+    brandSubtitle: { margin: '5px 0 0 0', fontSize: '10px', opacity: 0.5, fontWeight: 'bold' },
+    sidebarNav: { flex: 1, padding: '20px 15px', overflowY: 'auto' },
+    navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', transition: '0.3s', color: 'rgba(255,255,255,0.7)' },
+    navItemActive: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', backgroundColor: '#ff6600', color: '#fff', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(255, 102, 0, 0.3)' },
+    navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
+    dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
+    dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
+    dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
+    sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
+    logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+    main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh' },
+    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
+    avatarSmall: { width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
+    profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right', marginLeft: '12px' },
+    profileNameSmall: { fontSize: '14px', fontWeight: 'bold', color: '#1b263b' },
+    profileRoleSmall: { fontSize: '11px', color: '#778da9' },
     contentScroll: { padding: '40px', flex: 1 },
-    logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
-    menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
-    menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
-    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
-    filterBar: { display: 'flex', gap: '15px', marginBottom: '30px', marginTop: '20px' },
-    searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
-    selectWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
+    filterBar: { display: 'flex', gap: '15px', marginBottom: '30px' },
+    searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', border: '1px solid #e0e0e0' },
+    selectWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', border: '1px solid #e0e0e0' },
     input: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px' },
-    select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px', cursor: 'pointer' },
+    select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px' },
     card: { backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' },
     table: { width: '100%', borderCollapse: 'collapse' },
     thRow: { backgroundColor: '#f8f9fa' },
     th: { padding: '18px 15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase' },
     td: { padding: '15px', borderBottom: '1px solid #f1f1f1', verticalAlign: 'middle' },
-    dropdown: { padding: '8px 10px', borderRadius: '8px', border: '1px solid #cce0ff', fontSize: '12px', outline: 'none', cursor: 'pointer', backgroundColor: '#f0f4ff', color: '#003399', fontWeight: 'bold' },
+    dropdown: { padding: '8px 10px', borderRadius: '8px', border: '1px solid #cce0ff', fontSize: '12px', backgroundColor: '#f0f4ff', color: '#003399', fontWeight: 'bold' },
     badge: (status) => {
         let bg = '#eef2f7'; let color = '#34495e';
         if (status === 'Sedang Ditinjau SDM') { bg = '#fff4e5'; color = '#d35400'; }
@@ -425,7 +443,8 @@ const styles = {
         if (status === 'Surat Telah Masuk dari Pusat') { bg = '#e1f7e7'; color = '#27ae60'; }
         return { padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', backgroundColor: bg, color: color, display: 'inline-block' };
     },
-    btnDetail: { backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #cce0ff', padding: '8px', borderRadius: '8px', cursor: 'pointer' }
+    btnDetail: { backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #cce0ff', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
+    row: { transition: '0.2s' }
 };
 
 export default MonitoringPengajuan;

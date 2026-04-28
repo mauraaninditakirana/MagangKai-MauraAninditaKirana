@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
     LayoutDashboard, UserCog, Building2, RefreshCcw,
     LogOut, PlusCircle, Edit, Trash2, Search, FileText, 
-    ChevronDown, ChevronRight, ClipboardCheck, Settings2, Save, X
+    ChevronDown, ChevronRight, ClipboardCheck, Settings2, Save, X, Archive, Bell
 } from 'lucide-react';
 
 const UnitManagement = () => {
@@ -15,10 +15,14 @@ const UnitManagement = () => {
     const navigate = useNavigate();
     const location = useLocation();
     
+    // State Sidebar Dropdown
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
     
     const [expandedUnitId, setExpandedUnitId] = useState(null);
     const [quotaForm, setQuotaForm] = useState({});
+
+    // Ambil data user untuk header
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
         fetchUnits();
@@ -77,7 +81,6 @@ const UnitManagement = () => {
 
         if (namaBaru && namaBaru !== unit.nama_unit) {
             try {
-                // ✨ FIX ERROR DI SINI: Tambahkan (unit.quotas || []) ✨
                 const existingQuotas = types.map(t => {
                     const qLimit = (unit.quotas || []).find(q => q.submission_type_id === t.id)?.quota_limit || 0;
                     return { type_id: t.id, limit: qLimit };
@@ -118,7 +121,6 @@ const UnitManagement = () => {
             setExpandedUnitId(unit.id);
             const initialForm = {};
             types.forEach(t => {
-                // ✨ FIX ERROR DI SINI: Tambahkan (unit.quotas || []) ✨
                 const limit = (unit.quotas || []).find(q => q.submission_type_id === t.id)?.quota_limit || 0;
                 initialForm[t.id] = limit;
             });
@@ -159,144 +161,175 @@ const UnitManagement = () => {
 
     return (
         <div style={styles.container}>
+            {/* ✨ SIDEBAR PREMIUM STYLE ✨ */}
             <div style={styles.sidebar}>
-                <div style={styles.logoArea}>
-                    <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>PUSAT</span></h3>
-                    <small style={{opacity:0.7}}>Sistem Manajemen Magang</small>
+                <div style={styles.sidebarBrand}>
+                    <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
+                    <p style={styles.brandSubtitle}>SISTEM MANAJEMEN MAGANG</p>
                 </div>
-                <div>
-                    <div style={styles.menuItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
-                        <div style={{display:'flex', alignItems:'center', gap:'12px'}}><LayoutDashboard size={18}/> Dashboard Utama</div>
-                        {isDashboardMenuOpen ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
-                    </div>
-                    {isDashboardMenuOpen && (
-                        <div style={styles.subMenuContainer}>
-                            <div style={styles.subMenuItem} onClick={() => navigate('/super-admin')}>Ringkasan & Pantauan Unit</div>
-                            <div style={styles.subMenuItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'peserta_aktif' } })}>Monitoring Peserta Aktif</div>
+
+                <div style={styles.sidebarNav}>
+                    <div style={styles.navGroup}>
+                        <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
+                            <div style={styles.navLinkContent}>
+                                <LayoutDashboard size={20} />
+                                <span>Dashboard Utama</span>
+                            </div>
+                            <ChevronDown size={16} style={{ transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s'}} />
                         </div>
-                    )}
+                        {isDashboardMenuOpen && (
+                            <div style={styles.dropdownWrapper}>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin')}>
+                                    <div style={styles.dotIndicator} /> Ringkasan & Pantauan
+                                </div>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'peserta_aktif' } })}>
+                                    <div style={styles.dotIndicator} /> Monitoring Peserta
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/monitoring')}>
+                        <div style={styles.navLinkContent}><RefreshCcw size={20} /> <span>Monitoring Pengajuan</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'requirements' } })}>
+                        <div style={styles.navLinkContent}><ClipboardCheck size={20} /> <span>Syarat Dokumen</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/users')}>
+                        <div style={styles.navLinkContent}><UserCog size={20} /> <span>Manajemen Pengguna</span></div>
+                    </div>
+
+                    <div style={styles.navItemActive}>
+                        <div style={styles.navLinkContent}><Building2 size={20} /> <span>Manajemen Unit</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/archive')}>
+                        <div style={styles.navLinkContent}><Archive size={20} /> <span>Arsip Data Peserta</span></div>
+                    </div>
                 </div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/monitoring')}><RefreshCcw size={18}/> Monitoring Pengajuan</div>
-                <div style={styles.menuItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'requirements' } })}><ClipboardCheck size={18}/> Syarat Dokumen</div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/users')}><UserCog size={18}/> Manajemen Pengguna</div>
-                <div style={styles.menuActive}><Building2 size={18}/> Manajemen Unit</div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}><FileText size={18}/> Arsip Data Peserta</div>
-                <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}><LogOut size={18}/> Keluar Sistem</div>
+
+                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                    <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
+                </div>
             </div>
 
+            {/* AREA UTAMA */}
             <div style={styles.main}>
-                <div style={styles.header}>
-                    <div>
-                        <h2 style={{margin:0, color:'#003399'}}>Manajemen Unit & Kuota 🏢</h2>
-                        <p style={{color:'#666', fontSize:'14px'}}>Atur daftar divisi dan kuota spesifik per jenis kegiatan</p>
+                <div style={styles.contentScroll}>
+                    <div style={styles.header}>
+                        <div>
+                            <h2 style={{margin:0, color:'#003399'}}>Manajemen Unit & Kuota</h2>
+                            <p style={{color:'#666', fontSize:'14px'}}>Atur daftar divisi dan kuota spesifik per jenis kegiatan</p>
+                        </div>
+                        <button onClick={handleAddUnit} style={styles.btnAdd}>
+                            <PlusCircle size={18} /> Tambah Unit
+                        </button>
                     </div>
-                    <button onClick={handleAddUnit} style={styles.btnAdd}>
-                        <PlusCircle size={18} /> Tambah Unit
-                    </button>
-                </div>
 
-                <div style={styles.searchContainer}>
-                    <Search size={18} color="#003399" />
-                    <input 
-                        placeholder="Cari nama unit..." 
-                        style={styles.searchInput} 
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                </div>
+                    <div style={styles.searchContainer}>
+                        <Search size={18} color="#003399" />
+                        <input 
+                            placeholder="Cari nama unit..." 
+                            style={styles.searchInput} 
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
 
-                <div style={styles.card}>
-                    <table style={styles.table}>
-                        <thead>
-                            <tr style={styles.thRow}>
-                                <th style={{...styles.th, width: '50px'}}>No</th>
-                                <th style={styles.th}>Nama Divisi / Unit</th>
-                                <th style={styles.th}>Detail Kuota</th>
-                                <th style={{...styles.th, textAlign:'center', width: '200px'}}>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredUnits.length > 0 ? filteredUnits.map((u, index) => (
-                                <React.Fragment key={u.id}>
-                                    <tr style={styles.row}>
-                                        <td style={styles.td}>{index + 1}</td>
-                                        <td style={styles.td}>
-                                            <strong style={{color:'#333', fontSize: '15px'}}>{u.nama_unit}</strong>
-                                        </td>
-                                        <td style={styles.td}>
-                                            <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
-                                                {/* ✨ FIX ERROR DI SINI JUGA ✨ */}
-                                                {(u.quotas || []).length > 0 ? (
-                                                    (u.quotas || []).map(q => (
-                                                        <span key={q.id || Math.random()} style={styles.badgeQuota}>
-                                                            {q.nama_jenis || 'Kegiatan'}: <b>{q.quota_limit}</b>
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span style={{fontSize:'12px', color:'#999', fontStyle:'italic'}}>Belum diatur</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td style={styles.td}>
-                                            <div style={{display:'flex', gap:'8px', justifyContent:'center'}}>
-                                                <button 
-                                                    onClick={() => toggleQuotaDropdown(u)} 
-                                                    style={{...styles.btnAction, backgroundColor: expandedUnitId === u.id ? '#003399' : '#e0f0ff', color: expandedUnitId === u.id ? '#fff' : '#0055cc'}}
-                                                    title="Kelola Kuota"
-                                                >
-                                                    <Settings2 size={16}/> Kuota
-                                                </button>
-                                                <button onClick={() => handleEditName(u)} style={{...styles.btnAction, backgroundColor: '#fff4e5', color: '#f39c12'}} title="Edit Nama Unit">
-                                                    <Edit size={16}/>
-                                                </button>
-                                                <button onClick={() => handleDelete(u.id)} style={{...styles.btnAction, backgroundColor: '#fff0f0', color: '#e74c3c'}} title="Hapus Unit">
-                                                    <Trash2 size={16}/>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-
-                                    {expandedUnitId === u.id && (
-                                        <tr style={{backgroundColor: '#f8fbff'}}>
-                                            <td colSpan="4" style={{padding: '20px', borderBottom: '1px solid #e0e0e0'}}>
-                                                <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', padding: '15px', borderLeft: '4px solid #0055cc', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)'}}>
-                                                    <div style={{flex: 1}}>
-                                                        <h4 style={{margin: '0 0 15px 0', color: '#003399'}}>Kelola Kuota: {u.nama_unit}</h4>
-                                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px'}}>
-                                                            {types.map(t => (
-                                                                <div key={t.id} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                                                                    <label style={{fontSize: '12px', fontWeight: 'bold', color: '#666'}}>{t.nama_jenis}</label>
-                                                                    <div style={{display: 'flex', alignItems: 'center', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden'}}>
-                                                                        <span style={{padding: '8px 12px', backgroundColor: '#eee', color: '#555', borderRight: '1px solid #ddd'}}>Max</span>
-                                                                        <input 
-                                                                            type="number" 
-                                                                            min="0"
-                                                                            style={{border: 'none', padding: '8px 10px', width: '100%', outline: 'none', fontWeight: 'bold'}}
-                                                                            value={quotaForm[t.id] !== undefined ? quotaForm[t.id] : 0}
-                                                                            onChange={(e) => setQuotaForm({...quotaForm, [t.id]: e.target.value})}
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '35px'}}>
-                                                        <button onClick={() => handleSaveQuotas(u)} style={styles.btnSaveDropdown}>
-                                                            <Save size={16}/> Simpan Kuota
-                                                        </button>
-                                                        <button onClick={() => setExpandedUnitId(null)} style={styles.btnCancelDropdown}>
-                                                            <X size={16}/> Tutup
-                                                        </button>
-                                                    </div>
+                    <div style={styles.card}>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr style={styles.thRow}>
+                                    <th style={{...styles.th, width: '50px'}}>No</th>
+                                    <th style={styles.th}>Nama Divisi / Unit</th>
+                                    <th style={styles.th}>Detail Kuota</th>
+                                    <th style={{...styles.th, textAlign:'center', width: '200px'}}>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredUnits.length > 0 ? filteredUnits.map((u, index) => (
+                                    <React.Fragment key={u.id}>
+                                        <tr style={styles.row}>
+                                            <td style={styles.td}>{index + 1}</td>
+                                            <td style={styles.td}>
+                                                <strong style={{color:'#333', fontSize: '15px'}}>{u.nama_unit}</strong>
+                                            </td>
+                                            <td style={styles.td}>
+                                                <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
+                                                    {(u.quotas || []).length > 0 ? (
+                                                        (u.quotas || []).map(q => (
+                                                            <span key={q.id || Math.random()} style={styles.badgeQuota}>
+                                                                {q.nama_jenis || 'Kegiatan'}: <b>{q.quota_limit}</b>
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span style={{fontSize:'12px', color:'#999', fontStyle:'italic'}}>Belum diatur</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td style={styles.td}>
+                                                <div style={{display:'flex', gap:'8px', justifyContent:'center'}}>
+                                                    <button 
+                                                        onClick={() => toggleQuotaDropdown(u)} 
+                                                        style={{...styles.btnAction, backgroundColor: expandedUnitId === u.id ? '#003399' : '#f0f4ff', color: expandedUnitId === u.id ? '#fff' : '#003399'}}
+                                                        title="Kelola Kuota"
+                                                    >
+                                                        <Settings2 size={16}/> Kuota
+                                                    </button>
+                                                    <button onClick={() => handleEditName(u)} style={{...styles.btnAction, backgroundColor: '#fff4e5', color: '#f39c12'}} title="Edit Nama Unit">
+                                                        <Edit size={16}/>
+                                                    </button>
+                                                    <button onClick={() => handleDelete(u.id)} style={{...styles.btnAction, backgroundColor: '#fff0f0', color: '#e74c3c'}} title="Hapus Unit">
+                                                        <Trash2 size={16}/>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
-                                    )}
-                                </React.Fragment>
-                            )) : (
-                                <tr><td colSpan="4" style={{textAlign: 'center', padding: '40px', color: '#999'}}>Tidak ada data unit yang ditemukan.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+
+                                        {expandedUnitId === u.id && (
+                                            <tr style={{backgroundColor: '#f8fbff'}}>
+                                                <td colSpan="4" style={{padding: '20px', borderBottom: '1px solid #e0e0e0'}}>
+                                                    <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', padding: '15px', borderLeft: '4px solid #0055cc', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)'}}>
+                                                        <div style={{flex: 1}}>
+                                                            <h4 style={{margin: '0 0 15px 0', color: '#003399'}}>Kelola Kuota: {u.nama_unit}</h4>
+                                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px'}}>
+                                                                {types.map(t => (
+                                                                    <div key={t.id} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                                                                        <label style={{fontSize: '12px', fontWeight: 'bold', color: '#666'}}>{t.nama_jenis}</label>
+                                                                        <div style={{display: 'flex', alignItems: 'center', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden'}}>
+                                                                            <span style={{padding: '8px 12px', backgroundColor: '#eee', color: '#555', borderRight: '1px solid #ddd'}}>Max</span>
+                                                                            <input 
+                                                                                type="number" 
+                                                                                min="0"
+                                                                                style={{border: 'none', padding: '8px 10px', width: '100%', outline: 'none', fontWeight: 'bold'}}
+                                                                                value={quotaForm[t.id] !== undefined ? quotaForm[t.id] : 0}
+                                                                                onChange={(e) => setQuotaForm({...quotaForm, [t.id]: e.target.value})}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '35px'}}>
+                                                            <button onClick={() => handleSaveQuotas(u)} style={styles.btnSaveDropdown}>
+                                                                <Save size={16}/> Simpan
+                                                            </button>
+                                                            <button onClick={() => setExpandedUnitId(null)} style={styles.btnCancelDropdown}>
+                                                                <X size={16}/> Tutup
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                )) : (
+                                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '40px', color: '#999'}}>Tidak ada data unit yang ditemukan.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -304,15 +337,27 @@ const UnitManagement = () => {
 };
 
 const styles = {
-    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
-    main: { flex: 1, marginLeft: '260px', padding: '40px', minHeight: '100vh', boxSizing: 'border-box' },
-    logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
-    menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px' },
-    menuItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
-    subMenuContainer: { backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: '10px', marginBottom: '15px' },
-    subMenuItem: { padding: '10px 15px 10px 45px', color: '#ccc', fontSize: '13px', cursor: 'pointer' },
-    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa' },
+    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    sidebar: { width: '280px', backgroundColor: '#132a71', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
+    brandSubtitle: { margin: '5px 0 0 0', fontSize: '10px', opacity: 0.5, fontWeight: 'bold' },
+    sidebarNav: { flex: 1, padding: '20px 15px', overflowY: 'auto' },
+    navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', transition: '0.3s', color: 'rgba(255,255,255,0.7)' },
+    navItemActive: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', backgroundColor: '#ff6600', color: '#fff', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(255, 102, 0, 0.3)' },
+    navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
+    dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
+    dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
+    dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
+    sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
+    logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+    main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
+    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
+    avatarSmall: { width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
+    profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right', marginLeft: '12px' },
+    profileNameSmall: { fontSize: '14px', fontWeight: 'bold', color: '#1b263b' },
+    profileRoleSmall: { fontSize: '11px', color: '#778da9' },
+    contentScroll: { padding: '40px', flex: 1 },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' },
     searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', width: '300px', border: '1px solid #e0e0e0', marginBottom: '20px' },
     searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
@@ -324,7 +369,7 @@ const styles = {
     td: { padding: '15px', borderBottom: '1px solid #f1f1f1', verticalAlign: 'middle' },
     row: { transition: '0.2s', '&:hover': { backgroundColor: '#fcfcfc' } },
     badgeQuota: { padding: '6px 12px', backgroundColor: '#f0f4ff', color: '#003399', borderRadius: '8px', fontSize: '11px', border: '1px solid #cce0ff' },
-    btnAction: { border: 'none', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' },
+    btnAction: { border: 'none', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', fontSize: '12px' },
     btnSaveDropdown: { backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '13px' },
     btnCancelDropdown: { backgroundColor: '#eee', color: '#666', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '13px' }
 };

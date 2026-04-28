@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, FileText, RefreshCcw, UserCog, Building2, 
     LogOut, ChevronDown, User, Users, Archive, Edit3, Mail, IdCard, 
-    Building, Save, X, ChevronRight, ClipboardCheck, PlusCircle, Trash2
+    Building, Save, X, ChevronRight, ClipboardCheck, PlusCircle, Trash2, Bell
 } from 'lucide-react';
 
 const SuperAdminDashboard = () => {
@@ -19,7 +19,7 @@ const SuperAdminDashboard = () => {
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(true);
     const [pesertaAktif, setPesertaAktif] = useState([]);
     
-    // ✨ State Baru untuk Unit & Syarat Dokumen ✨
+    // State Baru untuk Unit & Syarat Dokumen
     const [units, setUnits] = useState([]);
     const [requirements, setRequirements] = useState([]);
 
@@ -30,7 +30,10 @@ const SuperAdminDashboard = () => {
     });
 
     const [formData, setFormData] = useState({
-        nama_lengkap: userData.nama_lengkap || '', email: userData.email || '', nomor_induk: userData.nomor_induk || '', password_baru: ''
+        nama_lengkap: userData.nama_lengkap || '', 
+        email: userData.email || '', 
+        nomor_induk: userData.nomor_induk || '', 
+        password_baru: ''
     });
 
     const fetchStats = async () => {
@@ -47,7 +50,6 @@ const SuperAdminDashboard = () => {
         } catch (err) { console.error("Gagal ambil peserta aktif", err); }
     };
 
-    // ✨ FETCH UNITS UNTUK PANTAUAN UNIT ✨
     const fetchUnits = async () => {
         try {
             const res = await axios.get('http://localhost:5000/api/units');
@@ -55,7 +57,6 @@ const SuperAdminDashboard = () => {
         } catch (err) { console.error("Gagal ambil unit", err); }
     };
 
-    // ✨ FETCH SYARAT DOKUMEN ✨
     const fetchRequirements = async () => {
         try {
             const res = await axios.get('http://localhost:5000/api/requirements');
@@ -67,7 +68,12 @@ const SuperAdminDashboard = () => {
         try {
             const res = await axios.get(`http://localhost:5000/api/users/${id}`);
             setUserData(res.data);
-            setFormData({ nama_lengkap: res.data.nama_lengkap || '', email: res.data.email || '', nomor_induk: res.data.nomor_induk || '', password_baru: '' });
+            setFormData({ 
+                nama_lengkap: res.data.nama_lengkap || '', 
+                email: res.data.email || '', 
+                nomor_induk: res.data.nomor_induk || '', 
+                password_baru: '' 
+            });
         } catch (err) { console.error("Gagal ambil profil:", err); }
     };
 
@@ -83,7 +89,7 @@ const SuperAdminDashboard = () => {
         } catch (err) { Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan.', 'error'); }
     };
 
-    // ✨ CRUD SYARAT DOKUMEN ✨
+    // CRUD SYARAT DOKUMEN
     const handleAddRequirement = async () => {
         const { value: formValues } = await Swal.fire({
             title: 'Tambah Syarat Dokumen',
@@ -186,68 +192,93 @@ const SuperAdminDashboard = () => {
 
     return (
         <div style={styles.container}>
-            {/* SIDEBAR */}
             <div style={styles.sidebar}>
-                <div style={styles.logoArea}>
-                    <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>PUSAT</span></h3>
-                    <small style={{opacity:0.7}}>Sistem Manajemen Magang</small>
+                <div style={styles.sidebarBrand}>
+                    <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
+                    <p style={styles.brandSubtitle}>SISTEM MANAJEMEN MAGANG</p>
                 </div>
-                
-                <div>
-                    <div 
-                        style={activeTab === 'dashboard' || activeTab === 'peserta_aktif' ? styles.menuActive : styles.menuItem} 
-                        onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}
-                    >
-                        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                            <LayoutDashboard size={18}/> Dashboard Utama
+
+                <div style={styles.sidebarNav}>
+                    {/* DROPDOWN GROUP: DASHBOARD */}
+                    <div style={styles.navGroup}>
+                        <div 
+                            style={activeTab === 'dashboard' || activeTab === 'peserta_aktif' ? styles.navItemActive : styles.navItem}
+                            onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}
+                        >
+                            <div style={styles.navLinkContent}>
+                                <LayoutDashboard size={20} />
+                                <span>Dashboard Utama</span>
+                            </div>
+                            <ChevronDown size={16} style={{ 
+                                transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: '0.3s'
+                            }} />
                         </div>
-                        {isDashboardMenuOpen ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+                        
+                        {isDashboardMenuOpen && (
+                            <div style={styles.dropdownWrapper}>
+                                <div 
+                                    style={activeTab === 'dashboard' ? styles.dropdownItemActive : styles.dropdownItem}
+                                    onClick={() => setActiveTab('dashboard')}
+                                >
+                                    <div style={styles.dotIndicator} /> Ringkasan & Pantauan
+                                </div>
+                                <div 
+                                    style={activeTab === 'peserta_aktif' ? styles.dropdownItemActive : styles.dropdownItem}
+                                    onClick={() => setActiveTab('peserta_aktif')}
+                                >
+                                    <div style={styles.dotIndicator} /> Monitoring Peserta
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    
-                    {isDashboardMenuOpen && (
-                        <div style={styles.subMenuContainer}>
-                            <div 
-                                style={activeTab === 'dashboard' ? styles.subMenuItemActive : styles.subMenuItem}
-                                onClick={() => setActiveTab('dashboard')}
-                            >
-                                Ringkasan & Pantauan Unit
-                            </div>
-                            <div 
-                                style={activeTab === 'peserta_aktif' ? styles.subMenuItemActive : styles.subMenuItem}
-                                onClick={() => setActiveTab('peserta_aktif')}
-                            >
-                                Monitoring Peserta Aktif
-                            </div>
-                        </div>
-                    )}
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/monitoring')}>
+                        <div style={styles.navLinkContent}><RefreshCcw size={20} /> <span>Monitoring Pengajuan</span></div>
+                    </div>
+
+                    <div style={activeTab === 'requirements' ? styles.navItemActive : styles.navItem} onClick={() => setActiveTab('requirements')}>
+                        <div style={styles.navLinkContent}><ClipboardCheck size={20} /> <span>Syarat Dokumen</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/users')}>
+                        <div style={styles.navLinkContent}><UserCog size={20} /> <span>Manajemen Pengguna</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/units')}>
+                        <div style={styles.navLinkContent}><Building2 size={20} /> <span>Manajemen Unit</span></div>
+                    </div>
+
+                    <div style={styles.navItem} onClick={() => navigate('/admin/archive')}>
+                        <div style={styles.navLinkContent}><Archive size={20} /> <span>Arsip Data Peserta</span></div>
+                    </div>
                 </div>
 
-                <div style={styles.menuItem} onClick={() => navigate('/admin/monitoring')}><RefreshCcw size={18}/> Monitoring Pengajuan</div>
-                <div style={activeTab === 'requirements' ? styles.menuActive : styles.menuItem} onClick={() => setActiveTab('requirements')}><ClipboardCheck size={18}/> Syarat Dokumen</div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/users')}><UserCog size={18}/> Manajemen Pengguna</div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/units')}><Building2 size={18}/> Manajemen Unit</div>
-                <div style={styles.menuItem} onClick={() => navigate('/admin/archive')}><FileText size={18}/> Arsip Data Peserta</div>
-
-                <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}><LogOut size={18}/> Keluar Sistem</div>
+                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                    <div style={styles.logoutBtn}>
+                        <LogOut size={20} />
+                        <span>Keluar Akun</span>
+                    </div>
+                </div>
             </div>
 
             {/* AREA UTAMA */}
             <div style={styles.main}>
                 <div style={styles.topHeader}>
                     <div style={styles.profileTrigger} onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                        <div style={styles.avatar}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
+                        <div style={styles.avatarSmall}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
                         <div style={styles.profileInfoText}>
-                            <span style={styles.profileName}>{userData.nama_lengkap}</span>
-                            <small style={styles.profileRole}>{userData.role}</small>
+                            <span style={styles.profileNameSmall}>{userData.nama_lengkap}</span>
+                            <small style={styles.profileRoleSmall}>{userData.role}</small>
                         </div>
                         <ChevronDown size={16} color="#666" />
                         
                         {showProfileMenu && (
                             <div style={styles.dropdownBox}>
-                                <div style={styles.dropdownItem} onClick={() => { setActiveTab('profile'); setShowProfileMenu(false); }}>
+                                <div style={styles.dropdownBoxItem} onClick={() => { setActiveTab('profile'); setShowProfileMenu(false); }}>
                                     <User size={14} /> Lihat Profil
                                 </div>
-                                <div style={{...styles.dropdownItem, color: '#e74c3c'}} onClick={() => {localStorage.clear(); navigate('/');}}>
+                                <div style={{...styles.dropdownBoxItem, color: '#e74c3c'}} onClick={() => {localStorage.clear(); navigate('/');}}>
                                     <LogOut size={14} /> Keluar
                                 </div>
                             </div>
@@ -278,14 +309,13 @@ const SuperAdminDashboard = () => {
                                 </div>
                             </div>
 
-                            {/* ✨ PANTAUAN UNIT GRID ✨ */}
+                            {/* PANTAUAN UNIT GRID */}
                             <div style={{marginTop: '40px'}}>
                                 <h3 style={{color: '#003399', borderBottom: '2px solid #e0e0e0', paddingBottom: '10px', marginBottom: '20px'}}>
                                     Pantauan Unit (Peserta Aktif)
                                 </h3>
                                 <div style={styles.unitGrid}>
                                     {units.map(unit => {
-                                        // Hitung peserta aktif di unit ini
                                         const activeInUnit = pesertaAktif.filter(p => p.unit_id === unit.id).length;
                                         return (
                                             <div key={unit.id} style={styles.unitCard}>
@@ -341,7 +371,6 @@ const SuperAdminDashboard = () => {
                         </div>
                     )}
 
-                    {/* ✨ VIEW CRUD SYARAT DOKUMEN ✨ */}
                     {activeTab === 'requirements' && (
                         <div style={styles.dashboardView}>
                             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
@@ -398,53 +427,68 @@ const SuperAdminDashboard = () => {
 
                     {activeTab === 'profile' && (
                         <div style={styles.profileContainer}>
-                            <div style={styles.profileHeader}>
-                                <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
-                                <h2 style={{margin: '10px 0 5px 0', color: '#003399'}}>{userData.nama_lengkap}</h2>
-                                <span style={styles.roleBadge}>Super Admin Pusat</span>
-                                {!isEditing && (
-                                    <button style={styles.btnEditAvatar} onClick={() => setIsEditing(true)}>
-                                        <Edit3 size={14} /> Edit Profil & Password
-                                    </button>
-                                )}
-                            </div>
-                            {!isEditing ? (
-                                <div style={styles.infoGrid}>
-                                    <div style={styles.infoItem}>
-                                        <Mail size={18} color="#003399" />
-                                        <div><small style={styles.label}>Email Sistem</small><p style={styles.val}>{userData.email || '-'}</p></div>
-                                    </div>
-                                    <div style={styles.infoItem}>
-                                        <IdCard size={18} color="#003399" />
-                                        <div><small style={styles.label}>NIPP / Nomor Induk</small><p style={styles.val}>{userData.nomor_induk || '-'}</p></div>
-                                    </div>
-                                    <div style={styles.infoItem}>
-                                        <Building size={18} color="#003399" />
-                                        <div><small style={styles.label}>Lokasi Penempatan</small><p style={styles.val}>Kantor Pusat (KAI PUSAT)</p></div>
+                            <div style={styles.landscapeHeader}>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '25px'}}>
+                                    <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
+                                    <div>
+                                        <h2 style={{margin: '0 0 5px 0', color: '#003399', fontSize: '24px'}}>{userData.nama_lengkap}</h2>
+                                        <span style={styles.roleBadgeSDM}>Super Admin Pusat</span>
                                     </div>
                                 </div>
+                                <div style={styles.notifIconWrapper}>
+                                    <Bell size={22} color="#ff6600" />
+                                    <span style={styles.notifDot}></span>
+                                </div>
+                            </div>
+
+                            <hr style={{border: '0.5px solid #eee', margin: '25px 0'}} />
+
+                            {!isEditing ? (
+                                <>
+                                    <div style={styles.infoGridHorizontal}>
+                                        <div style={styles.infoItemHorizontal}>
+                                            <Mail size={18} color="#003399" />
+                                            <div><small style={styles.labelSmall}>Email Sistem</small><p style={styles.valSmall}>{userData.email || '-'}</p></div>
+                                        </div>
+                                        <div style={styles.infoItemHorizontal}>
+                                            <IdCard size={18} color="#003399" />
+                                            <div><small style={styles.labelSmall}>NIPP / Nomor Induk</small><p style={styles.valSmall}>{userData.nomor_induk || '-'}</p></div>
+                                        </div>
+                                        <div style={styles.infoItemHorizontal}>
+                                            <Building size={18} color="#003399" />
+                                            <div><small style={styles.labelSmall}>Lokasi Penempatan</small><p style={styles.valSmall}>KAI DAOP 6 (PUSAT)</p></div>
+                                        </div>
+                                    </div>
+                                    <div style={{marginTop: '30px'}}>
+                                        <button style={styles.btnEditLandscape} onClick={() => setIsEditing(true)}>
+                                            <Edit3 size={16} /> Edit Profil & Password
+                                        </button>
+                                    </div>
+                                </>
                             ) : (
-                                <form onSubmit={handleUpdateProfile} style={styles.form}>
-                                    <div style={styles.inputGroup}>
-                                        <label style={styles.label}>Nama Lengkap</label>
-                                        <input style={styles.input} required value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
+                                <form onSubmit={handleUpdateProfile} style={styles.formLandscape}>
+                                    <div style={styles.inputGroupFull}>
+                                        <label style={styles.labelForm}>Nama Lengkap</label>
+                                        <input style={styles.inputForm} required value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
                                     </div>
-                                    <div style={styles.inputGroup}>
-                                        <label style={styles.label}>Email Sistem</label>
-                                        <input style={styles.input} type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                    </div>
-                                    <div style={styles.inputGroup}>
-                                        <label style={styles.label}>NIPP / Nomor Induk</label>
-                                        <input style={styles.input} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
+                                    <div style={styles.rowForm}>
+                                        <div style={styles.inputGroupHalf}>
+                                            <label style={styles.labelForm}>Email Sistem</label>
+                                            <input style={styles.inputForm} type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                        </div>
+                                        <div style={styles.inputGroupHalf}>
+                                            <label style={styles.labelForm}>NIPP / Nomor Induk</label>
+                                            <input style={styles.inputForm} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
+                                        </div>
                                     </div>
                                     <hr style={{margin: '15px 0', border: '0.5px solid #eee'}} />
-                                    <div style={styles.inputGroup}>
-                                        <label style={styles.label}>Password Baru</label>
-                                        <input type="password" style={styles.input} placeholder="Isi jika ingin ganti" value={formData.password_baru} onChange={e => setFormData({...formData, password_baru: e.target.value})}/>
+                                    <div style={styles.inputGroupFull}>
+                                        <label style={styles.labelForm}>Password Baru (Opsional)</label>
+                                        <input type="password" style={styles.inputForm} placeholder="Isi jika ingin ganti" value={formData.password_baru} onChange={e => setFormData({...formData, password_baru: e.target.value})}/>
                                     </div>
-                                    <div style={styles.btnArea}>
-                                        <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
-                                        <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan Perubahan</button>
+                                    <div style={styles.btnAreaLandscape}>
+                                        <button type="button" style={styles.btnCancelLandscape} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
+                                        <button type="submit" style={styles.btnSaveLandscape}><Save size={16}/> Simpan Perubahan</button>
                                     </div>
                                 </form>
                             )}
@@ -457,62 +501,86 @@ const SuperAdminDashboard = () => {
 };
 
 const styles = {
-    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100, boxShadow: '2px 0 10px rgba(0,0,0,0.1)' },
-    main: { flex: 1, marginLeft: '260px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
-    topHeader: { height: '70px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', borderBottom: '1px solid #e0e0e0', position: 'sticky', top: 0, zIndex: 5 },
+    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    
+    sidebar: { width: '280px', backgroundColor: '#132a71', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
+    brandSubtitle: { margin: '5px 0 0 0', fontSize: '10px', opacity: 0.5, fontWeight: 'bold' },
+    sidebarNav: { flex: 1, padding: '20px 15px', overflowY: 'auto' },
+    navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', transition: '0.3s', color: 'rgba(255,255,255,0.7)' },
+    navItemActive: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', backgroundColor: '#ff6600', color: '#fff', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(255, 102, 0, 0.3)' },
+    navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
+    
+    dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
+    dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
+    dropdownItemActive: { padding: '10px 15px', fontSize: '13px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' },
+    dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
+    
+    sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
+    logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+
+    // AREA UTAMA
+    main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh' },
+    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', position: 'sticky', top: 0, zIndex: 5 },
     profileTrigger: { display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', position: 'relative' },
-    avatar: { width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '16px' },
+    avatarSmall: { width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
     profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right' },
-    profileName: { fontSize: '14px', fontWeight: 'bold', color: '#333' },
-    profileRole: { fontSize: '11px', color: '#888', textTransform: 'capitalize' },
-    dropdownBox: { position: 'absolute', top: '50px', right: 0, width: '160px', backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #eee', overflow: 'hidden' },
-    dropdownItem: { padding: '12px 15px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', color: '#444', transition: '0.2s', cursor: 'pointer', '&:hover': { backgroundColor: '#f8f9fa' } },
+    profileNameSmall: { fontSize: '14px', fontWeight: 'bold', color: '#1b263b' },
+    profileRoleSmall: { fontSize: '11px', color: '#778da9' },
+    
+    dropdownBox: { position: 'absolute', top: '55px', right: 0, width: '160px', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #eee', overflow: 'hidden' },
+    dropdownBoxItem: { padding: '12px 15px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', color: '#444', transition: '0.2s', cursor: 'pointer' },
+
     contentScroll: { padding: '40px', flex: 1 },
+
+    // LANDSCAPE PROFILE
+    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '900px', borderRadius: '24px', padding: '40px', boxShadow: '0 20px 40px rgba(0,0,0,0.03)', margin: '0 auto' },
+    landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 8px 20px rgba(255, 102, 0, 0.2)' },
+    roleBadgeSDM: { display: 'inline-block', backgroundColor: '#e1f7e7', color: '#27ae60', padding: '6px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
+    notifIconWrapper: { position: 'relative', cursor: 'pointer', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '14px' },
+    notifDot: { position: 'absolute', top: '10px', right: '12px', width: '8px', height: '8px', backgroundColor: '#e74c3c', borderRadius: '50%', border: '2px solid #fff' },
+    
+    infoGridHorizontal: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    infoItemHorizontal: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #f1f3f9' },
+    labelSmall: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' },
+    valSmall: { margin: 0, fontWeight: 'bold', color: '#1b263b', fontSize: '16px' },
+    btnEditLandscape: { width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', backgroundColor: '#e0e7ff', color: '#4361ee', border: 'none', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+
+    // FORM
+    formLandscape: { display: 'flex', flexDirection: 'column', gap: '20px' },
+    rowForm: { display: 'flex', gap: '20px' },
+    inputGroupFull: { display: 'flex', flexDirection: 'column' },
+    inputGroupHalf: { flex: 1, display: 'flex', flexDirection: 'column' },
+    labelForm: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' },
+    inputForm: { padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '14px', backgroundColor: '#f8f9fa' },
+    btnAreaLandscape: { display: 'flex', gap: '15px' },
+    btnSaveLandscape: { flex: 2, padding: '14px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 'bold', cursor: 'pointer' },
+    btnCancelLandscape: { flex: 1, padding: '14px', backgroundColor: '#f1f3f9', color: '#778da9', border: 'none', borderRadius: '14px', fontWeight: 'bold', cursor: 'pointer' },
+
+    // DASHBOARD VIEWS
+    dashboardView: { display: 'flex', flexDirection: 'column' },
     welcomeSection: { marginBottom: '20px' },
     statsGrid: { display: 'flex', gap: '20px', marginTop: '30px' },
     statCard: { flex: 1, backgroundColor: '#fff', padding: '25px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' },
     iconCircle: { width: '50px', height: '50px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' },
     statNum: { margin: 0, fontSize: '24px', color: '#333' },
     statLabel: { margin: 0, fontSize: '13px', color: '#888' },
-    logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
-    menuActive: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
-    menuItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px', transition: '0.3s' },
-    subMenuContainer: { backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: '10px', marginBottom: '15px', padding: '5px 0' },
-    subMenuItem: { padding: '12px 15px 12px 45px', color: '#ccc', fontSize: '13px', cursor: 'pointer', transition: '0.3s' },
-    subMenuItemActive: { padding: '12px 15px 12px 45px', color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold' },
-    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px' },
-    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
-    profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
-    avatarLarge: { width: '90px', height: '90px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
-    roleBadge: { backgroundColor: '#e1f7e7', color: '#27ae60', padding: '4px 15px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' },
-    btnEditAvatar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' },
-    infoGrid: { display: 'flex', flexDirection: 'column', gap: '15px' },
-    infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' },
-    label: { color: '#888', margin: 0, fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' },
-    val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '14px' },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    th: { padding: '15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase', borderBottom: '2px solid #eee' },
-    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px', color: '#333' },
-    
-    // Styles Baru
     unitGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' },
     unitCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #eee' },
     unitHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' },
     unitBody: { display: 'flex', flexDirection: 'column' },
     btnAdd: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' },
+    table: { width: '100%', borderCollapse: 'collapse' },
+    th: { padding: '15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase', borderBottom: '2px solid #eee' },
+    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px', color: '#333' },
     badgeGreen: { backgroundColor: '#e1f7e7', color: '#27ae60', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' },
     badgeGray: { backgroundColor: '#f0f0f0', color: '#888', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' },
     badgeBlue: { backgroundColor: '#e0f0ff', color: '#0055cc', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' },
     badgeRed: { backgroundColor: '#ffe6e6', color: '#d33', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' },
     btnActionEdit: { backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #cce0ff', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
     btnActionDelete: { backgroundColor: '#fff0f0', color: '#e74c3c', border: '1px solid #ffcaca', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    inputGroup: { display: 'flex', flexDirection: 'column' },
-    input: { padding: '10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '14px' },
-    btnArea: { display: 'flex', gap: '10px', marginTop: '10px' },
-    btnSave: { flex: 1, padding: '10px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' },
-    btnCancel: { flex: 1, padding: '10px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }
 };
 
 export default SuperAdminDashboard;
