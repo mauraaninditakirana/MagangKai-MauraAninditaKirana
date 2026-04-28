@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // ✨ Tambahkan ini
-import Swal from 'sweetalert2'; // ✨ Tambahkan ini
+import axios from 'axios'; 
+import Swal from 'sweetalert2'; 
 import TabelPengajuan from '../components/TabelPengajuan';
 import { FilePlus, History, LogOut, User } from 'lucide-react';
 
@@ -65,6 +65,34 @@ const MySubmissions = () => {
         });
     };
 
+    // ✨ FUNGSI BARU: Meneruskan ke SDM ✨
+    const handleKirimSDM = (submissionId) => {
+        Swal.fire({
+            title: 'Kirim ke SDM Pusat?',
+            text: "Pastikan Anda sudah mendownload dan menyimpan Surat Unit. Data akan diteruskan ke KAI Pusat.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#003399',
+            confirmButtonText: 'Ya, Kirim Sekarang'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const formData = new FormData();
+                formData.append('status', 'Menunggu Verifikasi SDM');
+                formData.append('catatan', 'Mahasiswa meneruskan berkas yang telah disetujui Unit ke SDM Pusat.');
+                formData.append('admin_id', userData.id);
+
+                axios.put(`http://localhost:5000/api/submissions/${submissionId}/status`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                }).then(() => {
+                    Swal.fire('Terkirim!', 'Pengajuan Anda sekarang berada di meja SDM Pusat.', 'success').then(() => window.location.reload());
+                }).catch((err) => {
+                    console.error("Error Kirim ke SDM:", err);
+                    Swal.fire('Gagal', 'Terjadi kesalahan jaringan atau server.', 'error');
+                });
+            }
+        });
+    };
+
     if (!userData) return null;
 
     return (
@@ -100,8 +128,8 @@ const MySubmissions = () => {
                     </p>
                 </div>
                 
-                {/* ✨ Kirim props onAjukanJadwal ✨ */}
-                <TabelPengajuan userId={userData.id} onAjukanJadwal={handleAjukanJadwal} />
+                {/* ✨ Kirim props onKirimSDM ke Tabel ✨ */}
+                <TabelPengajuan userId={userData.id} onAjukanJadwal={handleAjukanJadwal} onKirimSDM={handleKirimSDM} />
             </div>
         </div>
     );

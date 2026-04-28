@@ -92,8 +92,44 @@ const AdminDashboard = () => {
         }
     };
 
-    // ✨ FUNGSI UPDATE STATUS BARU DENGAN DROPDOWN ✨
+    // ✨ UPDATE: Fungsi Update Status (Beserta Upload Surat Rekomendasi) ✨
     const handleUpdateStatus = async (id, newStatus) => {
+        
+        // JIKA ADMIN MEMILIH TERIMA BERKAS FINAL -> MINTA UPLOAD PDF
+        if (newStatus === 'Berkas Disetujui Unit') {
+            const { value: file } = await Swal.fire({
+                title: 'Upload Surat Rekomendasi Unit',
+                text: 'Wajib mengunggah Surat Rekomendasi (PDF) sebagai pengantar ke SDM Pusat.',
+                input: 'file',
+                inputAttributes: {
+                    'accept': 'application/pdf',
+                    'aria-label': 'Upload surat rekomendasi unit'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Upload & Setujui',
+                confirmButtonColor: '#28a745'
+            });
+
+            if (file) {
+                const formData = new FormData();
+                formData.append('surat_unit', file); 
+                formData.append('status', newStatus);
+                formData.append('admin_id', userData.id);
+                formData.append('catatan', 'Berkas final disetujui, Surat Rekomendasi Unit telah diunggah.');
+
+                try {
+                    await axios.put(`http://localhost:5000/api/submissions/${id}/status`, formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    Swal.fire('Berhasil!', 'Surat Rekomendasi terupload & status diperbarui.', 'success');
+                    fetchData(userData.unit_id);
+                } catch (err) {
+                    Swal.fire('Gagal', 'Gagal memperbarui status dan mengunggah dokumen.', 'error');
+                }
+            }
+            return; 
+        }
+
         let confirmText = `Ubah status menjadi: ${newStatus}?`;
         let confirmColor = '#0055cc';
 
@@ -125,7 +161,6 @@ const AdminDashboard = () => {
         }
     };
 
-    // Fungsi Tolak & Revisi tetap menggunakan modal karena butuh catatan manual
     const handleRejection = async (id, type) => {
         const { value: text } = await Swal.fire({
             title: type === 'revisi' ? 'Berikan Catatan Revisi' : 'Alasan Penolakan',
@@ -151,6 +186,7 @@ const AdminDashboard = () => {
         }
     };
 
+    // ✨ UPDATE: Menampilkan Pembimbing di Detail Modal ✨
     const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
@@ -180,12 +216,21 @@ const AdminDashboard = () => {
 
             let htmlContent = `
                 <div style="text-align:left; font-family: sans-serif; color: #333;">
-                    <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
                         <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">👤 Profil Mahasiswa</h4>
                         <p style="margin: 5px 0;"><b>Nama:</b> ${s.nama_lengkap}</p>
                         <p style="margin: 5px 0;"><b>Instansi:</b> ${s.asal_instansi || '-'}</p>
                         ${s.jadwal_wawancara ? `<p style="margin: 5px 0; color: #ff6600;"><b>Jadwal Wawancara:</b> ${new Date(s.jadwal_wawancara).toLocaleString('id-ID')}</p>` : ''}
                     </div>
+                    
+                    <div style="background: #fff4e5; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <h4 style="margin-top:0; color: #d35400; border-bottom: 2px solid #d35400; padding-bottom: 5px; font-size: 15px;">📋 Detail Kegiatan</h4>
+                        <p style="margin: 5px 0;"><b>Judul/Kegiatan:</b> ${s.judul_atau_tujuan || '-'}</p>
+                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                        <p style="margin: 5px 0;"><b>Dosen/Guru Pembimbing:</b> ${s.nama_pembimbing || '-'}</p>
+                        <p style="margin: 5px 0;"><b>Kontak Pembimbing:</b> ${s.kontak_pembimbing || '-'}</p>
+                    </div>
+
                     <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
                         <h4 style="margin-top:0; color: #003399; font-size: 15px; margin-bottom: 15px;">📂 Berkas Lampiran</h4>
                         ${berkasHtml}
@@ -208,7 +253,6 @@ const AdminDashboard = () => {
 
     if (!userData) return null;
 
-    // ✨ FILTER MONITORING: Fokus pada alur internal Unit ✨
     const monitoringData = submissions.filter(s => 
         ['Menunggu Verifikasi', 'Atur Jadwal Wawancara', 'Jadwal Wawancara Diajukan', 'Wawancara Disetujui', 'Selesai Wawancara (Lengkapi Berkas Akhir)', 'Berkas Akhir Terkirim', 'Revisi'].includes(s.status)
     );
@@ -319,8 +363,10 @@ const AdminDashboard = () => {
                                                             style={styles.dropdown}
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
+                                                                if (!val) return;
                                                                 if (val === 'revisi' || val === 'tolak') handleRejection(s.id, val);
-                                                                else if (val) handleUpdateStatus(s.id, val);
+                                                                else handleUpdateStatus(s.id, val);
+                                                                e.target.value = ""; // Reset dropdown after choice
                                                             }}
                                                             value=""
                                                         >
@@ -338,8 +384,9 @@ const AdminDashboard = () => {
                                                                 <option value="Selesai Wawancara (Lengkapi Berkas Akhir)">Selesaikan Wawancara</option>
                                                             )}
 
+                                                            {/* OPSI UNTUK UPLOAD SURAT REKOMENDASI UNIT */}
                                                             {s.status === 'Berkas Akhir Terkirim' && (
-                                                                <option value="Berkas Disetujui Unit">Terima Berkas Final</option>
+                                                                <option value="Berkas Disetujui Unit">Terima Berkas Final & Upload Rekomendasi</option>
                                                             )}
 
                                                             <option value="revisi">Minta Revisi</option>

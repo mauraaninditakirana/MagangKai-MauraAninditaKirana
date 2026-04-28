@@ -39,10 +39,8 @@ const MonitoringPengajuan = () => {
         window.scrollTo(0, 0);
     }, [navigate]); 
 
-    // ✨ UPDATE: Ambil data khusus SDM ✨
     const fetchData = async () => {
         try {
-            // Role superadmin dikirim agar backend memfilter otomatis data yang sudah disetujui Unit
             const res = await axios.get('http://localhost:5000/api/submissions?role=superadmin');
             const sortedData = (res.data || []).sort((a, b) => 
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
@@ -67,6 +65,7 @@ const MonitoringPengajuan = () => {
         } catch (err) { console.error("Gagal ambil jenis:", err); }
     };
 
+    // ✨ UPDATE: Tambah Info Pembimbing di Modal Detail ✨
     const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
@@ -96,18 +95,21 @@ const MonitoringPengajuan = () => {
 
             let htmlContent = `
                 <div style="text-align:left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
-                    <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
                         <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">👤 Data Mahasiswa</h4>
                         <p style="margin: 5px 0;"><b>Nama:</b> ${s.nama_lengkap}</p>
                         <p style="margin: 5px 0;"><b>Instansi:</b> ${s.asal_instansi || '-'}</p>
                     </div>
 
-                    <div style="padding: 0 10px 20px 10px;">
-                        <h4 style="color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">📋 Detail Kegiatan</h4>
-                        <p style="margin: 5px 0;"><b>Jenis:</b> ${s.nama_jenis}</p>
-                        <p style="margin: 5px 0;"><b>Unit:</b> ${s.nama_unit}</p>
-                        <p style="margin: 5px 0;"><b>Judul:</b> ${s.judul_atau_tujuan}</p>
-                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} - ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                    <div style="background: #fff4e5; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <h4 style="margin-top:0; color: #d35400; border-bottom: 2px solid #d35400; padding-bottom: 5px; font-size: 15px;">📋 Detail Kegiatan</h4>
+                        <p style="margin: 5px 0;"><b>Jenis Kegiatan:</b> ${s.nama_jenis}</p>
+                        <p style="margin: 5px 0;"><b>Unit Magang:</b> ${s.nama_unit}</p>
+                        <p style="margin: 5px 0;"><b>Judul/Kegiatan:</b> ${s.judul_atau_tujuan}</p>
+                        <p style="margin: 5px 0;"><b>Kategori:</b> ${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</p>
+                        <p style="margin: 5px 0;"><b>Dosen/Guru Pembimbing:</b> ${s.nama_pembimbing || '-'}</p>
+                        <p style="margin: 5px 0;"><b>Kontak Pembimbing:</b> ${s.kontak_pembimbing || '-'}</p>
+                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
                     </div>
                     
                     <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
@@ -131,7 +133,6 @@ const MonitoringPengajuan = () => {
         }
     };
 
-    // ✨ UPDATE: Fungsi API untuk Update Status ✨
     const sendStatusUpdate = async (id, status, extraData = {}, pesanSukses) => {
         try {
             await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
@@ -146,7 +147,6 @@ const MonitoringPengajuan = () => {
         }
     };
 
-    // ✨ UPDATE: Logika Dropdown Cerdas dengan Input Tanggal ✨
     const handleStatusDropdown = async (id, newStatus) => {
         if (newStatus === 'Pengajuan Telah Dikirim ke Pusat') {
             const { value: date } = await Swal.fire({
@@ -171,7 +171,6 @@ const MonitoringPengajuan = () => {
             if (date) sendStatusUpdate(id, newStatus, { tgl_terima_pusat: date, catatan: `Surat diterima dari Pusat pada ${date}` }, 'Status diubah ke Surat Masuk dari Pusat');
         
         } else {
-            // Konfirmasi biasa untuk status lainnya (Tinjau / Setuju awal)
             const result = await Swal.fire({
                 title: 'Konfirmasi',
                 text: `Ubah status menjadi: ${newStatus}?`,
@@ -343,8 +342,6 @@ const MonitoringPengajuan = () => {
                                         </td>
                                         <td style={styles.td}>
                                             <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                                                
-                                                {/* ✨ DROPDOWN TRACKING SDM ✨ */}
                                                 <select 
                                                     style={styles.dropdown}
                                                     onChange={(e) => {
@@ -353,7 +350,7 @@ const MonitoringPengajuan = () => {
                                                         if (val === 'tolak') handleRejection(s.id);
                                                         else if (val === 'upload_final') handleUploadFinal(s.id);
                                                         else handleStatusDropdown(s.id, val);
-                                                        e.target.value = ""; // reset dropdown
+                                                        e.target.value = "";
                                                     }}
                                                     value=""
                                                 >

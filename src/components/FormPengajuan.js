@@ -11,27 +11,32 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
 
     const [units, setUnits] = useState([]);
     const [submissionTypes, setSubmissionTypes] = useState([]); 
+    const [requirements, setRequirements] = useState([]); 
+
     const [formData, setFormData] = useState({
         submission_type_id: '',
         unit_id: '',
         judul_atau_tujuan: '',
+        nama_pembimbing: '',    
+        kontak_pembimbing: '',  
         kategori_pendaftar: 'Individu',
         jumlah_anggota: 1,
         asal_instansi: '', 
         tanggal_mulai: '',
         tanggal_selesai: ''
     });
-    const [files, setFiles] = useState([]);
     
-    // State untuk mendeteksi apakah ini upload berkas final
+    const [files, setFiles] = useState([]);
     const [isUploadFinal, setIsUploadFinal] = useState(false);
 
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
+                // 1. Fetch Units (Sudah membawa data .quotas dari backend terbaru)
                 const unitRes = await axios.get(`http://localhost:5000/api/units?_t=${Date.now()}`);
                 setUnits(unitRes.data);
 
+                // 2. Fetch Submission Types
                 setSubmissionTypes([
                     { id: 1, nama: 'Magang / Kerja Praktek' },
                     { id: 2, nama: 'PKL (Praktek Kerja Lapangan)' },
@@ -39,23 +44,32 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     { id: 4, nama: 'Tugas Akhir / Skripsi' }
                 ]);
 
+                // 3. Fetch Syarat Dokumen
+                try {
+                    const reqRes = await axios.get('http://localhost:5000/api/requirements');
+                    setRequirements(reqRes.data.filter(r => r.is_active) || []);
+                } catch (reqErr) {
+                    console.error("Belum ada API requirements, abaikan sementara", reqErr);
+                }
+
+                // 4. Fetch User Data
                 let userInstansi = '';
                 if (userId) {
                     const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
                     userInstansi = userRes.data.asal_instansi || '';
                 }
 
+                // 5. Set Form Data
                 if (revisiId) {
                     if (initialData) {
-                        // Deteksi mode Upload Final
-                        if (initialData.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') {
-                            setIsUploadFinal(true);
-                        }
+                        if (initialData.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') setIsUploadFinal(true);
 
                         setFormData({
                             submission_type_id: initialData.submission_type_id || '',
                             unit_id: initialData.unit_id || '',
                             judul_atau_tujuan: initialData.judul_atau_tujuan || '',
+                            nama_pembimbing: initialData.nama_pembimbing || '',
+                            kontak_pembimbing: initialData.kontak_pembimbing || '',
                             kategori_pendaftar: initialData.kategori_pendaftar || 'Individu',
                             jumlah_anggota: initialData.jumlah_anggota || 1,
                             asal_instansi: userInstansi, 
@@ -66,14 +80,14 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                         const resLama = await axios.get(`http://localhost:5000/api/submissions/${revisiId}`);
                         const dataLama = resLama.data;
                         
-                        if (dataLama.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') {
-                            setIsUploadFinal(true);
-                        }
+                        if (dataLama.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') setIsUploadFinal(true);
 
                         setFormData({
                             submission_type_id: dataLama.submission_type_id || '',
                             unit_id: dataLama.unit_id || '',
                             judul_atau_tujuan: dataLama.judul_atau_tujuan || '',
+                            nama_pembimbing: dataLama.nama_pembimbing || '',
+                            kontak_pembimbing: dataLama.kontak_pembimbing || '',
                             kategori_pendaftar: dataLama.kategori_pendaftar || 'Individu',
                             jumlah_anggota: dataLama.jumlah_anggota || 1,
                             asal_instansi: userInstansi, 
@@ -92,6 +106,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     } else {
                         setFormData({
                             submission_type_id: '', unit_id: '', judul_atau_tujuan: '', 
+                            nama_pembimbing: '', kontak_pembimbing: '',
                             asal_instansi: userInstansi, 
                             kategori_pendaftar: 'Individu', jumlah_anggota: 1, tanggal_mulai: '', tanggal_selesai: ''
                         });
@@ -106,7 +121,15 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     }, [revisiId, initialData, userId]); 
 
     const handleChange = (e) => {
-        const updatedData = { ...formData, [e.target.name]: e.target.value };
+        let updatedData = { ...formData, [e.target.name]: e.target.value };
+        
+        // ✨ LOGIKA RESET UNIT ✨
+        // Jika user mengubah jenis keperluan, otomatis reset pilihan unit
+        // karena kuota unitnya pasti berbeda
+        if (e.target.name === 'submission_type_id') {
+            updatedData.unit_id = ''; 
+        }
+
         setFormData(updatedData);
         
         if (!revisiId) {
@@ -125,18 +148,22 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
             return Swal.fire('Perhatian', 'Mohon pilih Keperluan dan Unit Tujuan', 'warning');
         }
 
-        // Kalau Upload Final, wajib upload minimal 1 file.
         if (isUploadFinal && files.length === 0) {
             return Swal.fire('Perhatian', 'Wajib melampirkan berkas akhir sebelum mengirim.', 'warning');
         }
 
+        // ✨ UPDATE LOGIKA CEK KUOTA SAAT SUBMIT ✨
         const selectedUnit = units.find(u => u.id.toString() === formData.unit_id.toString());
-        if (selectedUnit && formData.jumlah_anggota > selectedUnit.kuota) {
-            return Swal.fire(
-                'Kuota Tidak Cukup!', 
-                `Maaf, sisa kuota di ${selectedUnit.nama_unit} hanya tinggal ${selectedUnit.kuota} orang.`, 
-                'error'
-            );
+        if (selectedUnit) {
+            const specificQuota = selectedUnit.quotas?.find(q => q.submission_type_id.toString() === formData.submission_type_id.toString())?.quota_limit || 0;
+            
+            if (formData.jumlah_anggota > specificQuota) {
+                return Swal.fire(
+                    'Kuota Tidak Cukup!', 
+                    `Maaf, sisa kuota untuk jenis kegiatan ini di ${selectedUnit.nama_unit} hanya tinggal ${specificQuota} orang.`, 
+                    'error'
+                );
+            }
         }
 
         const data = new FormData();
@@ -165,6 +192,21 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         }
     };
 
+    // ✨ LOGIKA FILTER OPSI UNIT BERDASARKAN KUOTA JENIS ✨
+    const getAvailableUnits = () => {
+        if (!formData.submission_type_id) return []; // Jangan tampilkan unit kalau belum pilih jenis
+
+        return units.map(u => {
+            // Cari kuota spesifik unit ini berdasarkan jenis yang dipilih user
+            const typeQuota = u.quotas?.find(q => q.submission_type_id.toString() === formData.submission_type_id.toString());
+            const limit = typeQuota ? typeQuota.quota_limit : 0;
+            
+            return { ...u, availableQuota: limit };
+        });
+    };
+
+    const availableUnits = getAvailableUnits();
+
     return (
         <div style={styles.card}>
             <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
@@ -185,7 +227,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Jenis Keperluan</label>
                         <select name="submission_type_id" value={formData.submission_type_id} onChange={handleChange} style={styles.input} required disabled={isUploadFinal}>
-                            <option value="">-- Pilih Keperluan --</option>
+                            <option value="">-- Pilih Keperluan Dahulu --</option>
                             {submissionTypes.map(type => (
                                 <option key={type.id} value={type.id}>{type.nama}</option>
                             ))}
@@ -194,11 +236,22 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
 
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Unit Tujuan</label>
-                        <select name="unit_id" value={formData.unit_id} onChange={handleChange} style={styles.input} required disabled={isUploadFinal}>
-                            <option value="">-- Pilih Unit --</option>
-                            {units.map(u => (
-                                <option key={u.id} value={u.id} disabled={u.kuota <= 0}>
-                                    {u.nama_unit} {u.kuota <= 0 ? '(KUOTA PENUH 🚫)' : `(Sisa Kuota: ${u.kuota} Orang)`}
+                        <select 
+                            name="unit_id" 
+                            value={formData.unit_id} 
+                            onChange={handleChange} 
+                            style={styles.input} 
+                            required 
+                            disabled={isUploadFinal || !formData.submission_type_id}
+                        >
+                            <option value="">
+                                {!formData.submission_type_id ? 'Pilih Keperluan di atas terlebih dahulu' : '-- Pilih Unit --'}
+                            </option>
+                            
+                            {/* ✨ RENDER UNIT YANG ADA KUOTANYA SAJA ✨ */}
+                            {availableUnits.map(u => (
+                                <option key={u.id} value={u.id} disabled={u.availableQuota <= 0}>
+                                    {u.nama_unit} {u.availableQuota <= 0 ? '(KUOTA PENUH 🚫)' : `(Sisa: ${u.availableQuota} Slot)`}
                                 </option>
                             ))}
                         </select>
@@ -231,6 +284,31 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     />
                 </div>
 
+                <div style={styles.row}>
+                    <div style={styles.inputBox}>
+                        <label style={styles.label}>Nama Dosen / Guru Pembimbing</label>
+                        <input 
+                            name="nama_pembimbing" 
+                            value={formData.nama_pembimbing}
+                            placeholder="Contoh: Dr. Budi Santoso, S.T., M.Kom" 
+                            onChange={handleChange} 
+                            style={styles.input} 
+                            required 
+                        />
+                    </div>
+                    <div style={styles.inputBox}>
+                        <label style={styles.label}>Kontak Pembimbing (No. HP / Email)</label>
+                        <input 
+                            name="kontak_pembimbing" 
+                            value={formData.kontak_pembimbing}
+                            placeholder="Contoh: 08123456789 / budi@univ.ac.id" 
+                            onChange={handleChange} 
+                            style={styles.input} 
+                            required 
+                        />
+                    </div>
+                </div>
+
                 <div style={styles.inputBox}>
                     <label style={styles.label}>Judul Project / Nama Penelitian</label>
                     <input 
@@ -256,14 +334,28 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
 
                 <div style={styles.inputBox}>
                     <label style={styles.label}>Upload Dokumen Pendukung</label>
+                    
+                    {!isUploadFinal && requirements.length > 0 && (
+                        <div style={styles.reqBox}>
+                            <strong style={{color: '#444'}}>Dokumen yang perlu disiapkan:</strong>
+                            <ul style={{margin: '8px 0 0 20px', padding: 0, color: '#555', fontSize: '13px', lineHeight: '1.6'}}>
+                                {requirements.map(req => (
+                                    <li key={req.id}>
+                                        {req.nama_dokumen} {req.is_wajib ? <span style={{color:'red'}}>*wajib</span> : ''}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     <div style={styles.fileContainer}>
                         <FileUp size={20} color="#666" />
                         <input type="file" multiple onChange={handleFileChange} style={{border: 'none', width: '100%'}} required={!revisiId || isUploadFinal} />
                     </div>
                     <p style={{fontSize: '11px', color: '#888', marginTop: '5px'}}>
                         {isUploadFinal 
-                            ? '*Wajib mengunggah berkas/dokumen fix sebelum diajukan ke Pusat.'
-                            : (revisiId ? '*Biarkan kosong jika tidak ada dokumen yang perlu diubah.' : '*Anda dapat memilih lebih dari 1 file.')
+                            ? '*Wajib mengunggah berkas/dokumen fix (Gabungkan dalam 1 PDF/ZIP) sebelum diajukan ke Pusat.'
+                            : (revisiId ? '*Biarkan kosong jika tidak ada dokumen yang perlu diubah.' : '*Jadikan 1 file (PDF/ZIP) atau pilih beberapa file sekaligus.')
                         }
                     </p>
                 </div>
@@ -290,7 +382,8 @@ const styles = {
     label: { fontSize: '14px', fontWeight: '600', color: '#444' },
     input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', backgroundColor: '#fcfcfc', fontSize: '14px' },
     fileContainer: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', border: '2px dashed #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' },
-    btnSubmit: { color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '16px', transition: '0.3s' }
+    btnSubmit: { color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '16px', transition: '0.3s' },
+    reqBox: { backgroundColor: '#fff4e5', border: '1px solid #ffe0b2', padding: '12px 15px', borderRadius: '8px', marginBottom: '10px' }
 };
 
 export default FormPengajuan;

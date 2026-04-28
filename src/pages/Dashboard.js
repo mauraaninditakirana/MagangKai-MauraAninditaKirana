@@ -5,23 +5,30 @@ import Swal from 'sweetalert2';
 import FormPengajuan from '../components/FormPengajuan';
 import { 
     FilePlus, History, LogOut, AlertTriangle, CheckCircle, 
-    User, Edit3, Mail, IdCard, Building, Save, X 
+    User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock
 } from 'lucide-react';
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    
     const [userData, setUserData] = useState(() => {
         const saved = localStorage.getItem('user');
         return saved ? JSON.parse(saved) : null;
     });
+    
     const [activeSubmission, setActiveSubmission] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     
+    // ✨ STATE BARU: Untuk membuka form khusus perpanjangan
+    const [isExtending, setIsExtending] = useState(false);
+    
     const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'profile');
+    
     useEffect(() => {
         window.history.replaceState({}, document.title);
     }, []);
+
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         nama_lengkap: '', email: '', nomor_induk: '', asal_instansi: '', password_lama: '', password_baru: ''
@@ -84,26 +91,22 @@ const Dashboard = () => {
         }
     };
 
-    // ✨ UPDATE: Pengecekan Status Dinamis (Lebih Ringkas & Tepat) ✨
     const checkUserStatus = async (userId) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions?user_id=${userId}`);
             const submissions = res.data || [];
             
             const active = submissions.find(s => {
-                // Jika statusnya Ditolak atau Selesai Kegiatan, berarti bebas bikin baru
                 const statusBebas = ['Ditolak', 'Ditolak Unit', 'Ditolak SDM', 'Selesai Kegiatan'];
                 if (statusBebas.includes(s.status)) return false;
 
-                // Cek masa berlaku untuk kegiatan yang sedang berjalan
                 if (['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan'].includes(s.status)) {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0); 
                     const endDate = new Date(s.tanggal_selesai);
-                    return endDate >= today; // Jika belum selesai, anggap aktif
+                    return endDate >= today; 
                 }
 
-                // Selain kondisi di atas, berarti sedang dalam proses (aktif)
                 return true; 
             });
 
@@ -117,6 +120,18 @@ const Dashboard = () => {
 
     if (!userData) return null;
 
+    // ✨ LOGIKA HITUNG SISA HARI ✨
+    let daysRemaining = null;
+    if (activeSubmission && ['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan'].includes(activeSubmission.status)) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const endDate = new Date(activeSubmission.tanggal_selesai);
+        endDate.setHours(0,0,0,0);
+        
+        const diffTime = endDate - today;
+        daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
     return (
         <div style={styles.container}>
             {/* SIDEBAR */}
@@ -126,11 +141,11 @@ const Dashboard = () => {
                     <small style={{opacity:0.7}}>Portal Mahasiswa</small>
                 </div>
                 
-                <div style={activeTab === 'profile' ? styles.menuActive : styles.menuItem} onClick={() => setActiveTab('profile')}>
+                <div style={activeTab === 'profile' ? styles.menuActive : styles.menuItem} onClick={() => { setActiveTab('profile'); setIsExtending(false); }}>
                     <User size={18}/> Profil Saya
                 </div>
 
-                <div style={activeTab === 'pengajuan' ? styles.menuActive : styles.menuItem} onClick={() => setActiveTab('pengajuan')}>
+                <div style={activeTab === 'pengajuan' ? styles.menuActive : styles.menuItem} onClick={() => { setActiveTab('pengajuan'); setIsExtending(false); }}>
                     <FilePlus size={18}/> Buat Pengajuan
                 </div>
 
@@ -153,7 +168,6 @@ const Dashboard = () => {
                     <>
                         {activeTab === 'profile' ? (
                             <div style={styles.profileContainer}>
-                                {/* ... [KODE PROFIL TETAP SAMA SEPERTI ASLINYA] ... */}
                                 <div style={styles.profileHeader}>
                                     <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0)}</div>
                                     <h2 style={{margin: '10px 0 5px 0', color: '#003399'}}>{userData.nama_lengkap}</h2>
@@ -219,21 +233,44 @@ const Dashboard = () => {
                         ) : (
                             <>
                                 <div style={styles.headerArea}>
-                                    <h2 style={{color:'#003399', marginBottom: '5px'}}>Formulir Pengajuan 🚄</h2>
-                                    <p style={{color:'#666', margin: 0}}>Silakan lengkapi data dan dokumen untuk mengajukan kegiatan baru.</p>
+                                    <h2 style={{color:'#003399', marginBottom: '5px'}}>
+                                        {isExtending ? 'Formulir Perpanjangan Magang 🚄' : 'Formulir Pengajuan 🚄'}
+                                    </h2>
+                                    <p style={{color:'#666', margin: 0}}>
+                                        {isExtending ? 'Silakan lengkapi form di bawah ini untuk mengajukan perpanjangan kegiatan Anda.' : 'Silakan lengkapi data dan dokumen untuk mengajukan kegiatan baru.'}
+                                    </p>
                                 </div>
                                 
-                                {/* ✨ UPDATE: Logika Render Alert Card vs Form ✨ */}
-                                {activeSubmission && !location.state?.initialData ? (
+                                {/* ✨ LOGIKA RENDER TAMPILAN: Jika punya pengajuan aktif DAN tidak sedang klik perpanjang ✨ */}
+                                {activeSubmission && !location.state?.initialData && !isExtending ? (
                                     <div style={styles.alertCard}>
                                         
-                                        {activeSubmission.status === 'Selesai (Surat Dirilis)' || activeSubmission.status === 'Dalam Masa Kegiatan' ? (
+                                        {['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan'].includes(activeSubmission.status) ? (
                                             <>
                                                 <CheckCircle size={40} color="#27ae60" style={{marginBottom: '15px'}} />
                                                 <h3 style={{color: '#27ae60', margin: '0 0 10px 0'}}>Anda Sedang Menjalani Kegiatan Magang</h3>
                                                 <p style={{color: '#555', lineHeight: '1.5'}}>
                                                     Sistem mendeteksi bahwa Anda sedang aktif melaksanakan <b>{activeSubmission.nama_jenis}</b> hingga <b>{new Date(activeSubmission.tanggal_selesai).toLocaleDateString('id-ID')}</b>. 
                                                 </p>
+
+                                                {/* ✨ NOTIFIKASI SISA HARI & TOMBOL PERPANJANG ✨ */}
+                                                {daysRemaining !== null && daysRemaining <= 7 && daysRemaining >= 0 && (
+                                                    <div style={{marginTop: '20px', padding: '15px', backgroundColor: '#fff4e5', borderRadius: '10px', border: '1px solid #ffe0b2'}}>
+                                                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#d35400', marginBottom: '8px'}}>
+                                                            <CalendarClock size={20} />
+                                                            <strong style={{fontSize: '15px'}}>Masa Kegiatan Hampir Selesai ({daysRemaining} Hari Lagi)</strong>
+                                                        </div>
+                                                        <p style={{color: '#856404', fontSize: '13px', margin: '0 0 15px 0'}}>
+                                                            Apakah Anda membutuhkan perpanjangan waktu untuk kegiatan Anda? Anda bisa mengajukannya sekarang.
+                                                        </p>
+                                                        <button 
+                                                            onClick={() => setIsExtending(true)}
+                                                            style={{backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '5px'}}
+                                                        >
+                                                            <FilePlus size={16} /> Ajukan Perpanjangan Waktu
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </>
                                         ) : activeSubmission.status === 'Revisi' || activeSubmission.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)' ? (
                                             <>
@@ -257,9 +294,11 @@ const Dashboard = () => {
                                             </>
                                         )}
 
-                                        <button style={styles.btnRiwayat} onClick={() => navigate('/riwayat')}>
-                                            Cek Riwayat Pengajuan
-                                        </button>
+                                        <div style={{marginTop: '25px'}}>
+                                            <button style={styles.btnRiwayat} onClick={() => navigate('/riwayat')}>
+                                                Cek Riwayat Pengajuan
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div style={styles.formContainer}>
@@ -268,6 +307,14 @@ const Dashboard = () => {
                                             onDocsUploaded={() => navigate('/riwayat')} 
                                             initialData={location.state?.initialData}
                                         />
+                                        {isExtending && (
+                                            <button 
+                                                onClick={() => setIsExtending(false)} 
+                                                style={{marginTop: '15px', padding: '10px 20px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'}}
+                                            >
+                                                Batal Perpanjang
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </>
@@ -291,7 +338,7 @@ const styles = {
     formContainer: { backgroundColor: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' },
     alertCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '40px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', maxWidth: '600px', margin: '0 auto', borderTop: '5px solid #f39c12' },
     badgeWarning: { display: 'inline-block', backgroundColor: '#fff3cd', color: '#856404', padding: '6px 15px', borderRadius: '20px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px' },
-    btnRiwayat: { marginTop: '25px', backgroundColor: '#003399', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: '0.3s' },
+    btnRiwayat: { backgroundColor: '#003399', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: '0.3s' },
     profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
     profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
     avatarLarge: { width: '90px', height: '90px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },

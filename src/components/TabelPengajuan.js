@@ -4,7 +4,7 @@ import { Download, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-reac
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 
-const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
+const TabelPengajuan = ({ userId, onAjukanJadwal, onKirimSDM }) => {
     const navigate = useNavigate();
     const [data, setData] = useState([]);
 
@@ -44,6 +44,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
         if (status === 'Wawancara Disetujui') return { color: '#27ae60', icon: <CheckCircle size={16} />, bg: '#e1f7e7' };
         if (status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') return { color: '#0055cc', icon: <AlertCircle size={16} />, bg: '#e0f0ff' };
         if (status === 'Berkas Akhir Terkirim') return { color: '#d35400', icon: <Clock size={16} />, bg: '#fef5e7' };
+        if (status === 'Berkas Disetujui Unit') return { color: '#ff6600', icon: <CheckCircle size={16} />, bg: '#fff4e5' };
         
         // Status SDM Pusat & Unit
         if (status?.includes('Pusat') || status?.includes('SDM')) return { color: '#34495e', icon: <Clock size={16} />, bg: '#eef2f7' };
@@ -52,6 +53,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
             case 'Ditinjau Unit': return { color: '#ff6600', icon: <Clock size={16} />, bg: '#fff4e5' };
             case 'Revisi': return { color: '#e67e22', icon: <AlertCircle size={16} />, bg: '#fef5e7' };
             case 'Ditolak Unit': 
+            case 'Ditolak SDM':
             case 'Ditolak': return { color: '#e74c3c', icon: <AlertCircle size={16} />, bg: '#f9ebea' };
             default: return { color: '#7f8c8d', icon: <Clock size={16} />, bg: '#f8f9fa' };
         }
@@ -101,8 +103,18 @@ const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
                                         </button>
                                     )}
 
-                                    {/* 2. TOMBOL DOWNLOAD SURAT UNIT (REKOMENDASI) */}
-                                    {['Disetujui Unit, Menunggu Verifikasi SDM', 'Disetujui SDM, Menunggu Surat Pengantar Magang', 'Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
+                                    {/* ✨ 2. TOMBOL KIRIM KE SDM (Baru ditambahkan) ✨ */}
+                                    {s.status === 'Berkas Disetujui Unit' && (
+                                        <button 
+                                            onClick={() => onKirimSDM(s.id)} 
+                                            style={{ ...styles.btnDownload, backgroundColor: '#ff6600', color: '#fff', border: 'none', marginBottom: '5px' }}
+                                        >
+                                            🚀 Teruskan ke SDM Pusat
+                                        </button>
+                                    )}
+
+                                    {/* 3. TOMBOL DOWNLOAD SURAT UNIT (REKOMENDASI) */}
+                                    {['Berkas Disetujui Unit', 'Disetujui Unit, Menunggu Verifikasi SDM', 'Disetujui SDM, Menunggu Surat Pengantar Magang', 'Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
                                         <button 
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-unit`, '_blank')}
                                             style={{ ...styles.btnDownload, backgroundColor: '#fff', color: '#003399', border: '1px solid #003399', marginRight: '5px', marginBottom: '5px' }}
@@ -111,7 +123,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
                                         </button>
                                     )}
 
-                                    {/* 3. TOMBOL DOWNLOAD SURAT PUSAT (FINAL) */}
+                                    {/* 4. TOMBOL DOWNLOAD SURAT PUSAT (FINAL) */}
                                     {['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan'].includes(s.status) && (
                                         <button 
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-final`, '_blank')}
@@ -121,7 +133,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
                                         </button>
                                     )}
 
-                                    {/* ✨ 4. TOMBOL REVISI ATAU LENGKAPI BERKAS FINAL ✨ */}
+                                    {/* 5. TOMBOL REVISI ATAU LENGKAPI BERKAS FINAL */}
                                     {(s.status === 'Revisi' || s.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') && (
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                                             <button onClick={() => showCatatan(s.catatan)} style={styles.btnInfo}>Cek Catatan</button>
@@ -136,12 +148,12 @@ const TabelPengajuan = ({ userId, onAjukanJadwal }) => {
                                         </div>
                                     )}
 
-                                    {/* 5. TEXT MENUNGGU PROSES */}
-                                    {['Menunggu Verifikasi', 'Ditinjau Unit', 'Jadwal Wawancara Diajukan', 'Wawancara Disetujui', 'Berkas Akhir Terkirim', 'Berkas Disetujui Unit', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
+                                    {/* 6. TEXT MENUNGGU PROSES (Disesuaikan) */}
+                                    {['Menunggu Verifikasi', 'Ditinjau Unit', 'Jadwal Wawancara Diajukan', 'Wawancara Disetujui', 'Berkas Akhir Terkirim', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
                                         <div style={styles.textWait}>Sedang diproses internal...</div>
                                     )}
 
-                                    {/* 6. TOMBOL DITOLAK */}
+                                    {/* 7. TOMBOL DITOLAK */}
                                     {s.status.includes('Ditolak') && (
                                         <button onClick={() => showCatatan(s.catatan)} style={{...styles.btnInfo, color: '#e74c3c'}}>Lihat Alasan Ditolak</button>
                                     )}
