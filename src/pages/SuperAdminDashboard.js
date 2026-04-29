@@ -44,11 +44,18 @@ const SuperAdminDashboard = () => {
     };
 
     const fetchPesertaAktif = async () => {
-        try {
-            const res = await axios.get('http://localhost:5000/api/submissions?status=Dalam Masa Kegiatan');
-            setPesertaAktif(res.data || []);
-        } catch (err) { console.error("Gagal ambil peserta aktif", err); }
-    };
+    try {
+        // Kita ambil semua data pengajuan
+        const res = await axios.get('http://localhost:5000/api/submissions');
+        
+        // Filter khusus yang statusnya "Dalam Masa Kegiatan"
+        // Inilah yang akan dihitung masuk ke kotak-kotak unit
+        const aktif = (res.data || []).filter(s => s.status === 'Dalam Masa Kegiatan');
+        
+        setPesertaAktif(aktif);
+    } catch (err) { 
+        console.error("Gagal ambil peserta aktif", err); 
+    }};
 
     const fetchUnits = async () => {
         try {
@@ -316,22 +323,26 @@ const SuperAdminDashboard = () => {
                                 </h3>
                                 <div style={styles.unitGrid}>
                                     {units.map(unit => {
-                                        const activeInUnit = pesertaAktif.filter(p => p.unit_id === unit.id).length;
-                                        return (
-                                            <div key={unit.id} style={styles.unitCard}>
-                                                <div style={styles.unitHeader}>
-                                                    <Building size={20} color="#ff6600"/>
-                                                    <h4 style={{margin: 0, color: '#333', fontSize: '15px'}}>{unit.nama_unit}</h4>
-                                                </div>
-                                                <div style={styles.unitBody}>
-                                                    <span style={{fontSize: '32px', fontWeight: 'bold', color: activeInUnit > 0 ? '#27ae60' : '#ccc'}}>
-                                                        {activeInUnit}
-                                                    </span>
-                                                    <span style={{color: '#888', fontSize: '13px'}}>Peserta Aktif</span>
-                                                </div>
+                                    const activeInUnit = pesertaAktif.filter(p => String(p.unit_id) === String(unit.id)).length;
+                                    return (
+                                        <div key={unit.id} style={styles.unitCard}>
+                                            <div style={styles.unitHeader}>
+                                                <Building size={20} color="#ff6600"/>
+                                                <h4 style={{margin: 0, color: '#333', fontSize: '15px'}}>{unit.nama_unit}</h4>
                                             </div>
-                                        );
-                                    })}
+                                            <div style={styles.unitBody}>
+                                                <span style={{
+                                                    fontSize: '32px', 
+                                                    fontWeight: 'bold', 
+                                                    color: activeInUnit > 0 ? '#27ae60' : '#ccc'
+                                                }}>
+                                                    {activeInUnit}
+                                                </span>
+                                                <span style={{color: '#888', fontSize: '13px'}}>Peserta Aktif</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                                 </div>
                             </div>
                         </div>

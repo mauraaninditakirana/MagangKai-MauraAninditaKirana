@@ -43,24 +43,26 @@ const MonitoringPengajuan = () => {
         window.scrollTo(0, 0);
     }, [navigate]); 
 
-    // ✨ UPDATE: Filter data agar SAMA dengan kotak "Pengajuan ke SDM" di Dashboard ✨
     const fetchData = async () => {
-        try {
-            // Kita panggil API dengan role superadmin agar backend memfilter status yang relevan untuk SDM
-            const res = await axios.get('http://localhost:5000/api/submissions?role=superadmin');
-            
-            // Filter tambahan di frontend untuk memastikan hanya data "Active" (bukan arsip) yang masuk monitoring ini
-            const activeSubmissions = (res.data || []).filter(s => 
-                !['Selesai (Surat Dirilis)', 'Ditolak SDM', 'Selesai Kegiatan'].includes(s.status)
-            );
+    try {
+        const res = await axios.get('http://localhost:5000/api/submissions?role=superadmin');
+        
+        // Status 'Dalam Masa Kegiatan' dilarang masuk ke tabel monitoring ini
+        const activeProcess = (res.data || []).filter(s => 
+            s.status !== 'Dalam Masa Kegiatan' && 
+            s.status !== 'Selesai (Surat Dirilis)' && 
+            s.status !== 'Ditolak' &&
+            s.status !== 'Ditolak SDM' &&
+            s.status !== 'Selesai Kegiatan'
+        );
 
-            const sortedData = activeSubmissions.sort((a, b) => 
-                new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
-            );
-            setSubmissions(sortedData);
-        } catch (err) { 
-            console.error("Gagal mengambil data monitoring:", err); 
-        }
+        const sortedData = activeProcess.sort((a, b) => 
+            new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
+        );
+        setSubmissions(sortedData);
+    } catch (err) { 
+        console.error("Gagal mengambil data monitoring:", err); 
+    }
     };
 
     const fetchUnits = async () => {
