@@ -15,11 +15,9 @@ const UserManagement = () => {
     const [filterRole, setFilterRole] = useState('');
     const navigate = useNavigate();
     
-    // ✨ STATE UNTUK KEDUA DROPDOWN SIDEBAR ✨
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
     const [isMonitoringMenuOpen, setIsMonitoringMenuOpen] = useState(false);
 
-    // Ambil data user dari localStorage dengan aman
     const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
     const [showModal, setShowModal] = useState(false);
@@ -118,15 +116,16 @@ const UserManagement = () => {
 
     const handleEdit = (user) => {
         setIsEdit(true);
+        // ✨ PERBAIKAN: .toLowerCase() ditambahkan agar kondisi form dinamis langsung berjalan ✨
         setFormData({
             id: user.id,
             nama_lengkap: user.nama_lengkap || '',
             email: user.email || '',
             password: '', 
-            role: user.role || 'user',
+            role: (user.role || 'user').toLowerCase(), 
             unit_id: user.unit_id || '',
             nomor_induk: user.nomor_induk || '',
-            asal_instansi: user.asal_instansi || ''
+            asal_instansi: user.asal_instansi || '' // Asal instansi tertarik sempurna
         });
         setShowModal(true);
     };
@@ -174,7 +173,7 @@ const UserManagement = () => {
 
     return (
         <div style={styles.container}>
-            {/* ✨ SIDEBAR PREMIUM STYLE (100% SELARAS) ✨ */}
+            {/* SIDEBAR PREMIUM STYLE */}
             <div style={styles.sidebar}>
                 <div style={styles.sidebarBrand}>
                     <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
@@ -182,7 +181,6 @@ const UserManagement = () => {
                 </div>
 
                 <div style={styles.sidebarNav}>
-                    {/* DROPDOWN 1: DASHBOARD UTAMA */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
                             <div style={styles.navLinkContent}>
@@ -204,7 +202,6 @@ const UserManagement = () => {
                         )}
                     </div>
 
-                    {/* ✨ DROPDOWN 2: MONITORING PENGAJUAN ✨ */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsMonitoringMenuOpen(!isMonitoringMenuOpen)}>
                             <div style={styles.navLinkContent}>
@@ -245,11 +242,10 @@ const UserManagement = () => {
 
             {/* AREA UTAMA */}
             <div style={styles.main}>
-                
                 <div style={styles.contentScroll}>
                     <div style={styles.header}>
                         <div>
-                            <h2 style={{margin:0, color:'#003399'}}>Manajemen Pengguna</h2>
+                            <h2 style={{margin:0, color:'#003399'}}>Manajemen Pengguna 👥</h2>
                             <p style={{color:'#666', fontSize:'14px'}}>Atur hak akses dan penempatan unit Admin</p>
                         </div>
                         
@@ -344,6 +340,7 @@ const UserManagement = () => {
                     </div>
                 </div>
 
+                {/* ✨ MODAL EDIT/TAMBAH DENGAN LOGIKA FORM DINAMIS ✨ */}
                 {showModal && (
                     <div style={styles.modalOverlay}>
                         <div style={styles.modalBox}>
@@ -386,7 +383,7 @@ const UserManagement = () => {
                                     )}
                                 </div>
 
-                                {/* ✨ LOGIKA FORM DINAMIS (USER VS ADMIN) ✨ */}
+                                {/* LOGIKA FORM DINAMIS: NIPP VS NIM & INSTANSI */}
                                 {formData.role === 'user' ? (
                                     <div style={{display: 'flex', gap: '15px'}}>
                                         <div style={{...styles.formGroup, flex: 1}}>
