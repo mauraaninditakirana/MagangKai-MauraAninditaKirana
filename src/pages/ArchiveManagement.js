@@ -19,6 +19,7 @@ const ArchiveManagement = () => {
 
     // State Sidebar Dropdown
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
+    const [isMonitoringMenuOpen, setIsMonitoringMenuOpen] = useState(false);
 
     // Ambil data user untuk header
     const user = JSON.parse(localStorage.getItem('user')) || {};
@@ -36,7 +37,10 @@ const ArchiveManagement = () => {
     const fetchArchive = async () => {
         try {
             const res = await axios.get('http://localhost:5000/api/submissions');
+            
+            // ✨ UPDATE: Tambahkan 'Dalam Masa Kegiatan' agar ikut masuk ke tabel Arsip Data Peserta
             const finished = res.data.filter(s => 
+                s.status === 'Dalam Masa Kegiatan' ||
                 s.status === 'Selesai (Surat Dirilis)' || 
                 s.status === 'Ditolak' || 
                 s.status === 'Selesai Kegiatan' || 
@@ -106,7 +110,8 @@ const ArchiveManagement = () => {
                 html: htmlContent,
                 width: '600px',
                 confirmButtonText: 'Tutup',
-                confirmButtonColor: '#ff6600'
+                confirmButtonColor: '#ff6600',
+                showCloseButton: true
             });
         } catch (err) {
             Swal.fire('Error', 'Gagal memuat detail arsip.', 'error');
@@ -118,12 +123,13 @@ const ArchiveManagement = () => {
         const matchUnit = filterUnit === '' || String(s.unit_id) === String(filterUnit);
         const matchDate = filterDate === '' || (s.tanggal_selesai && s.tanggal_selesai.includes(filterDate));
         const matchType = filterType === '' || String(s.submission_type_id) === String(filterType); 
+
         return matchName && matchUnit && matchDate && matchType;
     });
 
     return (
         <div style={styles.container}>
-            {/* ✨ SIDEBAR PREMIUM STYLE ✨ */}
+            {/* SIDEBAR PREMIUM STYLE */}
             <div style={styles.sidebar}>
                 <div style={styles.sidebarBrand}>
                     <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
@@ -131,17 +137,19 @@ const ArchiveManagement = () => {
                 </div>
 
                 <div style={styles.sidebarNav}>
+                    {/* DROPDOWN 1: DASHBOARD UTAMA */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
                             <div style={styles.navLinkContent}>
                                 <LayoutDashboard size={20} />
                                 <span>Dashboard Utama</span>
                             </div>
-                            <ChevronDown size={16} style={{ transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s'}} />
+                            <ChevronDown size={16} style={{ transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }} />
                         </div>
+                        
                         {isDashboardMenuOpen && (
                             <div style={styles.dropdownWrapper}>
-                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin')}>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'dashboard' } })}>
                                     <div style={styles.dotIndicator} /> Ringkasan & Pantauan
                                 </div>
                                 <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'peserta_aktif' } })}>
@@ -151,12 +159,25 @@ const ArchiveManagement = () => {
                         )}
                     </div>
 
-                    <div style={styles.navItem} onClick={() => navigate('/admin/monitoring')}>
-                        <div style={styles.navLinkContent}><RefreshCcw size={20} /> <span>Monitoring Pengajuan</span></div>
-                    </div>
-
-                    <div style={styles.navItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'requirements' } })}>
-                        <div style={styles.navLinkContent}><ClipboardCheck size={20} /> <span>Syarat Dokumen</span></div>
+                    {/* DROPDOWN 2: MONITORING PENGAJUAN */}
+                    <div style={styles.navGroup}>
+                        <div style={styles.navItem} onClick={() => setIsMonitoringMenuOpen(!isMonitoringMenuOpen)}>
+                            <div style={styles.navLinkContent}>
+                                <RefreshCcw size={20} />
+                                <span>Monitoring Pengajuan</span>
+                            </div>
+                            <ChevronDown size={16} style={{ transform: isMonitoringMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s'}} />
+                        </div>
+                        {isMonitoringMenuOpen && (
+                            <div style={styles.dropdownWrapper}>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/admin/monitoring', { state: { activeTab: 'monitoring' } })}>
+                                    <div style={styles.dotIndicator} /> Monitoring Verifikasi
+                                </div>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/admin/monitoring', { state: { activeTab: 'requirements' } })}>
+                                    <div style={styles.dotIndicator} /> Syarat Dokumen
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div style={styles.navItem} onClick={() => navigate('/admin/users')}>
@@ -176,14 +197,13 @@ const ArchiveManagement = () => {
                     <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
                 </div>
             </div>
-
-            {/* AREA UTAMA */}
+            
+            {/* MAIN CONTENT */}
             <div style={styles.main}>
-
                 <div style={styles.contentScroll}>
                     <div style={styles.headerArea}>
                         <h2 style={{margin:0, color:'#003399'}}>Arsip Data Peserta 📂</h2>
-                        <p style={{color:'#666', fontSize:'14px'}}>Data seluruh peserta magang yang telah menyelesaikan proses atau ditolak.</p>
+                        <p style={{color:'#666', fontSize:'14px'}}>Pusat data detail peserta magang yang sedang berjalan, selesai, atau ditolak.</p>
                     </div>
 
                     {/* BARIS FILTER */}
@@ -223,29 +243,39 @@ const ArchiveManagement = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredData.length > 0 ? filteredData.map((s, index) => (
-                                    <tr key={index} style={styles.row}>
-                                        <td style={styles.td}>{index + 1}</td>
-                                        <td style={styles.td}><b>{s.nama_lengkap}</b></td>
-                                        <td style={styles.td}>{s.nama_unit}</td>
-                                        <td style={styles.td}>{s.nama_jenis}</td>
-                                        <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
-                                        <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
-                                        <td style={styles.td}>
-                                            <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}>
-                                                <Eye size={14}/> Lihat Form
-                                            </button>
-                                        </td>
-                                        <td style={{...styles.td, textAlign:'center'}}>
-                                            <span style={{
-                                                padding:'5px 12px', borderRadius:'20px', fontSize:'11px', fontWeight:'bold',
-                                                backgroundColor: s.status.includes('Selesai') ? '#e1f7e7' : '#fdeaea',
-                                                color: s.status.includes('Selesai') ? '#27ae60' : '#e74c3c',
-                                                display: 'inline-block'
-                                            }}>{s.status}</span>
-                                        </td>
-                                    </tr>
-                                )) : (
+                                {filteredData.length > 0 ? filteredData.map((s, index) => {
+                                    // Logika warna badge status
+                                    let bg = '#fdeaea'; let textColor = '#e74c3c'; // Default: Merah (Ditolak)
+                                    if (s.status.includes('Selesai')) {
+                                        bg = '#e1f7e7'; textColor = '#27ae60'; // Hijau (Selesai)
+                                    } else if (s.status === 'Dalam Masa Kegiatan') {
+                                        bg = '#e0f0ff'; textColor = '#0055cc'; // Biru (Sedang Berjalan)
+                                    }
+
+                                    return (
+                                        <tr key={index} style={styles.row}>
+                                            <td style={styles.td}>{index + 1}</td>
+                                            <td style={styles.td}><b>{s.nama_lengkap}</b></td>
+                                            <td style={styles.td}>{s.nama_unit}</td>
+                                            <td style={styles.td}>{s.nama_jenis}</td>
+                                            <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
+                                            <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
+                                            <td style={styles.td}>
+                                                <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}>
+                                                    <Eye size={14}/> Lihat Form
+                                                </button>
+                                            </td>
+                                            <td style={{...styles.td, textAlign:'center'}}>
+                                                <span style={{
+                                                    padding:'5px 12px', borderRadius:'20px', fontSize:'11px', fontWeight:'bold',
+                                                    backgroundColor: bg,
+                                                    color: textColor,
+                                                    display: 'inline-block'
+                                                }}>{s.status}</span>
+                                            </td>
+                                        </tr>
+                                    );
+                                }) : (
                                     <tr>
                                         <td colSpan="8" style={{textAlign:'center', padding:'30px', color: '#aaa'}}>Tidak ada data arsip yang cocok.</td>
                                     </tr>
@@ -261,26 +291,23 @@ const ArchiveManagement = () => {
 
 const styles = {
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
-    sidebar: { width: '280px', backgroundColor: '#132a71', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    sidebar: { width: '280px', backgroundColor: '#052278', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
     sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
     brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
     brandSubtitle: { margin: '5px 0 0 0', fontSize: '10px', opacity: 0.5, fontWeight: 'bold' },
     sidebarNav: { flex: 1, padding: '20px 15px', overflowY: 'auto' },
+    navGroup: { marginBottom: '5px' },
     navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', transition: '0.3s', color: 'rgba(255,255,255,0.7)' },
     navItemActive: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', backgroundColor: '#ff6600', color: '#fff', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(255, 102, 0, 0.3)' },
     navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
     dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
     dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
+    dropdownItemActive: { padding: '10px 15px', fontSize: '13px', color: '#fff', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' },
     dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
     sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
     logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
     main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
     topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
-    avatarSmall: { width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
-    profileTrigger: { display: 'flex', alignItems: 'center', gap: '12px' },
-    profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right' },
-    profileNameSmall: { fontSize: '14px', fontWeight: 'bold', color: '#1b263b' },
-    profileRoleSmall: { fontSize: '11px', color: '#778da9' },
     contentScroll: { padding: '40px', flex: 1 },
     headerArea: { marginBottom: '30px' },
     filterBar: { display: 'flex', gap: '15px', marginBottom: '25px' },
@@ -292,8 +319,8 @@ const styles = {
     thRow: { backgroundColor: '#f8f9fa' },
     th: { padding: '18px 15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' },
     td: { padding: '15px', borderBottom: '1px solid #f1f1f1', verticalAlign: 'middle', color: '#444', fontSize: '14px' },
-    row: { transition: '0.2s' },
-    btnDetail: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }
+    row: { transition: '0.2s', '&:hover': { backgroundColor: '#fcfcfc' } },
+    btnDetail: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' }
 };
 
 export default ArchiveManagement;

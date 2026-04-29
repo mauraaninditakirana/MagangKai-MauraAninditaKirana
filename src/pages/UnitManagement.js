@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
     LayoutDashboard, UserCog, Building2, RefreshCcw,
     LogOut, PlusCircle, Edit, Trash2, Search, FileText, 
-    ChevronDown, ChevronRight, ClipboardCheck, Settings2, Save, X, Archive, Bell
+    ChevronDown, ClipboardCheck, Settings2, Save, X, Archive, Bell
 } from 'lucide-react';
 
 const UnitManagement = () => {
@@ -17,6 +17,7 @@ const UnitManagement = () => {
     
     // State Sidebar Dropdown
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
+    const [isMonitoringMenuOpen, setIsMonitoringMenuOpen] = useState(false);
     
     const [expandedUnitId, setExpandedUnitId] = useState(null);
     const [quotaForm, setQuotaForm] = useState({});
@@ -25,9 +26,16 @@ const UnitManagement = () => {
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
+            navigate('/');
+            return;
+        }
+        
         fetchUnits();
         fetchTypes();
-    }, []);
+        window.scrollTo(0, 0);
+    }, [navigate]);
 
     const fetchUnits = async () => {
         try {
@@ -169,17 +177,19 @@ const UnitManagement = () => {
                 </div>
 
                 <div style={styles.sidebarNav}>
+                    {/* DROPDOWN 1: DASHBOARD UTAMA */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
                             <div style={styles.navLinkContent}>
                                 <LayoutDashboard size={20} />
                                 <span>Dashboard Utama</span>
                             </div>
-                            <ChevronDown size={16} style={{ transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s'}} />
+                            <ChevronDown size={16} style={{ transform: isDashboardMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }} />
                         </div>
+                        
                         {isDashboardMenuOpen && (
                             <div style={styles.dropdownWrapper}>
-                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin')}>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'dashboard' } })}>
                                     <div style={styles.dotIndicator} /> Ringkasan & Pantauan
                                 </div>
                                 <div style={styles.dropdownItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'peserta_aktif' } })}>
@@ -189,12 +199,25 @@ const UnitManagement = () => {
                         )}
                     </div>
 
-                    <div style={styles.navItem} onClick={() => navigate('/admin/monitoring')}>
-                        <div style={styles.navLinkContent}><RefreshCcw size={20} /> <span>Monitoring Pengajuan</span></div>
-                    </div>
-
-                    <div style={styles.navItem} onClick={() => navigate('/super-admin', { state: { activeTab: 'requirements' } })}>
-                        <div style={styles.navLinkContent}><ClipboardCheck size={20} /> <span>Syarat Dokumen</span></div>
+                    {/* DROPDOWN 2: MONITORING PENGAJUAN */}
+                    <div style={styles.navGroup}>
+                        <div style={styles.navItem} onClick={() => setIsMonitoringMenuOpen(!isMonitoringMenuOpen)}>
+                            <div style={styles.navLinkContent}>
+                                <RefreshCcw size={20} />
+                                <span>Monitoring Pengajuan</span>
+                            </div>
+                            <ChevronDown size={16} style={{ transform: isMonitoringMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s'}} />
+                        </div>
+                        {isMonitoringMenuOpen && (
+                            <div style={styles.dropdownWrapper}>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/admin/monitoring', { state: { activeTab: 'monitoring' } })}>
+                                    <div style={styles.dotIndicator} /> Monitoring Verifikasi
+                                </div>
+                                <div style={styles.dropdownItem} onClick={() => navigate('/admin/monitoring', { state: { activeTab: 'requirements' } })}>
+                                    <div style={styles.dotIndicator} /> Syarat Dokumen
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div style={styles.navItem} onClick={() => navigate('/admin/users')}>
@@ -220,9 +243,10 @@ const UnitManagement = () => {
                 <div style={styles.contentScroll}>
                     <div style={styles.header}>
                         <div>
-                            <h2 style={{margin:0, color:'#003399'}}>Manajemen Unit & Kuota</h2>
+                            <h2 style={{margin:0, color:'#003399'}}>Manajemen Unit & Kuota 🏢</h2>
                             <p style={{color:'#666', fontSize:'14px'}}>Atur daftar divisi dan kuota spesifik per jenis kegiatan</p>
                         </div>
+                        {/* ✨ TOMBOL TAMBAH UNIT YANG SUDAH KEMBALI STYLINGNYA ✨ */}
                         <button onClick={handleAddUnit} style={styles.btnAdd}>
                             <PlusCircle size={18} /> Tambah Unit
                         </button>
@@ -338,40 +362,55 @@ const UnitManagement = () => {
 
 const styles = {
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
-    sidebar: { width: '280px', backgroundColor: '#132a71', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    sidebar: { width: '280px', backgroundColor: '#052278', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
     sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
     brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
     brandSubtitle: { margin: '5px 0 0 0', fontSize: '10px', opacity: 0.5, fontWeight: 'bold' },
     sidebarNav: { flex: 1, padding: '20px 15px', overflowY: 'auto' },
+    navGroup: { marginBottom: '5px' },
     navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', transition: '0.3s', color: 'rgba(255,255,255,0.7)' },
     navItemActive: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', backgroundColor: '#ff6600', color: '#fff', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(255, 102, 0, 0.3)' },
     navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
     dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
     dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
+    dropdownItemActive: { padding: '10px 15px', fontSize: '13px', color: '#fff', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' },
     dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
     sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
     logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
     main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
     topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
-    avatarSmall: { width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
-    profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right', marginLeft: '12px' },
-    profileNameSmall: { fontSize: '14px', fontWeight: 'bold', color: '#1b263b' },
-    profileRoleSmall: { fontSize: '11px', color: '#778da9' },
     contentScroll: { padding: '40px', flex: 1 },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' },
     searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', width: '300px', border: '1px solid #e0e0e0', marginBottom: '20px' },
     searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
-    btnAdd: { backgroundColor: '#2ecc71', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 4px 10px rgba(46, 204, 113, 0.3)' },
+    selectWrapper: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0', width: '200px' },
+    select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px', color: '#333', cursor: 'pointer' },
     card: { backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' },
     table: { width: '100%', borderCollapse: 'collapse' },
     thRow: { backgroundColor: '#f8f9fa' },
-    th: { padding: '18px 15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase' },
-    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', verticalAlign: 'middle' },
+    th: { padding: '18px 15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' },
+    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', verticalAlign: 'middle', color: '#444', fontSize: '14px' },
     row: { transition: '0.2s', '&:hover': { backgroundColor: '#fcfcfc' } },
     badgeQuota: { padding: '6px 12px', backgroundColor: '#f0f4ff', color: '#003399', borderRadius: '8px', fontSize: '11px', border: '1px solid #cce0ff' },
-    btnAction: { border: 'none', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', fontSize: '12px' },
+    btnAction: { border: 'none', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' },
     btnSaveDropdown: { backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '13px' },
-    btnCancelDropdown: { backgroundColor: '#eee', color: '#666', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '13px' }
+    btnCancelDropdown: { backgroundColor: '#eee', color: '#666', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '13px' },
+    
+    btnAdd: { 
+        backgroundColor: '#2ecc71', 
+        color: '#fff', 
+        border: 'none', 
+        padding: '10px 20px', 
+        borderRadius: '12px', 
+        cursor: 'pointer', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '8px', 
+        fontWeight: 'bold', 
+        fontSize: '14px', 
+        boxShadow: '0 4px 10px rgba(46, 204, 113, 0.3)',
+        transition: '0.2s'
+    }
 };
 
 export default UnitManagement;
