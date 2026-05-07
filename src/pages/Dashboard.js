@@ -249,7 +249,7 @@ const Dashboard = () => {
                             <>
                                 <div style={styles.headerArea}>
                                     <h2 style={{color:'#003399', marginBottom: '5px'}}>
-                                        {isExtending ? 'Formulir Perpanjangan Magang 🚄' : 'Formulir Pengajuan 🚄'}
+                                        {isExtending ? 'Formulir Perpanjangan Magang' : 'Formulir Pengajuan'}
                                     </h2>
                                     <p style={{color:'#666', margin: 0}}>
                                         {isExtending ? 'Silakan lengkapi form di bawah ini untuk mengajukan perpanjangan kegiatan Anda.' : 'Silakan lengkapi data dan dokumen untuk mengajukan kegiatan baru.'}

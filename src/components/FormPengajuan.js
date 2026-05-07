@@ -214,8 +214,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
             Swal.fire('Gagal', 'Terjadi kesalahan saat mengirim data.', 'error');
         }
     };
-
-    // ✨ LOGIKA FILTER OPSI UNIT BERDASARKAN KUOTA JENIS ✨
     const getAvailableUnits = () => {
         if (!formData.submission_type_id) return []; // Jangan tampilkan unit kalau belum pilih jenis
 

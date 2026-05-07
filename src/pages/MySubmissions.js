@@ -122,13 +122,11 @@ const MySubmissions = () => {
 
             <div style={styles.main}>
                 <div style={styles.headerArea}>
-                    <h2 style={{color:'#003399', margin: 0}}>Riwayat Pengajuan Saya 📂</h2>
+                    <h2 style={{color:'#003399', margin: 0}}>Riwayat Pengajuan Saya</h2>
                     <p style={{color:'#666', marginTop: '5px'}}>
                         Halo {userData.nama_lengkap}, pantau status dan unduh surat balasan di sini.
                     </p>
                 </div>
-                
-                {/* ✨ Kirim props onKirimSDM ke Tabel ✨ */}
                 <TabelPengajuan userId={userData.id} onAjukanJadwal={handleAjukanJadwal} onKirimSDM={handleKirimSDM} />
             </div>
         </div>
