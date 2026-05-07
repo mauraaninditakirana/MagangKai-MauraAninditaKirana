@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import NotificationBell from '../components/NotificationBell';
 import { 
     LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, 
     Edit3, Mail, IdCard, Building, Save, X, Eye 
@@ -67,6 +68,37 @@ const AdminDashboard = () => {
             console.error("Gagal mengambil profil:", err);
         }
     };
+
+    const handleUpdateJadwal = async (id) => {
+    const { value: jadwalBaru } = await Swal.fire({
+        title: 'Ubah Jadwal Wawancara',
+        input: 'datetime-local',
+        inputLabel: 'Pilih Jadwal Baru',
+        showCancelButton: true,
+        confirmButtonText: 'Simpan',
+    });
+
+    if (jadwalBaru) {
+        const { value: catatan } = await Swal.fire({
+            title: 'Catatan (Opsional)',
+            input: 'textarea',
+            inputPlaceholder: 'Alasan ubah jadwal...',
+            showCancelButton: true,
+        });
+
+        try {
+            await axios.put(`http://localhost:5000/api/submissions/${id}/update-jadwal`, {
+                jadwal_baru: jadwalBaru,
+                admin_id: userData.id,
+                catatan: catatan
+            });
+
+            Swal.fire('Berhasil!', 'Jadwal berhasil diubah.', 'success');
+            fetchData(userData.unit_id);
+        } catch (err) {
+            Swal.fire('Error', 'Gagal mengubah jadwal.', 'error');
+        }
+    }};
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
@@ -150,7 +182,7 @@ const AdminDashboard = () => {
             try {
                 await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
                     status: newStatus,
-                    catatan: `Status diperbarui oleh Admin Unit: ${newStatus}`,
+                    catatan: `Admin Unit mengubah status menjadi "${newStatus}".`,
                     admin_id: userData.id
                 });
                 Swal.fire('Berhasil!', 'Status pengajuan telah diperbarui.', 'success');
@@ -213,7 +245,16 @@ const AdminDashboard = () => {
             } else {
                 berkasHtml = '<p style="color: #999; font-style: italic; text-align: center;">Tidak ada berkas yang dilampirkan.</p>';
             }
-
+            let logHtml = '';
+            if (s.logs && s.logs.length > 0) {
+                logHtml = s.logs.map(log => `
+                    <div style="font-size:12px; margin-bottom:5px;">
+                        • ${log.status_perubahan} - ${log.catatan}
+                    </div>
+                `).join('');
+            } else {
+                logHtml = '<p style="font-size:12px; color:#999;">Belum ada riwayat.</p>';
+            }
             let htmlContent = `
                 <div style="text-align:left; font-family: sans-serif; color: #333;">
                     <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
@@ -234,6 +275,11 @@ const AdminDashboard = () => {
                     <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
                         <h4 style="margin-top:0; color: #003399; font-size: 15px; margin-bottom: 15px;">📂 Berkas Lampiran</h4>
                         ${berkasHtml}
+                    </div>
+
+                    <div style="margin-top:15px; background:#f9f9f9; padding:15px; border-radius:12px;">
+                        <h4 style="margin-top:0;">📝 Riwayat Status</h4>
+                        ${logHtml}
                     </div>
                 </div>
             `;
@@ -258,7 +304,28 @@ const AdminDashboard = () => {
     );
 
     const archiveData = submissions.filter(s => 
-        ['Berkas Disetujui Unit', 'Disetujui Unit, Menunggu Verifikasi SDM', 'Menunggu Verifikasi SDM', 'Selesai (Surat Dirilis)', 'Ditolak Unit', 'Ditolak SDM'].includes(s.status)
+        [
+            // Sudah disetujui Unit, sedang nunggu user kirim ke SDM
+            'Berkas Disetujui Unit', 
+            'Disetujui Unit, Menunggu Verifikasi SDM', 
+
+            // Tahapan di SDM Pusat
+            'Menunggu Verifikasi SDM', 
+            'Sedang Ditinjau SDM', 
+            'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 
+            'Pengajuan Telah Dikirim ke Pusat', 
+            'Surat Telah Masuk dari Pusat', 
+            'Disetujui SDM, Menunggu Surat Pengantar Magang', 
+
+            // Sudah dirilis & masa kegiatan
+            'Selesai (Surat Dirilis)', 
+            'Dalam Masa Kegiatan', 
+            'Selesai Kegiatan', 
+
+            // Ditolak (di tahap mana pun)
+            'Ditolak Unit', 
+            'Ditolak SDM'
+        ].includes(s.status)
     );
 
     const displayData = activeMenu === 'monitoring' ? monitoringData : archiveData;
@@ -287,6 +354,14 @@ const AdminDashboard = () => {
             </div>
 
             <div style={styles.main}>
+                <div style={styles.topBar}>
+                    <div style={styles.topBarInfo}>
+                        <small style={styles.topBarLabel}>Login sebagai</small>
+                        <span style={styles.topBarName}>{userData.nama_lengkap} <span style={{color:'#ff6600'}}>• {userData.nama_unit || 'Admin Unit'}</span></span>
+                    </div>
+                    {userData.id && <NotificationBell userId={userData.id} iconColor="#ff6600" iconSize={22} />}
+                </div>
+
                 {activeMenu === 'profile' ? (
                     <div style={styles.profileContainer}>
                         <div style={styles.profileHeader}>
@@ -306,19 +381,81 @@ const AdminDashboard = () => {
                                     <div><small style={styles.label}>Email</small><p style={styles.val}>{userData.email}</p></div>
                                 </div>
                                 <div style={styles.infoItem}>
+                                    <IdCard size={18} color="#003399" />
+                                    <div><small style={styles.label}>NIPP / Nomor Induk</small><p style={styles.val}>{userData.nomor_induk || '-'}</p></div>
+                                </div>
+                                <div style={styles.infoItem}>
                                     <Building size={18} color="#003399" />
                                     <div><small style={styles.label}>Unit</small><p style={styles.val}>{userData.nama_unit || '-'}</p></div>
                                 </div>
                             </div>
-                        ) : (
+                                                ) : (
                             <form onSubmit={handleUpdateProfile} style={styles.form}>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>Nama Lengkap</label>
-                                    <input style={styles.input} required value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
+                                    <input 
+                                        style={styles.input} 
+                                        required 
+                                        value={formData.nama_lengkap} 
+                                        onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} 
+                                    />
                                 </div>
+
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Email Sistem</label>
+                                    <input 
+                                        style={styles.input} 
+                                        type="email" 
+                                        required 
+                                        value={formData.email} 
+                                        onChange={e => setFormData({...formData, email: e.target.value})} 
+                                    />
+                                </div>
+
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>NIPP / Nomor Induk</label>
+                                    <input 
+                                        style={styles.input} 
+                                        value={formData.nomor_induk} 
+                                        onChange={e => setFormData({...formData, nomor_induk: e.target.value})} 
+                                    />
+                                </div>
+
+                                <hr style={{margin: '15px 0', border: '0.5px solid #eee'}} />
+
+                                <p style={{fontSize: '13px', color: '#ff6600', fontWeight: 'bold', margin: '0 0 5px 0'}}>
+                                    Ganti Password (Opsional)
+                                </p>
+
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Password Lama</label>
+                                    <input 
+                                        type="password" 
+                                        style={styles.input} 
+                                        placeholder="Kosongkan jika tidak diubah" 
+                                        value={formData.password_lama} 
+                                        onChange={e => setFormData({...formData, password_lama: e.target.value})} 
+                                    />
+                                </div>
+
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Password Baru</label>
+                                    <input 
+                                        type="password" 
+                                        style={styles.input} 
+                                        placeholder="Kosongkan jika tidak diubah" 
+                                        value={formData.password_baru} 
+                                        onChange={e => setFormData({...formData, password_baru: e.target.value})} 
+                                    />
+                                </div>
+
                                 <div style={styles.btnArea}>
-                                    <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
-                                    <button type="submit" style={styles.btnSave}><Save size={16}/> Simpan</button>
+                                    <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}>
+                                        <X size={16}/> Batal
+                                    </button>
+                                    <button type="submit" style={styles.btnSave}>
+                                        <Save size={16}/> Simpan Perubahan
+                                    </button>
                                 </div>
                             </form>
                         )}
@@ -364,12 +501,19 @@ const AdminDashboard = () => {
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
                                                                 if (!val) return;
-                                                                if (val === 'revisi' || val === 'tolak') handleRejection(s.id, val);
-                                                                else handleUpdateStatus(s.id, val);
-                                                                e.target.value = ""; // Reset dropdown after choice
+
+                                                                if (val === 'revisi' || val === 'tolak') {
+                                                                    handleRejection(s.id, val);
+                                                                } else if (val === 'ubah_jadwal') {
+                                                                    handleUpdateJadwal(s.id);
+                                                                } else {
+                                                                    handleUpdateStatus(s.id, val);
+                                                                }
+
+                                                                e.target.value = "";
                                                             }}
                                                             value=""
-                                                        >
+                                                            >
                                                             <option value="" disabled>Pilih Tindakan</option>
                                                             
                                                             {s.status === 'Menunggu Verifikasi' && (
@@ -377,9 +521,12 @@ const AdminDashboard = () => {
                                                             )}
                                                             
                                                             {s.status === 'Jadwal Wawancara Diajukan' && (
-                                                                <option value="Wawancara Disetujui">Setujui Jadwal Wawancara</option>
+                                                                <>
+                                                                    <option value="Wawancara Disetujui">Setujui Jadwal Wawancara</option>
+                                                                    <option value="ubah_jadwal">Ubah Jadwal Wawancara</option>
+                                                                </>
                                                             )}
-                                                            
+                                                                                                                        
                                                             {s.status === 'Wawancara Disetujui' && (
                                                                 <option value="Selesai Wawancara (Lengkapi Berkas Akhir)">Selesaikan Wawancara</option>
                                                             )}
@@ -411,7 +558,22 @@ const AdminDashboard = () => {
 const styles = {
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8', fontFamily: 'sans-serif' },
     sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
-    main: { flex: 1, padding: '40px', marginLeft: '260px', minHeight: '100vh' },
+        main: { flex: 1, padding: '0 40px 40px 40px', marginLeft: '260px', minHeight: '100vh' },
+    topBar: { 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '20px 0', 
+        marginBottom: '20px',
+        borderBottom: '1px solid #eaeaea',
+        position: 'sticky',
+        top: 0,
+        backgroundColor: '#f0f4f8',
+        zIndex: 50
+    },
+    topBarInfo: { display: 'flex', flexDirection: 'column' },
+    topBarLabel: { fontSize: '11px', color: '#888', fontWeight: 'bold', textTransform: 'uppercase' },
+    topBarName: { fontSize: '14px', color: '#003399', fontWeight: 'bold', marginTop: '2px' },
     logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
     menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
     menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px' },

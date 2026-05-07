@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate, useLocation } from 'react-router-dom';
+import NotificationBell from '../components/NotificationBell';
 import { 
     LayoutDashboard, FileText, RefreshCcw, UserCog, Building2, 
     LogOut, ChevronDown, User, Users, Archive, Edit3, Mail, IdCard, 
-    Building, Save, X, Bell, Search, Briefcase
+    Building, Save, X, Search, Briefcase
 } from 'lucide-react';
 
 const SuperAdminDashboard = () => {
@@ -208,10 +209,13 @@ const SuperAdminDashboard = () => {
             </div>
 
             {/* AREA UTAMA */}
-            <div style={styles.main}>
+                        <div style={styles.main}>
                 <div style={styles.topHeader}>
+                    <div style={{marginRight: '20px'}}>
+                        {userData.id && <NotificationBell userId={userData.id} iconColor="#ff6600" iconSize={22} />}
+                    </div>
+
                     <div style={styles.profileTrigger} onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                        <Bell size={22} color="#ff6600" style={{marginRight: '20px'}} />
                         <div style={styles.avatarSmall}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
                         <div style={styles.profileInfoText}>
                             <span style={styles.profileNameSmall}>{userData.nama_lengkap}</span>
@@ -359,10 +363,7 @@ const SuperAdminDashboard = () => {
                                         <span style={styles.roleBadgeSDM}>Super Admin Pusat</span>
                                     </div>
                                 </div>
-                                <div style={styles.notifIconWrapper}>
-                                    <Bell size={22} color="#ff6600" />
-                                    <span style={styles.notifDot}></span>
-                                </div>
+                                {userData.id && <NotificationBell userId={userData.id} iconColor="#ff6600" iconSize={22} />}
                             </div>
 
                             <hr style={{border: '0.5px solid #eee', margin: '25px 0'}} />
@@ -479,8 +480,6 @@ const styles = {
     landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
     avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 8px 20px rgba(255, 102, 0, 0.2)' },
     roleBadgeSDM: { display: 'inline-block', backgroundColor: '#e1f7e7', color: '#27ae60', padding: '6px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
-    notifIconWrapper: { position: 'relative', cursor: 'pointer', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '14px' },
-    notifDot: { position: 'absolute', top: '10px', right: '12px', width: '8px', height: '8px', backgroundColor: '#e74c3c', borderRadius: '50%', border: '2px solid #fff' },
     infoGridHorizontal: { display: 'flex', flexDirection: 'column', gap: '15px' },
     infoItemHorizontal: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #f1f3f9' },
     labelSmall: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' },

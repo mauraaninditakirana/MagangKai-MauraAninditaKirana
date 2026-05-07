@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import FormPengajuan from '../components/FormPengajuan';
+import NotificationBell from '../components/NotificationBell';
 import { 
     FilePlus, History, LogOut, AlertTriangle, CheckCircle, 
-    User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock, Bell
+    User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -174,12 +175,7 @@ const Dashboard = () => {
                                         </div>
                                     </div>
                                     
-                                    {/* Icon Notifikasi di Kanan Atas */}
-                                    <div style={styles.notifIconWrapper} title="Notifikasi Sistem">
-                                        <Bell size={22} color="#ff6600" />
-                                        {/* Dot merah tanda ada notif (opsional, bisa dibuat dinamis nanti) */}
-                                        <span style={styles.notifDot}></span>
-                                    </div>
+                                     <NotificationBell userId={userData.id} iconColor="#ff6600" iconSize={22} />
                                 </div>
 
                                 <hr style={{border: '0.5px solid #eee', margin: '25px 0'}} />
@@ -355,13 +351,10 @@ const styles = {
     badgeWarning: { display: 'inline-block', backgroundColor: '#fff3cd', color: '#856404', padding: '6px 15px', borderRadius: '20px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px' },
     btnRiwayat: { backgroundColor: '#003399', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: '0.3s' },
     
-    // ✨ STYLES BARU UNTUK PROFIL LANDSCAPE ✨
     profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '800px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
     landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
     avatarLarge: { width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '32px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 4px 10px rgba(255, 102, 0, 0.3)' },
     roleBadge: { display: 'inline-block', backgroundColor: '#e0f0ff', color: '#0055cc', padding: '4px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
-    notifIconWrapper: { position: 'relative', cursor: 'pointer', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center' },
-    notifDot: { position: 'absolute', top: '8px', right: '10px', width: '8px', height: '8px', backgroundColor: '#e74c3c', borderRadius: '50%', border: '2px solid #fff' },
     
     btnEditAvatar: { width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', transition: '0.2s' },
     

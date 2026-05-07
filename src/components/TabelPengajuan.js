@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Download, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
+import { Download, Clock, CheckCircle, AlertCircle, Calendar, MessageSquare, UserCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,12 +23,71 @@ const TabelPengajuan = ({ userId, onAjukanJadwal, onKirimSDM }) => {
         }
     };
 
-    const showCatatan = (catatan) => {
+    const showCatatan = (submission) => {
+        const catatan = submission.catatan;
+        const catatanBy = submission.catatan_by || 'Admin';
+        const catatanAt = submission.catatan_at 
+            ? new Date(submission.catatan_at).toLocaleString('id-ID', { 
+                day: '2-digit', month: 'long', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+              })
+            : '-';
+        const statusContext = submission.catatan_status || submission.status;
+
+        // Tentukan warna & icon sesuai konteks
+        const isRejected = (submission.status || '').toLowerCase().includes('ditolak');
+        const accentColor = isRejected ? '#e74c3c' : '#ff6600';
+        const headerBg = isRejected ? '#fdecea' : '#fff4e5';
+        const titleText = isRejected ? '❌ Alasan Penolakan' : '📝 Catatan dari Admin';
+
+        // Kalau memang tidak ada catatan sama sekali (kasus jarang)
+        if (!catatan || catatan.trim() === '') {
+            Swal.fire({
+                title: titleText,
+                html: `<p style="color:#888; font-style:italic;">Tidak ada catatan khusus dari admin. Silakan cek kembali detail pengajuan Anda.</p>`,
+                confirmButtonColor: accentColor
+            });
+            return;
+        }
+
+        const htmlContent = `
+            <div style="text-align: left; font-family: 'Segoe UI', sans-serif;">
+                <div style="background:${headerBg}; border-left: 4px solid ${accentColor}; padding: 15px 18px; border-radius: 10px; margin-bottom: 15px;">
+                    <div style="font-size: 11px; color: #777; text-transform: uppercase; font-weight: bold; margin-bottom: 6px;">
+                        Konteks Status
+                    </div>
+                    <div style="color: ${accentColor}; font-weight: bold; font-size: 14px;">
+                        ${statusContext}
+                    </div>
+                </div>
+
+                <div style="background: #fafbfd; padding: 18px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px;">
+                    <div style="font-size: 11px; color: #777; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">
+                        💬 Isi Catatan
+                    </div>
+                    <p style="color: #333; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">
+                        ${catatan.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                    </p>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px; font-size: 12px; color: #666;">
+                    <div>
+                        <span style="color:#888;">Dari:</span>
+                        <b style="color: #003399; margin-left: 4px;">${catatanBy}</b>
+                    </div>
+                    <div style="color: #888;">
+                        🕒 ${catatanAt}
+                    </div>
+                </div>
+            </div>
+        `;
+
         Swal.fire({
-            title: 'Catatan Sistem',
-            text: catatan || 'Silakan cek kembali berkas atau jadwal Anda.',
-            icon: 'info',
-            confirmButtonColor: '#003399'
+            title: titleText,
+            html: htmlContent,
+            width: '500px',
+            confirmButtonText: 'Mengerti',
+            confirmButtonColor: accentColor
         });
     };
 
@@ -136,7 +195,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal, onKirimSDM }) => {
                                     {/* 5. TOMBOL REVISI ATAU LENGKAPI BERKAS FINAL */}
                                     {(s.status === 'Revisi' || s.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') && (
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                            <button onClick={() => showCatatan(s.catatan)} style={styles.btnInfo}>Cek Catatan</button>
+                                            <button onClick={() => showCatatan(s)} style={styles.btnInfo}>📝 Cek Catatan</button>
                                             <button 
                                                 style={{...styles.btnRevisi, backgroundColor: s.status === 'Revisi' ? '#ff6600' : '#27ae60'}} 
                                                 onClick={() => navigate(`/dashboard?revisi=${s.id}`, { 
@@ -155,7 +214,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal, onKirimSDM }) => {
 
                                     {/* 7. TOMBOL DITOLAK */}
                                     {s.status.includes('Ditolak') && (
-                                        <button onClick={() => showCatatan(s.catatan)} style={{...styles.btnInfo, color: '#e74c3c'}}>Lihat Alasan Ditolak</button>
+                                        <button onClick={() => showCatatan(s)} style={{...styles.btnInfo, color: '#e74c3c'}}>Lihat Alasan Ditolak</button>
                                     )}
                                 </td>
                             </tr>
