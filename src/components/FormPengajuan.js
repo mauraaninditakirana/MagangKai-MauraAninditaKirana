@@ -26,7 +26,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         tanggal_selesai: ''
     });
     
-    const [files, setFiles] = useState([]); 
     const [filesByReq, setFilesByReq] = useState({}); 
     const [isUploadFinal, setIsUploadFinal] = useState(false);
     useEffect(() => {
@@ -134,9 +133,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         }
     };
 
-    const handleFileChange = (e) => {
-        setFiles(e.target.files);
-    };
     const handleFileForReq = (reqName, file) => {
         setFilesByReq(prev => ({ ...prev, [reqName]: file }));
     };
@@ -147,12 +143,8 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         if (!formData.submission_type_id || !formData.unit_id) {
             return Swal.fire('Perhatian', 'Mohon pilih Keperluan dan Unit Tujuan', 'warning');
         }
-
-        if (isUploadFinal && files.length === 0) {
-            return Swal.fire('Perhatian', 'Wajib melampirkan berkas akhir sebelum mengirim.', 'warning');
-        }
-
-        if (!revisiId && !isUploadFinal) {
+    const isRegularRevisi = revisiId && !isUploadFinal;
+        if (!isRegularRevisi) {
             const missingRequired = requirements
                 .filter(r => r.is_wajib)
                 .filter(r => !filesByReq[r.nama_dokumen]);
@@ -183,19 +175,11 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         Object.keys(formData).forEach(key => data.append(key, formData[key]));
         data.append('user_id', userId);
         
-        if (isUploadFinal) {
-            // Mode berkas akhir: bulk upload dengan fieldname 'files'
-            for (let i = 0; i < files.length; i++) {
-                data.append('files', files[i]);
+        Object.keys(filesByReq).forEach(reqName => {
+            if (filesByReq[reqName]) {
+                data.append(reqName, filesByReq[reqName]);
             }
-        } else {
-            // Mode normal/revisi: setiap file pakai nama syarat sebagai fieldname
-            Object.keys(filesByReq).forEach(reqName => {
-                if (filesByReq[reqName]) {
-                    data.append(reqName, filesByReq[reqName]);
-                }
-            });
-        }
+        });
 
         try {
             if (revisiId) {
@@ -269,7 +253,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                                 {!formData.submission_type_id ? 'Pilih Keperluan di atas terlebih dahulu' : '-- Pilih Unit --'}
                             </option>
                             
-                            {/* ✨ RENDER UNIT YANG ADA KUOTANYA SAJA ✨ */}
+                            
                             {availableUnits.map(u => (
                                 <option key={u.id} value={u.id} disabled={u.availableQuota <= 0}>
                                     {u.nama_unit} {u.availableQuota <= 0 ? '(KUOTA PENUH 🚫)' : `(Sisa: ${u.availableQuota} Slot)`}
@@ -356,77 +340,64 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                                 <div style={styles.inputBox}>
                     <label style={styles.label}>Upload Dokumen Pendukung</label>
                     
-                    {/* ✨ MODE BERKAS AKHIR (Pasca Wawancara): Single Upload Bulk ✨ */}
-                    {isUploadFinal ? (
-                        <>
-                            <div style={styles.fileContainer}>
-                                <FileUp size={20} color="#666" />
-                                <input 
-                                    type="file" 
-                                    multiple 
-                                    onChange={handleFileChange} 
-                                    style={{border: 'none', width: '100%'}} 
-                                    required 
-                                />
-                            </div>
-                            <p style={{fontSize: '11px', color: '#888', marginTop: '5px'}}>
-                                *Wajib mengunggah berkas/dokumen fix (Gabungkan dalam 1 PDF/ZIP) sebelum diajukan ke Pusat.
-                            </p>
-                        </>
+                    {requirements.length === 0 ? (
+                        <div style={{...styles.reqBox, color: '#888', fontStyle: 'italic'}}>
+                            Belum ada syarat dokumen yang ditetapkan oleh Admin Pusat.
+                        </div>
                     ) : (
-                        <>
-                            {requirements.length === 0 ? (
-                                <div style={{...styles.reqBox, color: '#888', fontStyle: 'italic'}}>
-                                    Belum ada syarat dokumen yang ditetapkan oleh Admin Pusat.
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                            {isUploadFinal ? (
+                                <div style={{backgroundColor: '#e1f7e7', padding: '10px 14px', borderRadius: '8px', fontSize: '12px', color: '#1e8449'}}>
+                                    ✅ Mode Berkas Akhir: Upload versi <b>fix</b> dari semua dokumen wajib (setelah wawancara).
                                 </div>
-                            ) : (
-                                <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                                    {revisiId && (
-                                        <div style={{backgroundColor: '#fff4e5', padding: '10px 14px', borderRadius: '8px', fontSize: '12px', color: '#d35400'}}>
-                                            💡 Mode Revisi: Upload hanya dokumen yang perlu diperbarui. Yang lama akan tetap tersimpan.
-                                        </div>
-                                    )}
+                            ) : revisiId ? (
+                                <div style={{backgroundColor: '#fff4e5', padding: '10px 14px', borderRadius: '8px', fontSize: '12px', color: '#d35400'}}>
+                                    💡 Mode Revisi: Upload hanya dokumen yang perlu diperbarui. Yang lama akan tetap tersimpan.
+                                </div>
+                            ) : null}
 
-                                    {requirements.map(req => {
-                                        const uploaded = filesByReq[req.nama_dokumen];
-                                        const isWajib = !!req.is_wajib;
-                                        
-                                        return (
-                                            <div key={req.id} style={styles.reqUploadBox}>
-                                                <div style={{flex: 1, minWidth: 0}}>
-                                                    <div style={{fontSize: '13px', fontWeight: 'bold', color: '#333'}}>
-                                                        {req.nama_dokumen}
-                                                        {isWajib && <span style={{color: '#e74c3c', marginLeft: '6px', fontSize: '11px'}}>*wajib</span>}
-                                                        {!isWajib && <span style={{color: '#888', marginLeft: '6px', fontSize: '11px'}}>(opsional)</span>}
-                                                    </div>
-                                                    {uploaded && (
-                                                        <div style={{fontSize: '11px', color: '#27ae60', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                                            <CheckCircle size={12} /> {uploaded.name}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <label style={styles.btnPickFile}>
-                                                    <FileUp size={14} /> {uploaded ? 'Ganti' : 'Pilih File'}
-                                                    <input 
-                                                        type="file" 
-                                                        accept=".pdf,.jpg,.jpeg,.png" 
-                                                        onChange={(e) => handleFileForReq(req.nama_dokumen, e.target.files[0])}
-                                                        style={{display: 'none'}}
-                                                        required={isWajib && !revisiId && !uploaded}
-                                                    />
-                                                </label>
+                            {requirements.map(req => {
+                                const uploaded = filesByReq[req.nama_dokumen];
+                                const isWajib = !!req.is_wajib;
+                                // Wajib di-required HTML kecuali mode revisi biasa (bukan final)
+                                const isRegularRevisi = revisiId && !isUploadFinal;
+                                
+                                return (
+                                    <div key={req.id} style={styles.reqUploadBox}>
+                                        <div style={{flex: 1, minWidth: 0}}>
+                                            <div style={{fontSize: '13px', fontWeight: 'bold', color: '#333'}}>
+                                                {req.nama_dokumen}
+                                                {isWajib && <span style={{color: '#e74c3c', marginLeft: '6px', fontSize: '11px'}}>*wajib</span>}
+                                                {!isWajib && <span style={{color: '#888', marginLeft: '6px', fontSize: '11px'}}>(opsional)</span>}
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                            <p style={{fontSize: '11px', color: '#888', marginTop: '8px'}}>
-                                {revisiId 
-                                    ? '*Hanya upload dokumen yang perlu diperbaiki. Format: PDF/JPG/PNG.' 
-                                    : '*Setiap dokumen di-upload terpisah. Format: PDF/JPG/PNG.'}
-                            </p>
-                        </>
+                                            {uploaded && (
+                                                <div style={{fontSize: '11px', color: '#27ae60', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                                                    <CheckCircle size={12} /> {uploaded.name}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <label style={styles.btnPickFile}>
+                                            <FileUp size={14} /> {uploaded ? 'Ganti' : 'Pilih File'}
+                                            <input 
+                                                type="file" 
+                                                accept=".pdf,.jpg,.jpeg,.png" 
+                                                onChange={(e) => handleFileForReq(req.nama_dokumen, e.target.files[0])}
+                                                style={{display: 'none'}}
+                                                required={isWajib && !uploaded && !isRegularRevisi}
+                                            />
+                                        </label>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     )}
+                    <p style={{fontSize: '11px', color: '#888', marginTop: '8px'}}>
+                        {isUploadFinal 
+                            ? '*Pastikan semua dokumen wajib di-upload sebagai versi final. Format: PDF/JPG/PNG.' 
+                            : revisiId 
+                                ? '*Hanya upload dokumen yang perlu diperbaiki. Format: PDF/JPG/PNG.' 
+                                : '*Setiap dokumen di-upload terpisah. Format: PDF/JPG/PNG.'}
+                    </p>
                 </div>
 
                 <button type="submit" style={{...styles.btnSubmit, backgroundColor: isUploadFinal ? '#27ae60' : (revisiId ? '#ff6600' : '#003399')}}>

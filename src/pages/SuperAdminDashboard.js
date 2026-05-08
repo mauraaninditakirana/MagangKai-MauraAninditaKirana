@@ -32,7 +32,7 @@ const SuperAdminDashboard = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [userData, setUserData] = useState(() => {
-        const saved = localStorage.getItem('user');
+        const saved = sessionStorage.getItem('user');
         return saved ? JSON.parse(saved) : {};
     });
 
@@ -98,13 +98,13 @@ const SuperAdminDashboard = () => {
             Swal.fire('Berhasil!', 'Profil Super Admin diperbarui.', 'success');
             setIsEditing(false);
             const updated = { ...userData, ...formData };
-            localStorage.setItem('user', JSON.stringify(updated));
+            sessionStorage.setItem('user', JSON.stringify(updated));
             setUserData(updated);
         } catch (err) { Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan.', 'error'); }
     };
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = sessionStorage.getItem('user');
         if (!storedUser) { navigate('/'); return; }
         const parsedUser = JSON.parse(storedUser);
         const role = (parsedUser.role || '').toLowerCase();
@@ -203,7 +203,7 @@ const SuperAdminDashboard = () => {
                     </div>
                 </div>
 
-                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                <div style={styles.sidebarFooter} onClick={() => {sessionStorage.clear(); navigate('/');}}>
                     <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
                 </div>
             </div>
@@ -228,7 +228,7 @@ const SuperAdminDashboard = () => {
                                 <div style={styles.dropdownBoxItem} onClick={() => { setActiveTab('profile'); setShowProfileMenu(false); }}>
                                     <User size={14} /> Lihat Profil
                                 </div>
-                                <div style={{...styles.dropdownBoxItem, color: '#e74c3c'}} onClick={() => {localStorage.clear(); navigate('/');}}>
+                                <div style={{...styles.dropdownBoxItem, color: '#e74c3c'}} onClick={() => {sessionStorage.clear(); navigate('/');}}>
                                     <LogOut size={14} /> Keluar
                                 </div>
                             </div>

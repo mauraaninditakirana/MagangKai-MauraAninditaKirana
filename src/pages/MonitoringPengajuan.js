@@ -28,10 +28,10 @@ const MonitoringPengajuan = () => {
     const [filterUnit, setFilterUnit] = useState('');
     const [filterType, setFilterType] = useState('');
 
-    const user = JSON.parse(localStorage.getItem('user')) || {};
+    const user = JSON.parse(sessionStorage.getItem('user')) || {};
     
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = sessionStorage.getItem('user');
         if (!storedUser) {
             navigate('/');
             return;
@@ -411,7 +411,7 @@ const MonitoringPengajuan = () => {
                     </div>
                 </div>
 
-                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                <div style={styles.sidebarFooter} onClick={() => {sessionStorage.clear(); navigate('/');}}>
                     <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
                 </div>
             </div>
@@ -503,7 +503,7 @@ const MonitoringPengajuan = () => {
                                                                 <option value="Pengajuan Telah Dikirim ke Pusat">Tandai Dikirim ke Pusat (Input Tgl)</option>
                                                             )}
                                                             {s.status === 'Pengajuan Telah Dikirim ke Pusat' && (
-                                                                <option value="Surat Telah Masuk dari Pusat">Surat Turun dari Pusat (Input Tgl)</option>
+                                                                <option value="Surat Telah Masuk dari Pusat">Surat Persetujuan dari Pusat (Input Tgl)</option>
                                                             )}
                                                             {s.status === 'Surat Telah Masuk dari Pusat' && (
                                                                 <option value="upload_final">Upload & Rilis Surat Final</option>

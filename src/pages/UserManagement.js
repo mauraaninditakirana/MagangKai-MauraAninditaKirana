@@ -18,7 +18,7 @@ const UserManagement = () => {
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
     const [isMonitoringMenuOpen, setIsMonitoringMenuOpen] = useState(false);
 
-    const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+    const currentUser = JSON.parse(sessionStorage.getItem('user')) || {};
 
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
@@ -27,7 +27,7 @@ const UserManagement = () => {
     });
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = sessionStorage.getItem('user');
         if (!storedUser) {
             navigate('/');
             return;
@@ -235,7 +235,7 @@ const UserManagement = () => {
                     </div>
                 </div>
 
-                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                <div style={styles.sidebarFooter} onClick={() => {sessionStorage.clear(); navigate('/');}}>
                     <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
                 </div>
             </div>

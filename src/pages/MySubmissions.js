@@ -10,7 +10,7 @@ const MySubmissions = () => {
     const [userData, setUserData] = useState(null);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = sessionStorage.getItem('user');
         if (!storedUser) {
             navigate('/');
             return;
@@ -65,7 +65,6 @@ const MySubmissions = () => {
         });
     };
 
-    // ✨ FUNGSI BARU: Meneruskan ke SDM ✨
     const handleKirimSDM = (submissionId) => {
         Swal.fire({
             title: 'Kirim ke SDM Pusat?',
@@ -115,7 +114,7 @@ const MySubmissions = () => {
                     <History size={18}/> Riwayat Pengajuan
                 </div>
 
-                <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}>
+                <div style={styles.logout} onClick={() => {sessionStorage.clear(); navigate('/');}}>
                     <LogOut size={18}/> Keluar
                 </div>
             </div>

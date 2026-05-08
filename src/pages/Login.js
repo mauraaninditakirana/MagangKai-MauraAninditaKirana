@@ -15,7 +15,7 @@ const Login = () => {
         const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
         
         const userData = res.data.user;
-        localStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('user', JSON.stringify(userData));
 
         Swal.fire('Berhasil Login!', 'Selamat datang kembali', 'success');
 

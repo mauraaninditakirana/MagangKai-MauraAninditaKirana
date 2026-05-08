@@ -14,7 +14,7 @@ const Dashboard = () => {
     const location = useLocation();
     
     const [userData, setUserData] = useState(() => {
-        const saved = localStorage.getItem('user');
+        const saved = sessionStorage.getItem('user');
         return saved ? JSON.parse(saved) : null;
     });
     
@@ -33,7 +33,7 @@ const Dashboard = () => {
     });
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = sessionStorage.getItem('user');
         if (!storedUser) {
             navigate('/');
             return;
@@ -82,7 +82,7 @@ const Dashboard = () => {
             setIsEditing(false);
             
             const updatedUser = { ...userData, nama_lengkap: formData.nama_lengkap, email: formData.email, nomor_induk: formData.nomor_induk, asal_instansi: formData.asal_instansi };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            sessionStorage.setItem('user', JSON.stringify(updatedUser));
             setUserData(updatedUser);
         } catch (err) {
             Swal.fire('Gagal', err.response?.data?.message || 'Terjadi kesalahan', 'error');
@@ -150,7 +150,7 @@ const Dashboard = () => {
                     <History size={18}/> Riwayat Pengajuan
                 </div>
 
-                <div style={styles.logout} onClick={() => {localStorage.clear(); navigate('/');}}>
+                <div style={styles.logout} onClick={() => {sessionStorage.clear(); navigate('/');}}>
                     <LogOut size={18}/> Keluar
                 </div>
             </div>

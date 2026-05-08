@@ -23,10 +23,10 @@ const UnitManagement = () => {
     const [quotaForm, setQuotaForm] = useState({});
 
     // Ambil data user untuk header
-    const user = JSON.parse(localStorage.getItem('user')) || {};
+    const user = JSON.parse(sessionStorage.getItem('user')) || {};
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = sessionStorage.getItem('user');
         if (!storedUser) {
             navigate('/');
             return;
@@ -233,7 +233,7 @@ const UnitManagement = () => {
                     </div>
                 </div>
 
-                <div style={styles.sidebarFooter} onClick={() => {localStorage.clear(); navigate('/');}}>
+                <div style={styles.sidebarFooter} onClick={() => {sessionStorage.clear(); navigate('/');}}>
                     <div style={styles.logoutBtn}><LogOut size={20} /> <span>Keluar Akun</span></div>
                 </div>
             </div>
