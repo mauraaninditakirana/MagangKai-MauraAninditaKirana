@@ -423,6 +423,8 @@ const LandingPage = () => {
                                 </div>
                             </div>
                             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>Sistem manajemen magang resmi PT Kereta Api Indonesia (Persero) Daop 6 Yogyakarta.</p>
+                            <br />
+                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>Created by: Maura Anindita Kirana Universitas Muhammadiyyah Yogyakarta  kiranamaura351@gmail.com</p>
                         </div>
                         <div style={{ display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
                             <div>

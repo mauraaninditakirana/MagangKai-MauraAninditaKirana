@@ -168,7 +168,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal, onKirimSDM }) => {
                                             onClick={() => onKirimSDM(s.id)} 
                                             style={{ ...styles.btnDownload, backgroundColor: '#ff6600', color: '#fff', border: 'none', marginBottom: '5px' }}
                                         >
-                                            🚀 Teruskan ke SDM Pusat
+                                            Kirim ke SDM DAOP6
                                         </button>
                                     )}
 
