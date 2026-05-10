@@ -6,7 +6,7 @@ import NotificationBell from '../components/NotificationBell';
 import { 
     LayoutDashboard, FileText, RefreshCcw, UserCog, Building2, 
     LogOut, ChevronDown, User, Users, Archive, Edit3, Mail, IdCard, 
-    Building, Save, X, Search, Briefcase
+    Building, Save, X, Search, Briefcase, Calendar
 } from 'lucide-react';
 
 const SuperAdminDashboard = () => {
@@ -17,15 +17,13 @@ const SuperAdminDashboard = () => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'dashboard'); 
     
-    // State Dropdown Sidebar
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(true);
     const [isMonitoringMenuOpen, setIsMonitoringMenuOpen] = useState(false);
 
     const [pesertaAktif, setPesertaAktif] = useState([]);
     const [units, setUnits] = useState([]);
-    const [types, setTypes] = useState([]); // State untuk Jenis Kegiatan
+    const [types, setTypes] = useState([]);
 
-    // ✨ STATE UNTUK FILTER PESERTA AKTIF ✨
     const [searchTerm, setSearchTerm] = useState('');
     const [filterUnit, setFilterUnit] = useState('');
     const [filterType, setFilterType] = useState('');
@@ -119,7 +117,6 @@ const SuperAdminDashboard = () => {
         window.scrollTo(0, 0);
     }, [navigate]);
 
-    // ✨ LOGIKA FILTER UNTUK TABEL PESERTA AKTIF ✨
     const filteredPesertaAktif = pesertaAktif.filter(p => {
         const matchName = (p.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchUnit = filterUnit === '' || String(p.unit_id) === String(filterUnit);
@@ -137,7 +134,6 @@ const SuperAdminDashboard = () => {
                 </div>
 
                 <div style={styles.sidebarNav}>
-                    {/* DROPDOWN 1: DASHBOARD UTAMA */}
                     <div style={styles.navGroup}>
                         <div 
                             style={activeTab === 'dashboard' || activeTab === 'peserta_aktif' ? styles.navItemActive : styles.navItem} 
@@ -168,7 +164,6 @@ const SuperAdminDashboard = () => {
                         )}
                     </div>
 
-                    {/* DROPDOWN 2: MONITORING PENGAJUAN */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsMonitoringMenuOpen(!isMonitoringMenuOpen)}>
                             <div style={styles.navLinkContent}>
@@ -209,7 +204,7 @@ const SuperAdminDashboard = () => {
             </div>
 
             {/* AREA UTAMA */}
-                        <div style={styles.main}>
+            <div style={styles.main}>
                 <div style={styles.topHeader}>
                     <div style={{marginRight: '20px'}}>
                         {userData.id && <NotificationBell userId={userData.id} iconColor="#ff6600" iconSize={22} />}
@@ -240,44 +235,94 @@ const SuperAdminDashboard = () => {
                     {/* TAB: DASHBOARD RINGKASAN */}
                     {activeTab === 'dashboard' && (
                         <div style={styles.dashboardView}>
-                            <div style={styles.welcomeSection}>
-                                <h2 style={{color: '#003399', margin: 0}}>Selamat Datang, {userData.nama_lengkap}! 👋</h2>
-                                <p style={{color: '#666', marginTop: '5px'}}>Berikut ringkasan statistik yang masuk ke Pusat hari ini.</p>
+                            {/* HERO WELCOME — clean tanpa dekorasi */}
+                            <div style={styles.welcomeCard}>
+                                <div style={styles.welcomeFlex}>
+                                    <div style={{ flex: 1, minWidth: '260px' }}>
+                                        <div style={styles.welcomeTag}>DASHBOARD SDM PUSAT</div>
+                                        <h2 style={styles.welcomeTitle}>
+                                            Selamat Datang, {userData.nama_lengkap}
+                                        </h2>
+                                        <p style={styles.welcomeSubtitle}>
+                                            Berikut ringkasan pengajuan magang yang masuk ke Pusat hari ini.
+                                        </p>
+                                    </div>
+                                    <div style={styles.dateCard}>
+                                        <div style={styles.dateCardLabel}>HARI INI</div>
+                                        <div style={styles.dateCardDay}>{new Date().toLocaleDateString('id-ID', { weekday: 'long' })}</div>
+                                        <div style={styles.dateCardFull}>{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div style={styles.statsGrid}>
-                                <div style={styles.statCard}>
-                                    <div style={{...styles.iconCircle, backgroundColor: '#fff4e5'}}><FileText color="#ff6600"/></div>
-                                    <div><h3 style={styles.statNum}>{stats.active}</h3><p style={styles.statLabel}>Pengajuan ke SDM</p></div>
-                                </div>
-                                <div style={styles.statCard}>
-                                    <div style={{...styles.iconCircle, backgroundColor: '#e1f7e7'}}><Users color="#27ae60"/></div>
-                                    <div><h3 style={styles.statNum}>{stats.admins}</h3><p style={styles.statLabel}>Total Admin Unit</p></div>
-                                </div>
-                                <div style={styles.statCard}>
-                                    <div style={{...styles.iconCircle, backgroundColor: '#e0f0ff'}}><Archive color="#003399"/></div>
-                                    <div><h3 style={styles.statNum}>{stats.archive}</h3><p style={styles.statLabel}>Total Data Archive</p></div>
-                                </div>
+                                                        <div style={styles.statsGrid}>
+                                {[
+                                    { num: stats.active, label: 'Pengajuan ke SDM', icon: <FileText size={32} color="#003399" strokeWidth={2}/>, desc: 'Menunggu diproses' },
+                                    { num: stats.admins, label: 'Total Admin Unit', icon: <Users size={32} color="#003399" strokeWidth={2}/>, desc: 'Tersebar di unit' },
+                                    { num: stats.archive, label: 'Total Data Archive', icon: <Archive size={32} color="#003399" strokeWidth={2}/>, desc: 'Pengajuan selesai' }
+                                ].map((s, i) => (
+                                    <div key={i} style={styles.statCardClean}>
+                                        <div style={{ marginBottom: '18px' }}>
+                                            {s.icon}
+                                        </div>
+                                        <div style={styles.statNumberBig}>{s.num}</div>
+                                        <div style={styles.statLabelMain}>{s.label}</div>
+                                        <div style={styles.statLabelSub}>{s.desc}</div>
+                                    </div>
+                                ))}
                             </div>
 
-                            <div style={{marginTop: '40px'}}>
-                                <h3 style={{color: '#003399', borderBottom: '2px solid #e0e0e0', paddingBottom: '10px', marginBottom: '20px'}}>
-                                    Pantauan Unit (Peserta Aktif)
-                                </h3>
-                                <div style={styles.unitGrid}>
+                            {/* PANTAUAN UNIT — dengan progress bar */}
+                            <div style={{ marginTop: '40px' }}>
+                                <div style={styles.sectionHeaderRow}>
+                                    <div>
+                                        <div style={styles.accentBar} />
+                                        <h3 style={styles.sectionTitle}>Pantauan Unit</h3>
+                                        <p style={styles.sectionDesc}>
+                                            Daftar unit dan jumlah peserta yang sedang aktif menjalani magang.
+                                        </p>
+                                    </div>
+                                    <div style={styles.unitCountBadge}>
+                                        {units.length} Unit Total
+                                    </div>
+                                </div>
+
+                                <div style={styles.unitGridClean}>
                                     {units.map(unit => {
                                         const activeInUnit = pesertaAktif.filter(p => String(p.unit_id) === String(unit.id)).length;
+                                        const isActive = activeInUnit > 0;
+                                        const accentColor = isActive ? '#27ae60' : '#cbd5e1';
+                                        const maxVisual = 10;
+                                        const fillPercent = Math.min((activeInUnit / maxVisual) * 100, 100);
+                                        
                                         return (
-                                            <div key={unit.id} style={styles.unitCard}>
-                                                <div style={styles.unitHeader}>
-                                                    <Building size={20} color="#ff6600"/>
-                                                    <h4 style={{margin: 0, color: '#333', fontSize: '15px'}}>{unit.nama_unit}</h4>
+                                           <div key={unit.id} style={styles.unitCardClean}>
+                                                <div style={styles.unitCardHeader}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                                                        <Building size={22} color="#003399" strokeWidth={2}/>
+                                                        <h4 style={styles.unitNameText} title={unit.nama_unit}>
+                                                            {unit.nama_unit}
+                                                        </h4>
+                                                    </div>
                                                 </div>
-                                                <div style={styles.unitBody}>
-                                                    <span style={{fontSize: '32px', fontWeight: 'bold', color: activeInUnit > 0 ? '#27ae60' : '#ccc'}}>
+
+                                                <div style={styles.unitNumberRow}>
+                                                    <span style={{ ...styles.unitBigNumber, color: accentColor }}>
                                                         {activeInUnit}
                                                     </span>
-                                                    <span style={{color: '#888', fontSize: '13px'}}>Peserta Aktif</span>
+                                                    <span style={styles.unitNumberLabel}>peserta aktif</span>
+                                                </div>
+
+                                                <div style={styles.progressTrack}>
+                                                    <div style={{ 
+                                                        ...styles.progressFill,
+                                                        width: `${fillPercent}%`, 
+                                                        background: isActive ? `linear-gradient(90deg, ${accentColor}, #15803d)` : '#cbd5e1'
+                                                    }} />
+                                                </div>
+                                                
+                                                <div style={{ ...styles.unitStatusText, color: isActive ? '#27ae60' : '#9ca3af' }}>
+                                                    {isActive ? `● Aktif` : '○ Belum ada peserta'}
                                                 </div>
                                             </div>
                                         );
@@ -287,12 +332,17 @@ const SuperAdminDashboard = () => {
                         </div>
                     )}
 
-                    {/* ✨ TAB: MONITORING PESERTA AKTIF (DENGAN FILTER) ✨ */}
+                    {/* TAB: MONITORING PESERTA AKTIF */}
                     {activeTab === 'peserta_aktif' && (
                         <div style={styles.dashboardView}>
-                            <h2 style={{color: '#003399', margin: '0 0 20px 0'}}>Monitoring Peserta Aktif 📋</h2>
+                            <div style={{ marginBottom: '32px' }}>
+                                <div style={styles.accentBar} />
+                                <h2 style={styles.sectionTitle}>Monitoring Peserta Aktif</h2>
+                                <p style={styles.sectionDesc}>
+                                    Daftar peserta magang yang saat ini sedang menjalani kegiatan di KAI Daop 6 Yogyakarta.
+                                </p>
+                            </div>
                             
-                            {/* AREA FILTER */}
                             <div style={styles.filterBar}>
                                 <div style={styles.searchBox}>
                                     <Search size={18} color="#003399" />
@@ -319,10 +369,10 @@ const SuperAdminDashboard = () => {
                                 </div>
                             </div>
 
-                            <div style={{backgroundColor: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)'}}>
+                            <div style={styles.tableCard}>
                                 <table style={styles.table}>
                                     <thead>
-                                        <tr style={{backgroundColor: '#f8f9fa'}}>
+                                        <tr style={styles.thRow}>
                                             <th style={styles.th}>Nama Peserta</th>
                                             <th style={styles.th}>Asal Instansi</th>
                                             <th style={styles.th}>Unit Penempatan</th>
@@ -332,19 +382,22 @@ const SuperAdminDashboard = () => {
                                     </thead>
                                     <tbody>
                                         {filteredPesertaAktif.length > 0 ? filteredPesertaAktif.map(p => (
-                                            <tr key={p.id}>
+                                                                                       <tr key={p.id} style={styles.tableRow}>
                                                 <td style={styles.td}><b>{p.nama_lengkap}</b></td>
                                                 <td style={styles.td}>{p.asal_instansi}</td>
-                                                <td style={styles.td}>{p.nama_unit}</td>
+                                                <td style={styles.td}>
+                                                    <span style={{ color: '#003399', fontWeight: 'bold' }}>{p.nama_unit}</span>
+                                                </td>
                                                 <td style={styles.td}>{p.nama_jenis}</td>
                                                 <td style={styles.td}>
-                                                    <span style={{color:'#ff6600', fontWeight:'bold'}}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ff6600', fontWeight: 'bold' }}>
+                                                        <Calendar size={14} />
                                                         {new Date(p.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(p.tanggal_selesai).toLocaleDateString('id-ID')}
-                                                    </span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )) : (
-                                            <tr><td colSpan="5" style={{textAlign:'center', padding:'30px', color:'#888'}}>Belum ada peserta yang sesuai dengan pencarian.</td></tr>
+                                            <tr><td colSpan="5" style={{textAlign:'center', padding:'40px', color:'#888'}}>Belum ada peserta yang sesuai dengan pencarian.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -427,6 +480,8 @@ const SuperAdminDashboard = () => {
 
 const styles = {
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    
+    // SIDEBAR
     sidebar: { width: '280px', backgroundColor: '#052278', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
     sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
     brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
@@ -442,8 +497,10 @@ const styles = {
     dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
     sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
     logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+    
+    // MAIN AREA
     main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
-    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
+    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' },
     avatarSmall: { width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#ff6600', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
     profileTrigger: { display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', position: 'relative' },
     profileInfoText: { display: 'flex', flexDirection: 'column', textAlign: 'right', marginLeft: '12px' },
@@ -453,32 +510,100 @@ const styles = {
     dropdownBoxItem: { padding: '12px 15px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', color: '#444', transition: '0.2s', cursor: 'pointer' },
     contentScroll: { padding: '40px', flex: 1 },
     dashboardView: { display: 'flex', flexDirection: 'column' },
-    welcomeSection: { marginBottom: '20px' },
-    statsGrid: { display: 'flex', gap: '20px', marginTop: '30px' },
-    statCard: { flex: 1, backgroundColor: '#fff', padding: '25px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' },
-    iconCircle: { width: '50px', height: '50px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' },
-    statNum: { margin: 0, fontSize: '24px', color: '#333' },
-    statLabel: { margin: 0, fontSize: '13px', color: '#888' },
-    unitGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' },
-    unitCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #eee' },
-    unitHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' },
-    unitBody: { display: 'flex', flexDirection: 'column' },
+
+    // WELCOME CARD (clean, no decorations)
+    welcomeCard: { 
+        background: 'linear-gradient(135deg, #052278 0%, #003399 100%)', 
+        borderRadius: '20px', 
+        padding: '36px 40px', 
+        color: 'white', 
+        marginBottom: '32px', 
+        boxShadow: '0 8px 24px rgba(5, 34, 120, 0.18)' 
+    },
+    welcomeFlex: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' },
+    welcomeTag: { fontSize: '11px', letterSpacing: '2.5px', fontWeight: '700', color: '#ffaa55', marginBottom: '12px' },
+    welcomeTitle: { fontSize: '28px', fontWeight: '800', margin: '0 0 10px', lineHeight: 1.2 },
+    welcomeSubtitle: { color: 'rgba(255,255,255,0.75)', fontSize: '14px', margin: 0, lineHeight: 1.6 },
+    dateCard: { 
+        background: 'rgba(255,255,255,0.08)', 
+        border: '1px solid rgba(255,255,255,0.15)', 
+        borderRadius: '12px', 
+        padding: '16px 24px', 
+        textAlign: 'center', 
+        minWidth: '180px' 
+    },
+    dateCardLabel: { fontSize: '11px', color: '#ffaa55', fontWeight: '700', letterSpacing: '1.5px', marginBottom: '6px' },
+    dateCardDay: { fontSize: '20px', fontWeight: '800' },
+    dateCardFull: { fontSize: '13px', opacity: 0.8, marginTop: '2px' },
+
+    // STATS CARDS (clean, no left accent bar)
+    statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' },
+        statCardClean: { 
+        background: '#fff', 
+        borderRadius: '16px', 
+        padding: '26px', 
+        boxShadow: '0 2px 12px rgba(0,0,0,0.04)', 
+        border: '1px solid #f0f4f8'
+    },
     
-    // FILTER BAR STYLES
-    filterBar: { display: 'flex', gap: '15px', marginBottom: '20px' },
-    searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
-    selectWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0' },
+    statNumberBig: { fontSize: '38px', fontWeight: '900', color: '#111827', lineHeight: 1, margin: '0 0 8px' },
+    statLabelMain: { fontSize: '14px', fontWeight: '700', color: '#374151', marginBottom: '4px' },
+    statLabelSub: { fontSize: '12px', color: '#9ca3af' },
+
+    // SECTION HEADER (FAQ-style)
+    accentBar: { width: '40px', height: '3px', background: '#ff6600', borderRadius: '2px', marginBottom: '12px' },
+    sectionHeaderRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' },
+    sectionTitle: { color: '#111827', margin: 0, fontSize: '24px', fontWeight: '800' },
+    sectionDesc: { color: '#6b7280', fontSize: '13px', margin: '6px 0 0' },
+    unitCountBadge: { background: '#f0f4ff', color: '#003399', padding: '8px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' },
+
+    // UNIT GRID
+    unitGridClean: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' },
+    unitCardClean: { 
+        background: '#fff', 
+        borderRadius: '14px', 
+        padding: '20px', 
+        boxShadow: '0 2px 12px rgba(0,0,0,0.04)', 
+        border: '1px solid #f0f4f8', 
+        transition: 'all 0.25s', 
+        cursor: 'default' 
+    },
+    unitCardHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' },
+    unitNameText: { 
+        margin: 0, 
+        color: '#111827', 
+        fontSize: '14px', 
+        fontWeight: '700', 
+        whiteSpace: 'nowrap', 
+        overflow: 'hidden', 
+        textOverflow: 'ellipsis' 
+    },
+    unitNumberRow: { display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' },
+    unitBigNumber: { fontSize: '34px', fontWeight: '900', lineHeight: 1 },
+    unitNumberLabel: { color: '#9ca3af', fontSize: '13px' },
+    progressTrack: { width: '100%', height: '6px', background: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' },
+    progressFill: { height: '100%', borderRadius: '3px', transition: 'width 0.5s ease' },
+    unitStatusText: { marginTop: '8px', fontSize: '11px', fontWeight: '600' },
+    
+    // FILTER BAR
+    filterBar: { display: 'flex', gap: '15px', marginBottom: '24px' },
+    searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e0e7ff' },
+    selectWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e0e7ff' },
     input: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
     select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px', color: '#333', cursor: 'pointer' },
 
+    // TABLE
+    tableCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', border: '1px solid #f0f4f8', overflow: 'hidden' },
     table: { width: '100%', borderCollapse: 'collapse' },
-    thRow: { backgroundColor: '#f8f9fa' },
-    th: { padding: '15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase', borderBottom: '2px solid #eee' },
-    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px', color: '#333' },
-
-    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '900px', borderRadius: '24px', padding: '40px', boxShadow: '0 20px 40px rgba(0,0,0,0.03)', margin: '0 auto' },
+    thRow: { backgroundColor: 'transparent' },
+    th: { padding: '16px 12px', textAlign: 'left', color: '#6b7280', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #f3f4f6' },
+    td: { padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '14px', color: '#374151' },
+    tableRow: { transition: '0.2s' },
+  
+    // PROFILE
+    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '900px', borderRadius: '24px', padding: '40px', boxShadow: '0 8px 28px rgba(0,0,0,0.04)', margin: '0 auto', border: '1px solid #f0f4f8' },
     landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
-    avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 8px 20px rgba(255, 102, 0, 0.2)' },
+    avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', background: 'linear-gradient(135deg, #ff6600, #cc5200)', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 8px 20px rgba(255, 102, 0, 0.25)' },
     roleBadgeSDM: { display: 'inline-block', backgroundColor: '#e1f7e7', color: '#27ae60', padding: '6px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
     infoGridHorizontal: { display: 'flex', flexDirection: 'column', gap: '15px' },
     infoItemHorizontal: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #f1f3f9' },
