@@ -97,28 +97,30 @@ const LandingPage = () => {
         whiteSpace: 'nowrap',
     });
 
-    /* ── Benefit cards — Lentera style ── */
+        /* ── Benefit cards — KAI palette ── */
     const benefits = [
         {
-            blobColor: '#803b0a',
+            accent: KAI_BLUE,
+            accentDark: KAI_BLUE_DARK,
             icon: <IconThumbUp />,
             title: 'Pengembangan',
             desc: 'Tingkatkan hard skill & soft skill secara nyata untuk membentuk diri sebagai tenaga profesional yang siap bersaing di industri perkeretaapian.',
         },
         {
-            blobColor: '#0e0c4b',
+            accent: '#0055cc',
+            accentDark: KAI_BLUE,
             icon: <IconHandshake />,
             title: 'Pengalaman',
             desc: 'Kenali budaya kerja dan nilai-nilai Perusahaan secara langsung serta bangun jaringan profesional bersama insan KAI Daop 6 Yogyakarta.',
         },
         {
-            blobColor: KAI_ORANGE,
+            accent: KAI_ORANGE,
+            accentDark: '#cc5200',
             icon: <IconCertificate />,
             title: 'Sertifikat',
             desc: 'Peroleh sertifikat kelulusan magang resmi dalam bentuk hardfile & softfile dengan format penilaian yang sesuai standar institusi pendidikan Anda.',
         },
     ];
-
     /* ── Timeline alur pendaftaran ── */
     const phases = [
         {
@@ -249,7 +251,7 @@ const LandingPage = () => {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
                     onClick={() => scrollToSection(berandaRef, 'beranda')}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: KAI_BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', fontSize: '13px', letterSpacing: '0.5px' }}>KAI</div>
+                    <img src="/logo-kai.png" alt="KAI Logo" style={{ width: '44px', height: '44px', objectFit: 'contain' }} />
                     <div>
                         <div style={{ fontSize: '14px', fontWeight: '700', color: KAI_BLUE, lineHeight: 1.2 }}>KAI Daop 6 Yogyakarta</div>
                         <div style={{ fontSize: '10px', color: KAI_ORANGE, lineHeight: 1.3, fontWeight: '600' }}>Portal Magang Resmi</div>
@@ -271,7 +273,7 @@ const LandingPage = () => {
 
             {/* ─── HERO ─── */}
             <section id="beranda" ref={berandaRef} style={{ minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', scrollMarginTop: '68px', overflow: 'hidden', padding: '80px 48px 0' }}>
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTd5ymr5ceTdF5W7mWTgparOXnF3fuYZhDBbw&s" alt="Kantor KAI Daop 6 Yogyakarta" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', zIndex: 0 }} />
+                <img src="/fotokai.jpeg" alt="Kantor KAI Daop 6 Yogyakarta" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', zIndex: 0 }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(0,20,80,0.88) 0%, rgba(0,51,153,0.78) 55%, rgba(0,15,55,0.90) 100%)', zIndex: 1 }} />
 
                 <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: '820px', color: 'white' }}>
@@ -292,65 +294,258 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            <section id="tentang" ref={tentangRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '68px' }}>
-                <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-                        <h2 style={{ fontSize: '34px', fontWeight: '700', color: '#111827', margin: '0 0 14px' }}>Kenapa Magang di KAI Daop 6 Yogyakarta?</h2>
-                        <p style={{ color: '#6b7280', fontSize: '16px', maxWidth: '580px', margin: '0 auto', lineHeight: '1.7' }}>
+                        <section id="tentang" ref={tentangRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '68px' }}>
+                <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                    {/* ✨ Header ala FAQ ✨ */}
+                    <div style={{ marginBottom: '56px' }}>
+                        <div style={{ width: '48px', height: '4px', background: KAI_ORANGE, borderRadius: '2px', marginBottom: '18px' }} />
+                        <h2 style={{ fontSize: '36px', fontWeight: '800', color: '#111827', margin: '0 0 14px', lineHeight: 1.25 }}>
+                            <span style={{ fontWeight: '900' }}>Kenapa Magang</span> di KAI Daop 6<br />Yogyakarta?
+                        </h2>
+                        <p style={{ color: '#6b7280', fontSize: '15px', maxWidth: '640px', margin: 0, lineHeight: '1.7' }}>
                             Bergabunglah dan rasakan manfaat nyata yang akan membentuk Anda menjadi tenaga profesional di industri perkeretaapian Indonesia.
                         </p>
                     </div>
 
+                    {/* ✨ BENEFIT CARDS — modern design ✨ */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
                         {benefits.map((b, i) => (
-                            <div key={i} style={{ background: '#ffffff', borderRadius: '16px', boxShadow: '0 2px 20px rgba(0,0,0,0.07)', padding: '48px 32px 40px', textAlign: 'center', border: '1px solid #f0f0f0' }}>
-                                <BlobIcon color={b.blobColor}>{b.icon}</BlobIcon>
-                                <h3 style={{ fontSize: '22px', fontWeight: '800', color: '#111827', margin: '0 0 16px' }}>{b.title}</h3>
-                                <p style={{ color: '#6b7280', fontSize: '15px', lineHeight: '1.75', margin: 0 }}>{b.desc}</p>
+                            <div 
+                                key={i} 
+                                style={{ 
+                                    background: '#ffffff', 
+                                    borderRadius: '20px', 
+                                    padding: '40px 32px 36px', 
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)', 
+                                    border: '1px solid #f0f4ff', 
+                                    transition: 'all 0.35s', 
+                                    cursor: 'default',
+                                    minHeight: '320px',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                }}
+                                onMouseEnter={(e) => { 
+                                    e.currentTarget.style.transform = 'translateY(-8px)'; 
+                                    e.currentTarget.style.boxShadow = `0 18px 36px ${b.accent}25`;
+                                    e.currentTarget.style.borderColor = b.accent + '50';
+                                }}
+                                onMouseLeave={(e) => { 
+                                    e.currentTarget.style.transform = 'translateY(0)'; 
+                                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.06)'; 
+                                    e.currentTarget.style.borderColor = '#f0f4ff';
+                                }}
+                            >
+                                {/* Giant decorative number di pojok kanan atas */}
+                                <span style={{ 
+                                    position: 'absolute', 
+                                    top: '-30px', 
+                                    right: '-12px',
+                                    fontSize: '180px', 
+                                    fontWeight: '900', 
+                                    color: b.accent,
+                                    opacity: 0.07, 
+                                    lineHeight: 1,
+                                    pointerEvents: 'none',
+                                    letterSpacing: '-5px'
+                                }}>
+                                    {String(i + 1).padStart(2, '0')}
+                                </span>
+
+                                {/* Icon container dengan gradient */}
+                                <div style={{ 
+                                    width: '64px', 
+                                    height: '64px', 
+                                    borderRadius: '16px', 
+                                    background: `linear-gradient(135deg, ${b.accent} 0%, ${b.accentDark} 100%)`, 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    marginBottom: '24px', 
+                                    boxShadow: `0 10px 24px ${b.accent}40`,
+                                    position: 'relative',
+                                    zIndex: 1
+                                }}>
+                                    {b.icon}
+                                </div>
+
+                                {/* Label kecil */}
+                                <div style={{ fontSize: '11px', color: b.accent, fontWeight: '700', letterSpacing: '2px', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
+                                    BENEFIT · {String(i + 1).padStart(2, '0')}
+                                </div>
+
+                                {/* Title */}
+                                <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', margin: '0 0 14px', position: 'relative', zIndex: 1 }}>
+                                    {b.title}
+                                </h3>
+
+                                {/* Description */}
+                                <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: '1.75', margin: 0, position: 'relative', zIndex: 1, flex: 1 }}>
+                                    {b.desc}
+                                </p>
+
+                                {/* Bottom accent bar */}
+                                <div style={{ 
+                                    position: 'absolute', 
+                                    bottom: 0, 
+                                    left: 0, 
+                                    height: '4px', 
+                                    width: '100%',
+                                    background: `linear-gradient(90deg, ${b.accent} 0%, ${b.accentDark} 100%)`,
+                                    opacity: 0.8
+                                }} />
                             </div>
                         ))}
                     </div>
 
-                    {/* Mission banner */}
-                    <div style={{ marginTop: '40px', background: KAI_BLUE, borderRadius: '16px', padding: '36px 40px', display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap', borderLeft: `6px solid ${KAI_ORANGE}` }}>
+                    {/* ✨ MISSION BANNER ✨ */}
+                    <div style={{ marginTop: '40px', background: KAI_BLUE, borderRadius: '16px', padding: '36px 40px', display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: '260px' }}>
-                            <h3 style={{ color: 'white', fontSize: '20px', fontWeight: '700', margin: '0 0 10px' }}>Melayani Dengan Sepenuh Hati</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', margin: 0, lineHeight: '1.7' }}>Kami berkomitmen membentuk generasi penerus yang kompeten, disiplin, dan memiliki integritas tinggi di industri perkeretaapian Indonesia.</p>
+                            <h3 style={{ color: 'white', fontSize: '22px', fontWeight: '800', margin: '0 0 10px' }}>Melayani Dengan Sepenuh Hati</h3>
+                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', margin: 0, lineHeight: '1.7' }}>
+                                Kami berkomitmen membentuk generasi penerus yang kompeten, disiplin, dan memiliki integritas tinggi di industri perkeretaapian Indonesia.
+                            </p>
                         </div>
-                        <button onClick={() => navigate('/login')} style={{ backgroundColor: KAI_ORANGE, color: 'white', border: 'none', padding: '13px 30px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', fontSize: '14px', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(255,102,0,0.35)' }}>Mulai Daftar →</button>
+                        <button onClick={() => navigate('/login')} style={{ backgroundColor: KAI_ORANGE, color: 'white', border: 'none', padding: '13px 30px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', fontSize: '14px', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(255,102,0,0.35)' }}>
+                            Mulai Daftar →
+                        </button>
                     </div>
                 </div>
             </section>
-
-            {/* ─── CARA MENDAFTAR — full timeline ─── */}
-            <section id="caradaftar" ref={caraDaftarRef} style={{ padding: '80px 48px', backgroundColor: '#f0f4ff', scrollMarginTop: '68px' }}>
-                <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-                        <h2 style={{ fontSize: '34px', fontWeight: '700', color: KAI_BLUE, margin: '0 0 14px' }}>Alur Pendaftaran Magang</h2>
-                        <p style={{ color: '#6b7280', fontSize: '16px', maxWidth: '560px', margin: '0 auto' }}>Ikuti langkah-langkah berikut untuk mendaftarkan diri pada Program Magang KAI Daop 6 Yogyakarta.</p>
+            
+                        {/* ─── CARA MENDAFTAR — 2x2 Grid Cards ─── */}
+            <section id="caradaftar" ref={caraDaftarRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '68px' }}>
+                <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                    {/* ✨ Header ala FAQ ✨ */}
+                    <div style={{ marginBottom: '48px' }}>
+                        <div style={{ width: '48px', height: '4px', background: KAI_ORANGE, borderRadius: '2px', marginBottom: '18px' }} />
+                        <h2 style={{ fontSize: '36px', fontWeight: '800', color: '#111827', margin: '0 0 14px', lineHeight: 1.25 }}>
+                            <span style={{ fontWeight: '900' }}>Alur Pendaftaran</span> Magang
+                        </h2>
+                        <p style={{ color: '#6b7280', fontSize: '15px', maxWidth: '600px', margin: 0, lineHeight: '1.7' }}>
+                            Empat fase mudah untuk memulai program magang di KAI Daop 6 Yogyakarta.
+                        </p>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* ✨ 2x2 GRID CARDS ✨ */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
                         {phases.map((ph, pi) => (
-                            <div key={pi} style={{ background: '#ffffff', borderRadius: '16px', border: `1px solid #e0e7ff`, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-                                {/* Phase header */}
-                                <div style={{ background: ph.color, padding: '16px 28px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <span style={{ color: 'white', fontWeight: '800', fontSize: '13px' }}>{pi + 1}</span>
-                                    </div>
-                                    <div>
-                                        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '11px', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>{ph.phase}</div>
-                                        <div style={{ color: 'white', fontSize: '16px', fontWeight: '700', lineHeight: 1.2 }}>{ph.title}</div>
+                            <div 
+                                key={pi}
+                                style={{
+                                    background: '#ffffff',
+                                    borderRadius: '20px',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                                    border: '1px solid #f0f4f8',
+                                    transition: 'all 0.3s',
+                                    cursor: 'default',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                }}
+                                onMouseEnter={(e) => { 
+                                    e.currentTarget.style.transform = 'translateY(-6px)'; 
+                                    e.currentTarget.style.boxShadow = `0 16px 36px ${ph.color}25`;
+                                }}
+                                onMouseLeave={(e) => { 
+                                    e.currentTarget.style.transform = 'translateY(0)'; 
+                                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
+                                }}
+                            >
+                                {/* Colored top band dengan giant number bg */}
+                                <div style={{
+                                    background: `linear-gradient(135deg, ${ph.color} 0%, ${ph.color}d0 100%)`,
+                                    padding: '28px 32px',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}>
+                                    {/* Decorative giant number */}
+                                    <span style={{
+                                        position: 'absolute',
+                                        top: '-40px',
+                                        right: '-15px',
+                                        fontSize: '180px',
+                                        fontWeight: '900',
+                                        color: 'rgba(255,255,255,0.13)',
+                                        lineHeight: 1,
+                                        pointerEvents: 'none',
+                                        letterSpacing: '-5px'
+                                    }}>
+                                        {pi + 1}
+                                    </span>
+
+                                    {/* Decorative circle */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '-30px',
+                                        left: '-30px',
+                                        width: '100px',
+                                        height: '100px',
+                                        borderRadius: '50%',
+                                        background: 'rgba(255,255,255,0.08)',
+                                        pointerEvents: 'none'
+                                    }} />
+
+                                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                        {/* Small number badge */}
+                                        <div style={{
+                                            width: '44px',
+                                            height: '44px',
+                                            borderRadius: '12px',
+                                            background: 'rgba(255,255,255,0.25)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '18px',
+                                            fontWeight: '900',
+                                            color: 'white',
+                                            backdropFilter: 'blur(4px)',
+                                            border: '1px solid rgba(255,255,255,0.3)'
+                                        }}>
+                                            {pi + 1}
+                                        </div>
+
+                                        <div>
+                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', fontWeight: '700', letterSpacing: '1.5px', marginBottom: '4px' }}>
+                                                {ph.phase.toUpperCase()}
+                                            </div>
+                                            <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '800', margin: 0, lineHeight: 1.25 }}>
+                                                {ph.title}
+                                            </h3>
+                                        </div>
                                     </div>
                                 </div>
-                                {/* Steps */}
-                                <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+                                {/* Steps content - compact */}
+                                <div style={{ padding: '20px 28px 24px', flex: 1 }}>
                                     {ph.steps.map((st, si) => (
-                                        <div key={si} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: ph.color + '18', border: `2px solid ${ph.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
-                                                <span style={{ color: ph.color, fontWeight: '700', fontSize: '12px' }}>{st.n}</span>
-                                            </div>
-                                            <p style={{ margin: 0, color: '#374151', fontSize: '14px', lineHeight: '1.75', paddingTop: '4px' }}>{st.text}</p>
+                                        <div key={si} style={{
+                                            display: 'flex',
+                                            gap: '14px',
+                                            alignItems: 'flex-start',
+                                            padding: si === 0 ? '0 0 12px' : '12px 0',
+                                            borderTop: si > 0 ? '1px dashed #f0f0f0' : 'none'
+                                        }}>
+                                            {/* Number badge kecil */}
+                                            <span style={{
+                                                background: ph.color + '15',
+                                                color: ph.color,
+                                                fontWeight: '800',
+                                                fontSize: '11px',
+                                                padding: '4px 8px',
+                                                borderRadius: '6px',
+                                                flexShrink: 0,
+                                                minWidth: '30px',
+                                                textAlign: 'center',
+                                                letterSpacing: '0.5px',
+                                                marginTop: '1px'
+                                            }}>
+                                                {String(st.n).padStart(2, '0')}
+                                            </span>
+                                            <p style={{ margin: 0, color: '#4b5563', fontSize: '13.5px', lineHeight: '1.65', flex: 1 }}>
+                                                {st.text}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>
@@ -358,14 +553,14 @@ const LandingPage = () => {
                         ))}
                     </div>
 
-                    <div style={{ textAlign: 'center', marginTop: '48px' }}>
+                    {/* ✨ CTA ✨ */}
+                    <div style={{ textAlign: 'center', marginTop: '56px' }}>
                         <button onClick={() => navigate('/login')} style={{ backgroundColor: KAI_ORANGE, color: 'white', border: 'none', padding: '15px 40px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', fontSize: '15px', boxShadow: '0 6px 18px rgba(255,102,0,0.35)' }}>
-                            Mulai Pendaftaran Sekarang
+                            Mulai Pendaftaran Sekarang →
                         </button>
                     </div>
                 </div>
             </section>
-
             {/* ─── FAQ ─── */}
             <section id="faq" ref={faqRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '68px' }}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -410,13 +605,14 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* ─── FOOTER ─── */}
+                        {/* ─── FOOTER (improved: logo asli + link clickable) ─── */}
             <footer style={{ backgroundColor: KAI_BLUE_DARK, color: 'white', padding: '40px 48px 28px' }}>
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px', marginBottom: '32px' }}>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: KAI_ORANGE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', fontSize: '13px' }}>KAI</div>
+                                {/* ✨ Logo asli (bukan kotak KAI lagi) ✨ */}
+                                <img src="/logo-kai.png" alt="KAI Logo" style={{ width: '42px', height: '42px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '8px', padding: '4px' }} />
                                 <div>
                                     <div style={{ fontSize: '14px', fontWeight: '700' }}>KAI Daop 6 Yogyakarta</div>
                                     <div style={{ fontSize: '11px', opacity: 0.6 }}>Portal Magang Resmi</div>
@@ -424,23 +620,53 @@ const LandingPage = () => {
                             </div>
                             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>Sistem manajemen magang resmi PT Kereta Api Indonesia (Persero) Daop 6 Yogyakarta.</p>
                             <br />
-                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>Created by: Maura Anindita Kirana Universitas Muhammadiyyah Yogyakarta  kiranamaura351@gmail.com</p>
+                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>Created by: Maura Anindita Kirana<br/>Universitas Muhammadiyyah Yogyakarta<br/>kiranamaura351@gmail.com</p>
                         </div>
+
                         <div style={{ display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
+                            {/* ✨ Navigasi clickable ✨ */}
                             <div>
                                 <p style={{ fontWeight: '700', fontSize: '13px', marginBottom: '12px', color: KAI_ORANGE }}>Navigasi</p>
-                                {['Beranda', 'Tentang', 'Cara Mendaftar', 'FAQ'].map(item => (
-                                    <p key={item} style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', margin: '0 0 8px', cursor: 'pointer' }}>{item}</p>
+                                {[
+                                    { label: 'Beranda', action: () => scrollToSection(berandaRef, 'beranda') },
+                                    { label: 'Tentang', action: () => scrollToSection(tentangRef, 'tentang') },
+                                    { label: 'Cara Mendaftar', action: () => scrollToSection(caraDaftarRef, 'caradaftar') },
+                                    { label: 'FAQ', action: () => scrollToSection(faqRef, 'faq') }
+                                ].map(item => (
+                                    <p 
+                                        key={item.label} 
+                                        onClick={item.action}
+                                        style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', margin: '0 0 8px', cursor: 'pointer', transition: 'color 0.2s' }}
+                                        onMouseEnter={(e) => e.target.style.color = KAI_ORANGE}
+                                        onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.55)'}
+                                    >
+                                        {item.label}
+                                    </p>
                                 ))}
                             </div>
+
+                            {/* ✨ Akun clickable ✨ */}
                             <div>
                                 <p style={{ fontWeight: '700', fontSize: '13px', marginBottom: '12px', color: KAI_ORANGE }}>Akun</p>
-                                {['Masuk', 'Daftar', 'Cek Kuota'].map(item => (
-                                    <p key={item} style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', margin: '0 0 8px', cursor: 'pointer' }}>{item}</p>
+                                {[
+                                    { label: 'Masuk', action: () => navigate('/login') },
+                                    { label: 'Daftar', action: () => navigate('/register') },
+                                    { label: 'Cek Kuota', action: handleCekKuota }
+                                ].map(item => (
+                                    <p 
+                                        key={item.label} 
+                                        onClick={item.action}
+                                        style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', margin: '0 0 8px', cursor: 'pointer', transition: 'color 0.2s' }}
+                                        onMouseEnter={(e) => e.target.style.color = KAI_ORANGE}
+                                        onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.55)'}
+                                    >
+                                        {item.label}
+                                    </p>
                                 ))}
                             </div>
                         </div>
                     </div>
+
                     <div style={{ borderTop: '1px solid rgba(255,102,0,0.25)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', margin: 0 }}>&copy; {new Date().getFullYear()} PT Kereta Api Indonesia (Persero) Daop 6 Yogyakarta. All Rights Reserved.</p>
                         <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', margin: 0 }}>Sistem Manajemen Magang KAI Daop 6 Yogyakarta</p>
