@@ -255,11 +255,11 @@ const SuperAdminDashboard = () => {
                                 </div>
                             </div>
 
-                                                        <div style={styles.statsGrid}>
+                                <div style={styles.statsGrid}>
                                 {[
                                     { num: stats.active, label: 'Pengajuan ke SDM', icon: <FileText size={32} color="#003399" strokeWidth={2}/>, desc: 'Menunggu diproses' },
                                     { num: stats.admins, label: 'Total Admin Unit', icon: <Users size={32} color="#003399" strokeWidth={2}/>, desc: 'Tersebar di unit' },
-                                    { num: stats.archive, label: 'Total Data Archive', icon: <Archive size={32} color="#003399" strokeWidth={2}/>, desc: 'Pengajuan selesai' }
+                                    { num: stats.archive, label: 'Peserta Aktif', icon: <Briefcase size={32} color="#003399" strokeWidth={2}/>, desc: 'Sedang menjalani magang' }
                                 ].map((s, i) => (
                                     <div key={i} style={styles.statCardClean}>
                                         <div style={{ marginBottom: '18px' }}>
