@@ -3,8 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { 
-    LayoutDashboard, RefreshCcw, UserCog, Building2, FileText, 
-    LogOut, Search, Eye, ChevronDown, ClipboardCheck, Archive, Bell
+    LayoutDashboard, RefreshCcw, UserCog, Building2, 
+    LogOut, Search, Eye, ChevronDown, Archive
 } from 'lucide-react';
 
 const ArchiveManagement = () => {
@@ -17,12 +17,8 @@ const ArchiveManagement = () => {
     const [units, setUnits] = useState([]);
     const navigate = useNavigate();
 
-    // State Sidebar Dropdown
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
     const [isMonitoringMenuOpen, setIsMonitoringMenuOpen] = useState(false);
-
-    // Ambil data user untuk header
-    const user = JSON.parse(sessionStorage.getItem('user')) || {};
 
     useEffect(() => {
         const storedUser = sessionStorage.getItem('user');
@@ -37,8 +33,6 @@ const ArchiveManagement = () => {
     const fetchArchive = async () => {
         try {
             const res = await axios.get('http://localhost:5000/api/submissions');
-            
-            // ✨ UPDATE: Tambahkan 'Dalam Masa Kegiatan' agar ikut masuk ke tabel Arsip Data Peserta
             const finished = res.data.filter(s => 
                 s.status === 'Dalam Masa Kegiatan' ||
                 s.status === 'Selesai (Surat Dirilis)' || 
@@ -71,47 +65,90 @@ const ArchiveManagement = () => {
             const s = res.data;
             const docs = s.documents || [];
 
+            // Helper inline styles untuk modal
+            const sectionCard = 'background:#f8fafd; padding:18px 22px; border-radius:12px; margin-bottom:14px; border:1px solid #f0f4f8;';
+            const sectionLabel = 'font-size:11px; color:#003399; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; display:block;';
+            const fieldRow = 'display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e5e7eb; font-size:13px;';
+            const fieldLabel = 'color:#6b7280; font-weight:600;';
+            const fieldValue = 'color:#111827; font-weight:600; text-align:right; max-width:60%;';
+
             let htmlContent = `
-                <div style="text-align:left; font-family: sans-serif; font-size: 14px; color: #333;">
-                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                        <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px;">👤 Data Mahasiswa</h4>
-                        <p style="margin: 5px 0;"><b>Nama Lengkap:</b> ${s.nama_lengkap}</p>
-                        <p style="margin: 5px 0;"><b>Asal Instansi:</b> ${s.asal_instansi || '-'}</p>
+                <div style="text-align:left; font-family:'Segoe UI', Tahoma, sans-serif;">
+                    
+                    <div style="${sectionCard}">
+                        <span style="${sectionLabel}">━━ Data Mahasiswa</span>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Nama Lengkap</span>
+                            <span style="${fieldValue}">${s.nama_lengkap}</span>
+                        </div>
+                        <div style="${fieldRow} border-bottom:none;">
+                            <span style="${fieldLabel}">Asal Instansi</span>
+                            <span style="${fieldValue}">${s.asal_instansi || '-'}</span>
+                        </div>
                     </div>
 
-                    <div style="background: #fff4e5; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                        <h4 style="margin-top:0; color: #d35400; border-bottom: 2px solid #d35400; padding-bottom: 5px;">📋 Detail Pelaksanaan</h4>
-                        <p style="margin: 5px 0;"><b>Jenis Kegiatan:</b> ${s.nama_jenis}</p>
-                        <p style="margin: 5px 0;"><b>Unit Magang:</b> ${s.nama_unit}</p>
-                        <p style="margin: 5px 0;"><b>Judul Project:</b> ${s.judul_atau_tujuan}</p>
-                        <p style="margin: 5px 0;"><b>Kategori:</b> ${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</p>
-                        <p style="margin: 5px 0;"><b>Dosen/Guru Pembimbing:</b> ${s.nama_pembimbing || '-'}</p>
-                        <p style="margin: 5px 0;"><b>Kontak Pembimbing:</b> ${s.kontak_pembimbing || '-'}</p>
-                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
+                    <div style="${sectionCard}">
+                        <span style="${sectionLabel}">━━ Detail Pelaksanaan</span>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Jenis Kegiatan</span>
+                            <span style="${fieldValue}">${s.nama_jenis}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Unit Magang</span>
+                            <span style="${fieldValue}">${s.nama_unit}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Judul Project</span>
+                            <span style="${fieldValue}">${s.judul_atau_tujuan}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Kategori</span>
+                            <span style="${fieldValue}">${s.kategori_pendaftar} (${s.jumlah_anggota} orang)</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Pembimbing</span>
+                            <span style="${fieldValue}">${s.nama_pembimbing || '-'}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Kontak Pembimbing</span>
+                            <span style="${fieldValue}">${s.kontak_pembimbing || '-'}</span>
+                        </div>
+                        <div style="${fieldRow} border-bottom:none;">
+                            <span style="${fieldLabel}">Periode Kegiatan</span>
+                            <span style="${fieldValue}">${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</span>
+                        </div>
                     </div>
 
-                    <div style="padding: 15px; background: #e0f0ff; border-radius: 10px;">
-                        <h4 style="margin-top:0; color: #0055cc; border-bottom: 2px solid #0055cc; padding-bottom: 5px;">📁 Arsip Dokumen Lampiran</h4>
+                    <div style="${sectionCard} margin-bottom:0;">
+                        <span style="${sectionLabel}">━━ Arsip Dokumen Lampiran</span>
                         ${docs.length > 0 ? docs.map((doc, i) => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dotted #ccc;">
-                                <span>${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:8px; margin-bottom:6px; border:1px solid #e0e7ff;">
+                                <span style="font-size:13px; color:#374151; font-weight:600;">${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
                                 <a href="http://localhost:5000/${doc.file_path}" target="_blank" 
-                                   style="background: #0055cc; color: #fff; padding: 4px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: bold;">
-                                    👁️ Lihat Berkas
+                                   style="background:#003399; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">
+                                   Lihat Berkas
                                 </a>
                             </div>
-                        `).join('') : '<p style="color: #999; margin:0;">Tidak ada dokumen dilampirkan.</p>'}
+                        `).join('') : '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:20px 0;">Tidak ada dokumen dilampirkan.</p>'}
                     </div>
                 </div>
             `;
-
             Swal.fire({
-                title: 'Arsip Detail Pengajuan',
+                title: 'Detail Arsip Pengajuan',
                 html: htmlContent,
-                width: '600px',
+                width: '640px',
                 confirmButtonText: 'Tutup',
-                confirmButtonColor: '#ff6600',
-                showCloseButton: true
+                confirmButtonColor: '#003399',
+                didOpen: () => {
+                    const titleEl = Swal.getTitle();
+                    if (titleEl) {
+                        titleEl.style.color = '#111827';
+                        titleEl.style.fontWeight = '800';
+                        titleEl.style.fontSize = '22px';
+                        titleEl.style.fontFamily = "'Segoe UI', Tahoma, sans-serif";
+                        titleEl.style.letterSpacing = '-0.2px';
+                    }
+                }
             });
         } catch (err) {
             Swal.fire('Error', 'Gagal memuat detail arsip.', 'error');
@@ -127,9 +164,15 @@ const ArchiveManagement = () => {
         return matchName && matchUnit && matchDate && matchType;
     });
 
+    const getStatusColor = (status) => {
+        if (status?.includes('Selesai')) return '#27ae60';
+        if (status === 'Dalam Masa Kegiatan') return '#0055cc';
+        return '#e74c3c';
+    };
+
     return (
         <div style={styles.container}>
-            {/* SIDEBAR PREMIUM STYLE */}
+            {/* SIDEBAR */}
             <div style={styles.sidebar}>
                 <div style={styles.sidebarBrand}>
                     <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
@@ -137,7 +180,6 @@ const ArchiveManagement = () => {
                 </div>
 
                 <div style={styles.sidebarNav}>
-                    {/* DROPDOWN 1: DASHBOARD UTAMA */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
                             <div style={styles.navLinkContent}>
@@ -159,7 +201,6 @@ const ArchiveManagement = () => {
                         )}
                     </div>
 
-                    {/* DROPDOWN 2: MONITORING PENGAJUAN */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsMonitoringMenuOpen(!isMonitoringMenuOpen)}>
                             <div style={styles.navLinkContent}>
@@ -198,86 +239,77 @@ const ArchiveManagement = () => {
                 </div>
             </div>
             
-            {/* MAIN CONTENT */}
+            {/* MAIN */}
             <div style={styles.main}>
                 <div style={styles.contentScroll}>
-                    <div style={styles.headerArea}>
-                        <h2 style={{margin:0, color:'#003399'}}>Arsip Data Peserta 📂</h2>
-                        <p style={{color:'#666', fontSize:'14px'}}>Pusat data detail peserta magang yang sedang berjalan, selesai, atau ditolak.</p>
+                    {/* Section header */}
+                    <div style={{ marginBottom: '28px' }}>
+                        <div style={styles.accentBar} />
+                        <h2 style={styles.sectionTitle}>Arsip Data Peserta</h2>
+                        <p style={styles.sectionDesc}>Pusat data peserta magang yang sedang berjalan, telah selesai, atau ditolak.</p>
                     </div>
 
-                    {/* BARIS FILTER */}
+                    {/* Filter bar */}
                     <div style={styles.filterBar}>
                         <div style={styles.searchBox}>
-                            <Search size={16} color="#888" />
+                            <Search size={18} color="#003399" />
                             <input 
-                                placeholder="Cari Nama Peserta..." 
+                                placeholder="Cari nama peserta..." 
                                 style={styles.input} 
                                 onChange={e => setSearchTerm(e.target.value)} 
                             />
                         </div>
-                        <select style={styles.select} onChange={e => setFilterUnit(e.target.value)}>
+                        <select style={styles.selectBox} value={filterUnit} onChange={e => setFilterUnit(e.target.value)}>
                             <option value="">Semua Unit</option>
                             {units.map(u => <option key={u.id} value={u.id}>{u.nama_unit}</option>)}
                         </select>
-                        <select style={styles.select} onChange={e => setFilterType(e.target.value)}>
+                        <select style={styles.selectBox} value={filterType} onChange={e => setFilterType(e.target.value)}>
                             <option value="">Semua Jenis</option>
                             {types.map(t => <option key={t.id} value={t.id}>{t.nama_jenis}</option>)}
                         </select>
-                        <input type="date" style={styles.select} onChange={e => setFilterDate(e.target.value)} />
+                        <input type="date" style={styles.selectBox} onChange={e => setFilterDate(e.target.value)} />
                     </div>
 
-                    {/* TABEL */}
-                    <div style={styles.card}>
+                    {/* Tabel */}
+                    <div style={styles.tableCard}>
                         <table style={styles.table}>
                             <thead>
                                 <tr style={styles.thRow}>
-                                    <th style={styles.th}>No</th>
+                                    <th style={{...styles.th, width: '50px'}}>No</th>
                                     <th style={styles.th}>Nama Mahasiswa</th>
                                     <th style={styles.th}>Unit Magang</th>
                                     <th style={styles.th}>Jenis</th>
                                     <th style={styles.th}>Tanggal Mulai</th>
                                     <th style={styles.th}>Tanggal Selesai</th>
-                                    <th style={styles.th}>Detail Form</th>
-                                    <th style={{...styles.th, textAlign:'center'}}>Status Akhir</th>
+                                    <th style={{...styles.th, textAlign: 'center'}}>Status Akhir</th>
+                                    <th style={{...styles.th, textAlign:'center', width: '120px'}}>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredData.length > 0 ? filteredData.map((s, index) => {
-                                    // Logika warna badge status
-                                    let bg = '#fdeaea'; let textColor = '#e74c3c'; // Default: Merah (Ditolak)
-                                    if (s.status.includes('Selesai')) {
-                                        bg = '#e1f7e7'; textColor = '#27ae60'; // Hijau (Selesai)
-                                    } else if (s.status === 'Dalam Masa Kegiatan') {
-                                        bg = '#e0f0ff'; textColor = '#0055cc'; // Biru (Sedang Berjalan)
-                                    }
-
-                                    return (
-                                        <tr key={index} style={styles.row}>
-                                            <td style={styles.td}>{index + 1}</td>
-                                            <td style={styles.td}><b>{s.nama_lengkap}</b></td>
-                                            <td style={styles.td}>{s.nama_unit}</td>
-                                            <td style={styles.td}>{s.nama_jenis}</td>
-                                            <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
-                                            <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
-                                            <td style={styles.td}>
-                                                <button onClick={() => viewDetail(s.id)} style={styles.btnDetail}>
-                                                    <Eye size={14}/> Lihat Form
-                                                </button>
-                                            </td>
-                                            <td style={{...styles.td, textAlign:'center'}}>
-                                                <span style={{
-                                                    padding:'5px 12px', borderRadius:'20px', fontSize:'11px', fontWeight:'bold',
-                                                    backgroundColor: bg,
-                                                    color: textColor,
-                                                    display: 'inline-block'
-                                                }}>{s.status}</span>
-                                            </td>
-                                        </tr>
-                                    );
-                                }) : (
+                                {filteredData.length > 0 ? filteredData.map((s, index) => (
+                                    <tr key={index} style={styles.tableRow}>
+                                        <td style={styles.td}>{index + 1}</td>
+                                        <td style={styles.td}><b style={{color: '#111827'}}>{s.nama_lengkap}</b></td>
+                                        <td style={styles.td}>
+                                            <span style={{color: '#003399', fontWeight: 'bold'}}>{s.nama_unit}</span>
+                                        </td>
+                                        <td style={styles.td}>{s.nama_jenis}</td>
+                                        <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
+                                        <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
+                                        <td style={{...styles.td, textAlign: 'center'}}>
+                                            <span style={{ color: getStatusColor(s.status), fontWeight: 'bold', fontSize: '13px' }}>
+                                                {s.status}
+                                            </span>
+                                        </td>
+                                        <td style={{...styles.td, textAlign: 'center'}}>
+                                            <button onClick={() => viewDetail(s.id)} style={styles.btnDetail} title="Lihat Detail">
+                                                <Eye size={14}/> Lihat
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )) : (
                                     <tr>
-                                        <td colSpan="8" style={{textAlign:'center', padding:'30px', color: '#aaa'}}>Tidak ada data arsip yang cocok.</td>
+                                        <td colSpan="8" style={{textAlign:'center', padding:'40px', color: '#aaa'}}>Tidak ada data arsip yang cocok.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -291,6 +323,8 @@ const ArchiveManagement = () => {
 
 const styles = {
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+
+    // SIDEBAR
     sidebar: { width: '280px', backgroundColor: '#052278', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
     sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
     brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
@@ -302,25 +336,35 @@ const styles = {
     navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
     dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
     dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
-    dropdownItemActive: { padding: '10px 15px', fontSize: '13px', color: '#fff', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' },
     dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
     sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
     logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+
+    // MAIN
     main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
-    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
     contentScroll: { padding: '40px', flex: 1 },
-    headerArea: { marginBottom: '30px' },
-    filterBar: { display: 'flex', gap: '15px', marginBottom: '25px' },
-    searchBox: { flex: 2, display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '0 15px', borderRadius: '12px', border: '1px solid #e0e0e0', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' },
-    input: { border: 'none', outline: 'none', padding: '12px', width: '100%', fontSize: '14px', color: '#333' },
-    select: { flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #e0e0e0', outline: 'none', backgroundColor: '#fff', fontSize: '14px', color: '#333' },
-    card: { backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' },
+
+    // SECTION HEADER
+    accentBar: { width: '40px', height: '3px', background: '#ff6600', borderRadius: '2px', marginBottom: '12px' },
+    sectionTitle: { color: '#111827', margin: 0, fontSize: '24px', fontWeight: '800' },
+    sectionDesc: { color: '#6b7280', fontSize: '13px', margin: '6px 0 0' },
+
+    // FILTER BAR
+    filterBar: { display: 'flex', gap: '15px', marginBottom: '24px', flexWrap: 'wrap' },
+    searchBox: { flex: 2, minWidth: '260px', display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e0e7ff' },
+    selectBox: { flex: 1, minWidth: '160px', padding: '12px 18px', borderRadius: '12px', border: '1px solid #e0e7ff', outline: 'none', backgroundColor: '#fff', fontSize: '14px', color: '#333', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer' },
+    input: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
+
+    // TABLE
+    tableCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', border: '1px solid #f0f4f8', overflow: 'hidden' },
     table: { width: '100%', borderCollapse: 'collapse' },
-    thRow: { backgroundColor: '#f8f9fa' },
-    th: { padding: '18px 15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' },
-    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', verticalAlign: 'middle', color: '#444', fontSize: '14px' },
-    row: { transition: '0.2s', '&:hover': { backgroundColor: '#fcfcfc' } },
-    btnDetail: { display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f0f4f8', color: '#003399', border: '1px solid #cce0ff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', transition: '0.2s' }
+    thRow: { backgroundColor: 'transparent' },
+    th: { padding: '16px 12px', textAlign: 'left', color: '#6b7280', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #f3f4f6' },
+    td: { padding: '16px 12px', borderBottom: '1px solid #f3f4f6', verticalAlign: 'middle', color: '#374151', fontSize: '14px' },
+    tableRow: {},
+
+    // BUTTONS
+    btnDetail: { display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#f0f4ff', color: '#003399', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }
 };
 
 export default ArchiveManagement;

@@ -110,7 +110,7 @@ const MonitoringPengajuan = () => {
             width: '460px',
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonColor: '#27ae60',
+            confirmButtonColor: '#003399',
             cancelButtonColor: '#9ca3af',
             confirmButtonText: 'Simpan',
             cancelButtonText: 'Batal',

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
     LayoutDashboard, UserCog, Building2, RefreshCcw,
-    LogOut, PlusCircle, Edit, Trash2, Search, FileText, 
-    ChevronDown, ClipboardCheck, Settings2, Save, X, Archive, Bell
+    LogOut, PlusCircle, Edit, Trash2, Search,
+    ChevronDown, Settings2, Save, X, Archive
 } from 'lucide-react';
 
 const UnitManagement = () => {
@@ -13,17 +13,12 @@ const UnitManagement = () => {
     const [types, setTypes] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
-    const location = useLocation();
     
-    // State Sidebar Dropdown
     const [isDashboardMenuOpen, setIsDashboardMenuOpen] = useState(false);
     const [isMonitoringMenuOpen, setIsMonitoringMenuOpen] = useState(false);
     
     const [expandedUnitId, setExpandedUnitId] = useState(null);
     const [quotaForm, setQuotaForm] = useState({});
-
-    // Ambil data user untuk header
-    const user = JSON.parse(sessionStorage.getItem('user')) || {};
 
     useEffect(() => {
         const storedUser = sessionStorage.getItem('user');
@@ -84,7 +79,7 @@ const UnitManagement = () => {
             inputValue: unit.nama_unit,
             showCancelButton: true,
             confirmButtonText: 'Update Nama',
-            confirmButtonColor: '#f39c12'
+            confirmButtonColor: '#003399'
         });
 
         if (namaBaru && namaBaru !== unit.nama_unit) {
@@ -169,7 +164,7 @@ const UnitManagement = () => {
 
     return (
         <div style={styles.container}>
-            {/* ✨ SIDEBAR PREMIUM STYLE ✨ */}
+            {/* SIDEBAR */}
             <div style={styles.sidebar}>
                 <div style={styles.sidebarBrand}>
                     <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>DAOP 6</span></h2>
@@ -177,7 +172,6 @@ const UnitManagement = () => {
                 </div>
 
                 <div style={styles.sidebarNav}>
-                    {/* DROPDOWN 1: DASHBOARD UTAMA */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsDashboardMenuOpen(!isDashboardMenuOpen)}>
                             <div style={styles.navLinkContent}>
@@ -199,7 +193,6 @@ const UnitManagement = () => {
                         )}
                     </div>
 
-                    {/* DROPDOWN 2: MONITORING PENGAJUAN */}
                     <div style={styles.navGroup}>
                         <div style={styles.navItem} onClick={() => setIsMonitoringMenuOpen(!isMonitoringMenuOpen)}>
                             <div style={styles.navLinkContent}>
@@ -241,106 +234,134 @@ const UnitManagement = () => {
             {/* AREA UTAMA */}
             <div style={styles.main}>
                 <div style={styles.contentScroll}>
-                    <div style={styles.header}>
-                        <div>
-                            <h2 style={{margin:0, color:'#003399'}}>Manajemen Unit & Kuota 🏢</h2>
-                            <p style={{color:'#666', fontSize:'14px'}}>Atur daftar divisi dan kuota spesifik per jenis kegiatan</p>
+                    {/* Section header (selaras dengan halaman lain) */}
+                    <div style={{ marginBottom: '28px' }}>
+                        <div style={styles.accentBar} />
+                        <h2 style={styles.sectionTitle}>Manajemen Unit & Kuota</h2>
+                        <p style={styles.sectionDesc}>Atur daftar divisi dan kuota spesifik per jenis kegiatan magang.</p>
+                    </div>
+
+                    {/* Action bar: search + tombol tambah */}
+                    <div style={styles.actionBar}>
+                        <div style={styles.searchBox}>
+                            <Search size={18} color="#003399" />
+                            <input 
+                                placeholder="Cari nama unit..." 
+                                style={styles.input} 
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        {/* ✨ TOMBOL TAMBAH UNIT YANG SUDAH KEMBALI STYLINGNYA ✨ */}
                         <button onClick={handleAddUnit} style={styles.btnAdd}>
-                            <PlusCircle size={18} /> Tambah Unit
+                            <PlusCircle size={16} /> Tambah Unit
                         </button>
                     </div>
 
-                    <div style={styles.searchContainer}>
-                        <Search size={18} color="#003399" />
-                        <input 
-                            placeholder="Cari nama unit..." 
-                            style={styles.searchInput} 
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-
-                    <div style={styles.card}>
+                    {/* Tabel */}
+                    <div style={styles.tableCard}>
                         <table style={styles.table}>
                             <thead>
                                 <tr style={styles.thRow}>
                                     <th style={{...styles.th, width: '50px'}}>No</th>
                                     <th style={styles.th}>Nama Divisi / Unit</th>
                                     <th style={styles.th}>Detail Kuota</th>
-                                    <th style={{...styles.th, textAlign:'center', width: '200px'}}>Aksi</th>
+                                    <th style={{...styles.th, textAlign:'center', width: '180px'}}>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredUnits.length > 0 ? filteredUnits.map((u, index) => (
                                     <React.Fragment key={u.id}>
-                                        <tr style={styles.row}>
+                                        <tr style={styles.tableRow}>
                                             <td style={styles.td}>{index + 1}</td>
                                             <td style={styles.td}>
-                                                <strong style={{color:'#333', fontSize: '15px'}}>{u.nama_unit}</strong>
+                                                <strong style={{color:'#111827', fontSize: '14px'}}>{u.nama_unit}</strong>
                                             </td>
                                             <td style={styles.td}>
-                                                <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
-                                                    {(u.quotas || []).length > 0 ? (
-                                                        (u.quotas || []).map(q => (
-                                                            <span key={q.id || Math.random()} style={styles.badgeQuota}>
-                                                                {q.nama_jenis || 'Kegiatan'}: <b>{q.quota_limit}</b>
-                                                            </span>
-                                                        ))
-                                                    ) : (
-                                                        <span style={{fontSize:'12px', color:'#999', fontStyle:'italic'}}>Belum diatur</span>
-                                                    )}
-                                                </div>
+                                                {(u.quotas || []).length > 0 ? (
+                                                    <div style={{
+                                                        display: 'grid',
+                                                        gridTemplateColumns: 'repeat(2, 1fr)',
+                                                        gap: '8px 32px',
+                                                        fontSize: '13px',
+                                                        color: '#374151',
+                                                        maxWidth: '600px'
+                                                    }}>
+                                                        {(u.quotas || []).map((q, i) => (
+                                                            <div key={q.id || i} style={{
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'baseline',
+                                                                gap: '8px'
+                                                            }}>
+                                                                <span>{q.nama_jenis || 'Kegiatan'}</span>
+                                                                <b style={{color: '#003399', flexShrink: 0}}>{q.quota_limit}</b>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span style={{fontSize:'13px', color:'#9ca3af', fontStyle:'italic'}}>Belum diatur</span>
+                                                )}
                                             </td>
-                                            <td style={styles.td}>
-                                                <div style={{display:'flex', gap:'8px', justifyContent:'center'}}>
+                                            <td style={{...styles.td, textAlign: 'center'}}>
+                                                <div style={{display:'flex', gap:'8px', justifyContent:'center', alignItems: 'center'}}>
                                                     <button 
                                                         onClick={() => toggleQuotaDropdown(u)} 
-                                                        style={{...styles.btnAction, backgroundColor: expandedUnitId === u.id ? '#003399' : '#f0f4ff', color: expandedUnitId === u.id ? '#fff' : '#003399'}}
+                                                        style={{
+                                                            ...styles.btnKuota, 
+                                                            backgroundColor: expandedUnitId === u.id ? '#003399' : '#f0f4ff', 
+                                                            color: expandedUnitId === u.id ? '#fff' : '#003399'
+                                                        }}
                                                         title="Kelola Kuota"
                                                     >
-                                                        <Settings2 size={16}/> Kuota
+                                                        <Settings2 size={14}/> Kuota
                                                     </button>
-                                                    <button onClick={() => handleEditName(u)} style={{...styles.btnAction, backgroundColor: '#fff4e5', color: '#f39c12'}} title="Edit Nama Unit">
-                                                        <Edit size={16}/>
+                                                    <button onClick={() => handleEditName(u)} style={styles.btnIconEdit} title="Edit Nama Unit">
+                                                        <Edit size={18} strokeWidth={2}/>
                                                     </button>
-                                                    <button onClick={() => handleDelete(u.id)} style={{...styles.btnAction, backgroundColor: '#fff0f0', color: '#e74c3c'}} title="Hapus Unit">
-                                                        <Trash2 size={16}/>
+                                                    <button onClick={() => handleDelete(u.id)} style={styles.btnIconDelete} title="Hapus Unit">
+                                                        <Trash2 size={18} strokeWidth={2}/>
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
 
                                         {expandedUnitId === u.id && (
-                                            <tr style={{backgroundColor: '#f8fbff'}}>
-                                                <td colSpan="4" style={{padding: '20px', borderBottom: '1px solid #e0e0e0'}}>
-                                                    <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', padding: '15px', borderLeft: '4px solid #0055cc', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)'}}>
-                                                        <div style={{flex: 1}}>
-                                                            <h4 style={{margin: '0 0 15px 0', color: '#003399'}}>Kelola Kuota: {u.nama_unit}</h4>
-                                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px'}}>
-                                                                {types.map(t => (
-                                                                    <div key={t.id} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                                                                        <label style={{fontSize: '12px', fontWeight: 'bold', color: '#666'}}>{t.nama_jenis}</label>
-                                                                        <div style={{display: 'flex', alignItems: 'center', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden'}}>
-                                                                            <span style={{padding: '8px 12px', backgroundColor: '#eee', color: '#555', borderRight: '1px solid #ddd'}}>Max</span>
-                                                                            <input 
-                                                                                type="number" 
-                                                                                min="0"
-                                                                                style={{border: 'none', padding: '8px 10px', width: '100%', outline: 'none', fontWeight: 'bold'}}
-                                                                                value={quotaForm[t.id] !== undefined ? quotaForm[t.id] : 0}
-                                                                                onChange={(e) => setQuotaForm({...quotaForm, [t.id]: e.target.value})}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
+                                            <tr>
+                                                <td colSpan="4" style={{padding: '0 12px 16px'}}>
+                                                    <div style={styles.quotaPanel}>
+                                                        <div style={styles.quotaPanelHeader}>
+                                                            <div>
+                                                                <div style={styles.quotaPanelLabel}>KELOLA KUOTA</div>
+                                                                <h4 style={styles.quotaPanelTitle}>{u.nama_unit}</h4>
                                                             </div>
-                                                        </div>
-                                                        <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '35px'}}>
-                                                            <button onClick={() => handleSaveQuotas(u)} style={styles.btnSaveDropdown}>
-                                                                <Save size={16}/> Simpan
+                                                            <button onClick={() => setExpandedUnitId(null)} style={styles.btnClosePanel}>
+                                                                <X size={18}/>
                                                             </button>
+                                                        </div>
+
+                                                        <div style={styles.quotaGrid}>
+                                                            {types.map(t => (
+                                                                <div key={t.id} style={styles.quotaItem}>
+                                                                    <label style={styles.quotaLabel}>{t.nama_jenis}</label>
+                                                                    <div style={styles.quotaInputWrap}>
+                                                                        <span style={styles.quotaInputPrefix}>Max</span>
+                                                                        <input 
+                                                                            type="number" 
+                                                                            min="0"
+                                                                            style={styles.quotaInput}
+                                                                            value={quotaForm[t.id] !== undefined ? quotaForm[t.id] : 0}
+                                                                            onChange={(e) => setQuotaForm({...quotaForm, [t.id]: e.target.value})}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        <div style={styles.quotaActions}>
                                                             <button onClick={() => setExpandedUnitId(null)} style={styles.btnCancelDropdown}>
-                                                                <X size={16}/> Tutup
+                                                                Batal
+                                                            </button>
+                                                            <button onClick={() => handleSaveQuotas(u)} style={styles.btnSaveDropdown}>
+                                                                <Save size={14}/> Simpan Kuota
                                                             </button>
                                                         </div>
                                                     </div>
@@ -362,6 +383,8 @@ const UnitManagement = () => {
 
 const styles = {
     container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+
+    // SIDEBAR
     sidebar: { width: '280px', backgroundColor: '#052278', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
     sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
     brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
@@ -373,44 +396,53 @@ const styles = {
     navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
     dropdownWrapper: { paddingLeft: '20px', marginBottom: '10px', marginTop: '5px' },
     dropdownItem: { padding: '10px 15px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: '0.2s' },
-    dropdownItemActive: { padding: '10px 15px', fontSize: '13px', color: '#fff', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' },
     dotIndicator: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor' },
     sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
     logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+
+    // MAIN
     main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
-    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5 },
     contentScroll: { padding: '40px', flex: 1 },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' },
-    searchContainer: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', width: '300px', border: '1px solid #e0e0e0', marginBottom: '20px' },
-    searchInput: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
-    selectWrapper: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '10px 20px', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e0e0e0', width: '200px' },
-    select: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px', color: '#333', cursor: 'pointer' },
-    card: { backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' },
+
+    // SECTION HEADER (FAQ-style)
+    accentBar: { width: '40px', height: '3px', background: '#ff6600', borderRadius: '2px', marginBottom: '12px' },
+    sectionTitle: { color: '#111827', margin: 0, fontSize: '24px', fontWeight: '800' },
+    sectionDesc: { color: '#6b7280', fontSize: '13px', margin: '6px 0 0' },
+
+    // ACTION BAR
+    actionBar: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '24px', flexWrap: 'wrap' },
+    searchBox: { flex: 1, minWidth: '280px', display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e0e7ff' },
+    input: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
+    btnAdd: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 22px', backgroundColor: '#ff6600', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(255,102,0,0.25)' },
+
+    // TABLE
+    tableCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', border: '1px solid #f0f4f8', overflow: 'hidden' },
     table: { width: '100%', borderCollapse: 'collapse' },
-    thRow: { backgroundColor: '#f8f9fa' },
-    th: { padding: '18px 15px', textAlign: 'left', color: '#888', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' },
-    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', verticalAlign: 'middle', color: '#444', fontSize: '14px' },
-    row: { transition: '0.2s', '&:hover': { backgroundColor: '#fcfcfc' } },
-    badgeQuota: { padding: '6px 12px', backgroundColor: '#f0f4ff', color: '#003399', borderRadius: '8px', fontSize: '11px', border: '1px solid #cce0ff' },
-    btnAction: { border: 'none', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' },
-    btnSaveDropdown: { backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '13px' },
-    btnCancelDropdown: { backgroundColor: '#eee', color: '#666', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '13px' },
-    
-    btnAdd: { 
-        backgroundColor: '#2ecc71', 
-        color: '#fff', 
-        border: 'none', 
-        padding: '10px 20px', 
-        borderRadius: '12px', 
-        cursor: 'pointer', 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px', 
-        fontWeight: 'bold', 
-        fontSize: '14px', 
-        boxShadow: '0 4px 10px rgba(46, 204, 113, 0.3)',
-        transition: '0.2s'
-    }
+    thRow: { backgroundColor: 'transparent' },
+    th: { padding: '16px 12px', textAlign: 'left', color: '#6b7280', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #f3f4f6' },
+    td: { padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '14px', color: '#374151', verticalAlign: 'middle' },
+    tableRow: {},
+
+    // ACTION BUTTONS
+    btnKuota: { border: 'none', padding: '7px 12px', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', fontSize: '12px' },
+    btnIconEdit: { background: 'none', color: '#003399', border: 'none', padding: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+    btnIconDelete: { background: 'none', color: '#e74c3c', border: 'none', padding: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+
+    // QUOTA PANEL (expanded row)
+    quotaPanel: { background: '#f8fbff', border: '1px solid #cce0ff', borderLeft: '4px solid #003399', borderRadius: '12px', padding: '20px 24px', marginTop: '4px' },
+    quotaPanelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px', paddingBottom: '14px', borderBottom: '1px dashed #cce0ff' },
+    quotaPanelLabel: { fontSize: '11px', color: '#003399', fontWeight: '700', letterSpacing: '1.5px', marginBottom: '4px' },
+    quotaPanelTitle: { margin: 0, color: '#111827', fontSize: '17px', fontWeight: '800' },
+    btnClosePanel: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' },
+    quotaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px', marginBottom: '20px' },
+    quotaItem: { display: 'flex', flexDirection: 'column', gap: '6px' },
+    quotaLabel: { fontSize: '12px', fontWeight: '700', color: '#374151' },
+    quotaInputWrap: { display: 'flex', alignItems: 'stretch', backgroundColor: '#fff', border: '1px solid #e0e7ff', borderRadius: '8px', overflow: 'hidden' },
+    quotaInputPrefix: { padding: '10px 14px', backgroundColor: '#f0f4ff', color: '#003399', fontSize: '12px', fontWeight: '700', borderRight: '1px solid #e0e7ff', display: 'flex', alignItems: 'center' },
+    quotaInput: { border: 'none', padding: '10px 14px', width: '100%', outline: 'none', fontWeight: 'bold', fontSize: '14px', color: '#003399', background: 'transparent' },
+    quotaActions: { display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '14px', borderTop: '1px solid #e0e7ff' },
+    btnSaveDropdown: { backgroundColor: '#003399', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 4px 10px rgba(42, 106, 179, 0.25)' },
+    btnCancelDropdown: { backgroundColor: '#f1f3f9', color: '#6b7280', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }
 };
 
 export default UnitManagement;
