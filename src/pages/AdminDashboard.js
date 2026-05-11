@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import NotificationBell from '../components/NotificationBell';
 import { 
-    LayoutDashboard, FileText, LogOut, Search, CheckCircle, XCircle, User, 
+    LayoutDashboard, FileText, LogOut, Search, User, 
     Edit3, Mail, IdCard, Building, Save, X, Eye 
 } from 'lucide-react';
 
@@ -70,35 +70,36 @@ const AdminDashboard = () => {
     };
 
     const handleUpdateJadwal = async (id) => {
-    const { value: jadwalBaru } = await Swal.fire({
-        title: 'Ubah Jadwal Wawancara',
-        input: 'datetime-local',
-        inputLabel: 'Pilih Jadwal Baru',
-        showCancelButton: true,
-        confirmButtonText: 'Simpan',
-    });
-
-    if (jadwalBaru) {
-        const { value: catatan } = await Swal.fire({
-            title: 'Catatan (Opsional)',
-            input: 'textarea',
-            inputPlaceholder: 'Alasan ubah jadwal...',
+        const { value: jadwalBaru } = await Swal.fire({
+            title: 'Ubah Jadwal Wawancara',
+            input: 'datetime-local',
+            inputLabel: 'Pilih Jadwal Baru',
             showCancelButton: true,
+            confirmButtonText: 'Simpan',
         });
 
-        try {
-            await axios.put(`http://localhost:5000/api/submissions/${id}/update-jadwal`, {
-                jadwal_baru: jadwalBaru,
-                admin_id: userData.id,
-                catatan: catatan
+        if (jadwalBaru) {
+            const { value: catatan } = await Swal.fire({
+                title: 'Catatan (Opsional)',
+                input: 'textarea',
+                inputPlaceholder: 'Alasan ubah jadwal...',
+                showCancelButton: true,
             });
 
-            Swal.fire('Berhasil!', 'Jadwal berhasil diubah.', 'success');
-            fetchData(userData.unit_id);
-        } catch (err) {
-            Swal.fire('Error', 'Gagal mengubah jadwal.', 'error');
+            try {
+                await axios.put(`http://localhost:5000/api/submissions/${id}/update-jadwal`, {
+                    jadwal_baru: jadwalBaru,
+                    admin_id: userData.id,
+                    catatan: catatan
+                });
+
+                Swal.fire('Berhasil!', 'Jadwal berhasil diubah.', 'success');
+                fetchData(userData.unit_id);
+            } catch (err) {
+                Swal.fire('Error', 'Gagal mengubah jadwal.', 'error');
+            }
         }
-    }};
+    };
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
@@ -124,10 +125,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // ✨ UPDATE: Fungsi Update Status (Beserta Upload Surat Rekomendasi) ✨
     const handleUpdateStatus = async (id, newStatus) => {
-        
-        // JIKA ADMIN MEMILIH TERIMA BERKAS FINAL -> MINTA UPLOAD PDF
         if (newStatus === 'Berkas Disetujui Unit') {
             const { value: file } = await Swal.fire({
                 title: 'Upload Surat Rekomendasi Unit',
@@ -143,14 +141,14 @@ const AdminDashboard = () => {
             });
 
             if (file) {
-                const formData = new FormData();
-                formData.append('surat_unit', file); 
-                formData.append('status', newStatus);
-                formData.append('admin_id', userData.id);
-                formData.append('catatan', 'Berkas final disetujui, Surat Rekomendasi Unit telah diunggah.');
+                const formDataFile = new FormData();
+                formDataFile.append('surat_unit', file); 
+                formDataFile.append('status', newStatus);
+                formDataFile.append('admin_id', userData.id);
+                formDataFile.append('catatan', 'Berkas final disetujui, Surat Rekomendasi Unit telah diunggah.');
 
                 try {
-                    await axios.put(`http://localhost:5000/api/submissions/${id}/status`, formData, {
+                    await axios.put(`http://localhost:5000/api/submissions/${id}/status`, formDataFile, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
                     Swal.fire('Berhasil!', 'Surat Rekomendasi terupload & status diperbarui.', 'success');
@@ -218,67 +216,102 @@ const AdminDashboard = () => {
         }
     };
 
-    // ✨ UPDATE: Menampilkan Pembimbing di Detail Modal ✨
     const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
             const s = res.data;
+
+            // Helper inline styles untuk modal (selaras ArchiveManagement)
+            const sectionCard = 'background:#f8fafd; padding:18px 22px; border-radius:12px; margin-bottom:14px; border:1px solid #f0f4f8;';
+            const sectionLabel = 'font-size:11px; color:#003399; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; display:block;';
+            const fieldRow = 'display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e5e7eb; font-size:13px;';
+            const fieldLabel = 'color:#6b7280; font-weight:600;';
+            const fieldValue = 'color:#111827; font-weight:600; text-align:right; max-width:60%;';
 
             let berkasHtml = '';
             if (s.documents && s.documents.length > 0) {
                 berkasHtml = s.documents.map((doc, index) => {
                     const justFileName = doc.file_path.split(/[\\/]/).pop();
                     const pathFile = `http://localhost:5000/api/preview/${justFileName}`;
-                    
                     return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e0e0e0;">
-                            <span style="font-size: 13px; color: #444; font-weight: 500;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:8px; margin-bottom:6px; border:1px solid #e0e7ff;">
+                            <span style="font-size:13px; color:#374151; font-weight:600;">
                                 ${index + 1}. ${doc.nama_dokumen === 'files' ? 'Dokumen Pengajuan' : doc.nama_dokumen}
                             </span>
                             <a href="${pathFile}" target="_blank" rel="noopener noreferrer" 
-                               style="background-color: #0055cc; color: white; padding: 5px 12px; border-radius: 5px; text-decoration: none; font-size: 11px; font-weight: bold; transition: 0.2s;">
-                                📄 Lihat File
+                               style="background:#003399; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">
+                                Lihat File
                             </a>
                         </div>
                     `;
                 }).join('');
             } else {
-                berkasHtml = '<p style="color: #999; font-style: italic; text-align: center;">Tidak ada berkas yang dilampirkan.</p>';
+                berkasHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:20px 0;">Tidak ada berkas yang dilampirkan.</p>';
             }
+
             let logHtml = '';
             if (s.logs && s.logs.length > 0) {
                 logHtml = s.logs.map(log => `
-                    <div style="font-size:12px; margin-bottom:5px;">
-                        • ${log.status_perubahan} - ${log.catatan}
+                    <div style="display:flex; gap:10px; padding:8px 0; border-bottom:1px dashed #e5e7eb; font-size:12px; color:#374151;">
+                        <span style="min-width:8px; height:8px; background:#003399; border-radius:50%; margin-top:6px; flex-shrink:0;"></span>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; color:#003399; margin-bottom:2px;">${log.status_perubahan}</div>
+                            <div style="color:#6b7280;">${log.catatan || '-'}</div>
+                        </div>
                     </div>
                 `).join('');
             } else {
-                logHtml = '<p style="font-size:12px; color:#999;">Belum ada riwayat.</p>';
+                logHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:14px 0;">Belum ada riwayat perubahan.</p>';
             }
+
             let htmlContent = `
-                <div style="text-align:left; font-family: sans-serif; color: #333;">
-                    <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-                        <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">👤 Profil Mahasiswa</h4>
-                        <p style="margin: 5px 0;"><b>Nama:</b> ${s.nama_lengkap}</p>
-                        <p style="margin: 5px 0;"><b>Instansi:</b> ${s.asal_instansi || '-'}</p>
-                        ${s.jadwal_wawancara ? `<p style="margin: 5px 0; color: #ff6600;"><b>Jadwal Wawancara:</b> ${new Date(s.jadwal_wawancara).toLocaleString('id-ID')}</p>` : ''}
-                    </div>
+                <div style="text-align:left; font-family:'Segoe UI', Tahoma, sans-serif;">
                     
-                    <div style="background: #fff4e5; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-                        <h4 style="margin-top:0; color: #d35400; border-bottom: 2px solid #d35400; padding-bottom: 5px; font-size: 15px;">📋 Detail Kegiatan</h4>
-                        <p style="margin: 5px 0;"><b>Judul/Kegiatan:</b> ${s.judul_atau_tujuan || '-'}</p>
-                        <p style="margin: 5px 0;"><b>Periode:</b> ${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</p>
-                        <p style="margin: 5px 0;"><b>Dosen/Guru Pembimbing:</b> ${s.nama_pembimbing || '-'}</p>
-                        <p style="margin: 5px 0;"><b>Kontak Pembimbing:</b> ${s.kontak_pembimbing || '-'}</p>
+                    <div style="${sectionCard}">
+                        <span style="${sectionLabel}">━━ Profil Mahasiswa</span>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Nama Lengkap</span>
+                            <span style="${fieldValue}">${s.nama_lengkap}</span>
+                        </div>
+                        <div style="${fieldRow} ${s.jadwal_wawancara ? '' : 'border-bottom:none;'}">
+                            <span style="${fieldLabel}">Asal Instansi</span>
+                            <span style="${fieldValue}">${s.asal_instansi || '-'}</span>
+                        </div>
+                        ${s.jadwal_wawancara ? `
+                            <div style="${fieldRow} border-bottom:none;">
+                                <span style="${fieldLabel}">Jadwal Wawancara</span>
+                                <span style="${fieldValue} color:#ff6600;">${new Date(s.jadwal_wawancara).toLocaleString('id-ID')}</span>
+                            </div>
+                        ` : ''}
                     </div>
 
-                    <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
-                        <h4 style="margin-top:0; color: #003399; font-size: 15px; margin-bottom: 15px;">📂 Berkas Lampiran</h4>
+                    <div style="${sectionCard}">
+                        <span style="${sectionLabel}">━━ Detail Kegiatan</span>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Judul / Kegiatan</span>
+                            <span style="${fieldValue}">${s.judul_atau_tujuan || '-'}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Periode</span>
+                            <span style="${fieldValue}">${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Pembimbing</span>
+                            <span style="${fieldValue}">${s.nama_pembimbing || '-'}</span>
+                        </div>
+                        <div style="${fieldRow} border-bottom:none;">
+                            <span style="${fieldLabel}">Kontak Pembimbing</span>
+                            <span style="${fieldValue}">${s.kontak_pembimbing || '-'}</span>
+                        </div>
+                    </div>
+
+                    <div style="${sectionCard}">
+                        <span style="${sectionLabel}">━━ Berkas Lampiran</span>
                         ${berkasHtml}
                     </div>
 
-                    <div style="margin-top:15px; background:#f9f9f9; padding:15px; border-radius:12px;">
-                        <h4 style="margin-top:0;">📝 Riwayat Status</h4>
+                    <div style="${sectionCard} margin-bottom:0;">
+                        <span style="${sectionLabel}">━━ Riwayat Status</span>
                         ${logHtml}
                     </div>
                 </div>
@@ -287,9 +320,19 @@ const AdminDashboard = () => {
             Swal.fire({
                 title: 'Detail Pengajuan',
                 html: htmlContent,
-                width: '600px',
+                width: '640px',
                 confirmButtonText: 'Tutup',
-                confirmButtonColor: '#666'
+                confirmButtonColor: '#003399',
+                didOpen: () => {
+                    const titleEl = Swal.getTitle();
+                    if (titleEl) {
+                        titleEl.style.color = '#111827';
+                        titleEl.style.fontWeight = '800';
+                        titleEl.style.fontSize = '22px';
+                        titleEl.style.fontFamily = "'Segoe UI', Tahoma, sans-serif";
+                        titleEl.style.letterSpacing = '-0.2px';
+                    }
+                }
             });
 
         } catch (err) {
@@ -305,312 +348,303 @@ const AdminDashboard = () => {
 
     const archiveData = submissions.filter(s => 
         [
-            // Sudah disetujui Unit, sedang nunggu user kirim ke SDM
-            'Berkas Disetujui Unit', 
-            'Disetujui Unit, Menunggu Verifikasi SDM', 
-
-            // Tahapan di SDM Pusat
-            'Menunggu Verifikasi SDM', 
-            'Sedang Ditinjau SDM', 
-            'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 
-            'Pengajuan Telah Dikirim ke Pusat', 
-            'Surat Telah Masuk dari Pusat', 
-            'Disetujui SDM, Menunggu Surat Pengantar Magang', 
-
-            // Sudah dirilis & masa kegiatan
-            'Selesai (Surat Dirilis)', 
-            'Dalam Masa Kegiatan', 
-            'Selesai Kegiatan', 
-
-            // Ditolak (di tahap mana pun)
-            'Ditolak Unit', 
-            'Ditolak SDM'
+            'Berkas Disetujui Unit', 'Disetujui Unit, Menunggu Verifikasi SDM', 
+            'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 
+            'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat', 'Disetujui SDM, Menunggu Surat Pengantar Magang', 
+            'Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan', 
+            'Ditolak Unit', 'Ditolak SDM'
         ].includes(s.status)
     );
 
     const displayData = activeMenu === 'monitoring' ? monitoringData : archiveData;
 
+    const getStatusColor = (status) => {
+        if (status?.includes('Ditolak')) return '#dc2626';
+        if (status?.includes('Revisi')) return '#ff6600';
+        if (status?.includes('Wawancara')) return '#8e44ad';
+        if (status?.includes('Selesai')) return '#27ae60';
+        if (status?.includes('Dalam Masa')) return '#0055cc';
+        return '#003399';
+    };
+
     return (
         <div style={styles.container}>
+            {/* SIDEBAR (selaras SuperAdmin) */}
             <div style={styles.sidebar}>
-                <div style={styles.logoArea}>
-                    <h3 style={{margin:0}}>KAI <span style={{color: '#ff6600'}}>UNIT</span></h3>
-                    <small style={{opacity:0.7}}>{userData.nama_unit || 'Kepala Unit'}</small>
-                </div>
-                
-                <div style={activeMenu === 'profile' ? styles.menuActive : styles.menuItem} onClick={() => setActiveMenu('profile')}>
-                    <User size={18}/> Profil Saya
-                </div>
-                <div style={activeMenu === 'monitoring' ? styles.menuActive : styles.menuItem} onClick={() => setActiveMenu('monitoring')}>
-                    <LayoutDashboard size={18}/> Monitoring Tugas
-                </div>
-                <div style={activeMenu === 'arsip' ? styles.menuActive : styles.menuItem} onClick={() => setActiveMenu('arsip')}>
-                    <FileText size={18}/> Arsip Peserta Unit
+                <div style={styles.sidebarBrand}>
+                    <h2 style={styles.brandTitle}>KAI <span style={{color: '#ff6600'}}>UNIT</span></h2>
+                    <p style={styles.brandSubtitle}>{userData.nama_unit || 'KEPALA UNIT'}</p>
                 </div>
 
-                <div style={styles.logout} onClick={() => {sessionStorage.clear(); navigate('/');}}>
-                    <LogOut size={18}/> Keluar
+                <div style={styles.sidebarNav}>
+                    <div style={activeMenu === 'profile' ? styles.navItemActive : styles.navItem} onClick={() => setActiveMenu('profile')}>
+                        <div style={styles.navLinkContent}><User size={20}/> <span>Profil Saya</span></div>
+                    </div>
+                    <div style={activeMenu === 'monitoring' ? styles.navItemActive : styles.navItem} onClick={() => setActiveMenu('monitoring')}>
+                        <div style={styles.navLinkContent}><LayoutDashboard size={20}/> <span>Monitoring Tugas</span></div>
+                    </div>
+                    <div style={activeMenu === 'arsip' ? styles.navItemActive : styles.navItem} onClick={() => setActiveMenu('arsip')}>
+                        <div style={styles.navLinkContent}><FileText size={20}/> <span>Arsip Peserta Unit</span></div>
+                    </div>
+                </div>
+
+                <div style={styles.sidebarFooter} onClick={() => {sessionStorage.clear(); navigate('/');}}>
+                    <div style={styles.logoutBtn}><LogOut size={20}/> <span>Keluar Akun</span></div>
                 </div>
             </div>
 
+            {/* MAIN */}
             <div style={styles.main}>
-                <div style={styles.topBar}>
+                {/* TOP HEADER (sticky) */}
+                <div style={styles.topHeader}>
                     <div style={styles.topBarInfo}>
-                        <small style={styles.topBarLabel}>Login sebagai</small>
+                        <small style={styles.topBarLabel}>LOGIN SEBAGAI</small>
                         <span style={styles.topBarName}>{userData.nama_lengkap} <span style={{color:'#ff6600'}}>• {userData.nama_unit || 'Admin Unit'}</span></span>
                     </div>
                     {userData.id && <NotificationBell userId={userData.id} iconColor="#ff6600" iconSize={22} />}
                 </div>
 
-                {activeMenu === 'profile' ? (
-                    <div style={styles.profileContainer}>
-                        <div style={styles.profileHeader}>
-                            <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0)}</div>
-                            <h2 style={{margin: '10px 0 5px 0', color: '#003399'}}>{userData.nama_lengkap}</h2>
-                            <span style={styles.roleBadge}>Admin Unit</span>
-                            {!isEditing && (
-                                <button style={styles.btnEditAvatar} onClick={() => setIsEditing(true)}>
-                                    <Edit3 size={14} /> Edit Profil
-                                </button>
+                <div style={styles.contentScroll}>
+                    {/* TAB: PROFILE */}
+                    {activeMenu === 'profile' && (
+                        <div style={styles.profileContainer}>
+                            <div style={styles.landscapeHeader}>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '25px'}}>
+                                    <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
+                                    <div>
+                                        <h2 style={{margin: '0 0 5px 0', color: '#003399', fontSize: '24px'}}>{userData.nama_lengkap}</h2>
+                                        <span style={styles.roleBadgeUnit}>Admin Unit</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr style={{border: '0.5px solid #eee', margin: '25px 0'}} />
+
+                            {!isEditing ? (
+                                <>
+                                    <div style={styles.infoGridHorizontal}>
+                                        <div style={styles.infoItemHorizontal}>
+                                            <Mail size={18} color="#003399" />
+                                            <div><small style={styles.labelSmall}>Email Sistem</small><p style={styles.valSmall}>{userData.email || '-'}</p></div>
+                                        </div>
+                                        <div style={styles.infoItemHorizontal}>
+                                            <IdCard size={18} color="#003399" />
+                                            <div><small style={styles.labelSmall}>NIPP / Nomor Induk</small><p style={styles.valSmall}>{userData.nomor_induk || '-'}</p></div>
+                                        </div>
+                                        <div style={styles.infoItemHorizontal}>
+                                            <Building size={18} color="#003399" />
+                                            <div><small style={styles.labelSmall}>Unit Penempatan</small><p style={styles.valSmall}>{userData.nama_unit || '-'}</p></div>
+                                        </div>
+                                    </div>
+                                    <div style={{marginTop: '30px'}}>
+                                        <button style={styles.btnEditLandscape} onClick={() => setIsEditing(true)}>
+                                            <Edit3 size={16} /> Edit Profil & Password
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <form onSubmit={handleUpdateProfile} style={styles.formLandscape}>
+                                    <div style={styles.inputGroupFull}>
+                                        <label style={styles.labelForm}>Nama Lengkap</label>
+                                        <input style={styles.inputForm} required value={formData.nama_lengkap} onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} />
+                                    </div>
+                                    <div style={styles.rowForm}>
+                                        <div style={styles.inputGroupHalf}>
+                                            <label style={styles.labelForm}>Email Sistem</label>
+                                            <input style={styles.inputForm} type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                        </div>
+                                        <div style={styles.inputGroupHalf}>
+                                            <label style={styles.labelForm}>NIPP / Nomor Induk</label>
+                                            <input style={styles.inputForm} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <hr style={{margin: '8px 0', border: '0.5px solid #eee'}} />
+                                    <p style={{fontSize: '12px', color: '#ff6600', fontWeight: '700', letterSpacing: '1px', margin: 0, textTransform: 'uppercase'}}>Ganti Password (Opsional)</p>
+                                    <div style={styles.rowForm}>
+                                        <div style={styles.inputGroupHalf}>
+                                            <label style={styles.labelForm}>Password Lama</label>
+                                            <input type="password" style={styles.inputForm} placeholder="Kosongkan jika tidak diubah" value={formData.password_lama} onChange={e => setFormData({...formData, password_lama: e.target.value})}/>
+                                        </div>
+                                        <div style={styles.inputGroupHalf}>
+                                            <label style={styles.labelForm}>Password Baru</label>
+                                            <input type="password" style={styles.inputForm} placeholder="Kosongkan jika tidak diubah" value={formData.password_baru} onChange={e => setFormData({...formData, password_baru: e.target.value})}/>
+                                        </div>
+                                    </div>
+                                    <div style={styles.btnAreaLandscape}>
+                                        <button type="button" style={styles.btnCancelLandscape} onClick={() => setIsEditing(false)}><X size={16}/> Batal</button>
+                                        <button type="submit" style={styles.btnSaveLandscape}><Save size={16}/> Simpan Perubahan</button>
+                                    </div>
+                                </form>
                             )}
                         </div>
-                        {!isEditing ? (
-                            <div style={styles.infoGrid}>
-                                <div style={styles.infoItem}>
-                                    <Mail size={18} color="#003399" />
-                                    <div><small style={styles.label}>Email</small><p style={styles.val}>{userData.email}</p></div>
-                                </div>
-                                <div style={styles.infoItem}>
-                                    <IdCard size={18} color="#003399" />
-                                    <div><small style={styles.label}>NIPP / Nomor Induk</small><p style={styles.val}>{userData.nomor_induk || '-'}</p></div>
-                                </div>
-                                <div style={styles.infoItem}>
-                                    <Building size={18} color="#003399" />
-                                    <div><small style={styles.label}>Unit</small><p style={styles.val}>{userData.nama_unit || '-'}</p></div>
-                                </div>
-                            </div>
-                                                ) : (
-                            <form onSubmit={handleUpdateProfile} style={styles.form}>
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Nama Lengkap</label>
-                                    <input 
-                                        style={styles.input} 
-                                        required 
-                                        value={formData.nama_lengkap} 
-                                        onChange={e => setFormData({...formData, nama_lengkap: e.target.value})} 
-                                    />
-                                </div>
+                    )}
 
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Email Sistem</label>
-                                    <input 
-                                        style={styles.input} 
-                                        type="email" 
-                                        required 
-                                        value={formData.email} 
-                                        onChange={e => setFormData({...formData, email: e.target.value})} 
-                                    />
-                                </div>
-
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>NIPP / Nomor Induk</label>
-                                    <input 
-                                        style={styles.input} 
-                                        value={formData.nomor_induk} 
-                                        onChange={e => setFormData({...formData, nomor_induk: e.target.value})} 
-                                    />
-                                </div>
-
-                                <hr style={{margin: '15px 0', border: '0.5px solid #eee'}} />
-
-                                <p style={{fontSize: '13px', color: '#ff6600', fontWeight: 'bold', margin: '0 0 5px 0'}}>
-                                    Ganti Password (Opsional)
+                    {/* TAB: MONITORING / ARSIP */}
+                    {activeMenu !== 'profile' && (
+                        <>
+                            {/* Section header (selaras dengan halaman lain) */}
+                            <div style={{ marginBottom: '24px' }}>
+                                <div style={styles.accentBar} />
+                                <h2 style={styles.sectionTitle}>{activeMenu === 'monitoring' ? 'Monitoring Tugas' : 'Arsip Peserta Unit'}</h2>
+                                <p style={styles.sectionDesc}>
+                                    {activeMenu === 'monitoring' 
+                                        ? 'Daftar pengajuan magang yang sedang menunggu tindakan Anda.' 
+                                        : 'Pengajuan yang sudah lewat tahap Unit (sedang di SDM, selesai, atau ditolak).'}
                                 </p>
-
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Password Lama</label>
-                                    <input 
-                                        type="password" 
-                                        style={styles.input} 
-                                        placeholder="Kosongkan jika tidak diubah" 
-                                        value={formData.password_lama} 
-                                        onChange={e => setFormData({...formData, password_lama: e.target.value})} 
-                                    />
-                                </div>
-
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Password Baru</label>
-                                    <input 
-                                        type="password" 
-                                        style={styles.input} 
-                                        placeholder="Kosongkan jika tidak diubah" 
-                                        value={formData.password_baru} 
-                                        onChange={e => setFormData({...formData, password_baru: e.target.value})} 
-                                    />
-                                </div>
-
-                                <div style={styles.btnArea}>
-                                    <button type="button" style={styles.btnCancel} onClick={() => setIsEditing(false)}>
-                                        <X size={16}/> Batal
-                                    </button>
-                                    <button type="submit" style={styles.btnSave}>
-                                        <Save size={16}/> Simpan Perubahan
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-                    </div>
-                ) : (
-                    <>
-                        <div style={styles.header}>
-                            <h2 style={{color:'#003399', margin: 0}}>
-                                {activeMenu === 'monitoring' ? 'Monitoring Unit 📋' : 'Arsip Unit 📂'}
-                            </h2>
-                            <div style={styles.searchBox}>
-                                <Search size={16} color="#888" />
-                                <input placeholder="Cari nama..." style={styles.searchInput} onChange={(e) => setSearchTerm(e.target.value)} />
                             </div>
-                        </div>
 
-                        <div style={styles.card}>
-                            <table style={styles.table}>
-                                <thead>
-                                    <tr style={styles.thRow}>
-                                        <th style={styles.th}>No</th>
-                                        <th style={styles.th}>Nama Peserta</th>
-                                        <th style={styles.th}>Instansi</th>
-                                        <th style={styles.th}>Status</th>
-                                        <th style={{...styles.th, textAlign: 'center'}}>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {displayData.filter(s => s.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase())).map((s, i) => (
-                                        <tr key={s.id} style={styles.row}>
-                                            <td style={styles.td}>{i + 1}</td>
-                                            <td style={styles.td}><b>{s.nama_lengkap}</b></td>
-                                            <td style={styles.td}>{s.asal_instansi || '-'}</td>
-                                            <td style={styles.td}><span style={styles.badge(s.status)}>{s.status}</span></td>
-                                            <td style={{...styles.td, textAlign: 'center'}}>
-                                                <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
-                                                    <button onClick={() => viewDetail(s.id)} style={styles.btnActionIcon} title="Detail"><Eye size={16}/></button>
-                                                    
-                                                    {/* ✨ DROPDOWN AKSI DINAMIS ✨ */}
-                                                    {activeMenu === 'monitoring' && (
-                                                        <select 
-                                                            style={styles.dropdown}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                if (!val) return;
+                            {/* Search bar */}
+                            <div style={styles.actionBar}>
+                                <div style={styles.searchBox}>
+                                    <Search size={18} color="#003399" />
+                                    <input placeholder="Cari nama peserta..." style={styles.input} onChange={(e) => setSearchTerm(e.target.value)} />
+                                </div>
+                            </div>
 
-                                                                if (val === 'revisi' || val === 'tolak') {
-                                                                    handleRejection(s.id, val);
-                                                                } else if (val === 'ubah_jadwal') {
-                                                                    handleUpdateJadwal(s.id);
-                                                                } else {
-                                                                    handleUpdateStatus(s.id, val);
-                                                                }
-
-                                                                e.target.value = "";
-                                                            }}
-                                                            value=""
-                                                            >
-                                                            <option value="" disabled>Pilih Tindakan</option>
-                                                            
-                                                            {s.status === 'Menunggu Verifikasi' && (
-                                                                <option value="Atur Jadwal Wawancara">Terima & Atur Wawancara</option>
-                                                            )}
-                                                            
-                                                            {s.status === 'Jadwal Wawancara Diajukan' && (
-                                                                <>
-                                                                    <option value="Wawancara Disetujui">Setujui Jadwal Wawancara</option>
-                                                                    <option value="ubah_jadwal">Ubah Jadwal Wawancara</option>
-                                                                </>
-                                                            )}
-                                                                                                                        
-                                                            {s.status === 'Wawancara Disetujui' && (
-                                                                <option value="Selesai Wawancara (Lengkapi Berkas Akhir)">Selesaikan Wawancara</option>
-                                                            )}
-
-                                                            {/* OPSI UNTUK UPLOAD SURAT REKOMENDASI UNIT */}
-                                                            {s.status === 'Berkas Akhir Terkirim' && (
-                                                                <option value="Berkas Disetujui Unit">Terima Berkas Final & Upload Rekomendasi</option>
-                                                            )}
-
-                                                            <option value="revisi">Minta Revisi</option>
-                                                            <option value="tolak">Tolak Pengajuan</option>
-                                                        </select>
-                                                    )}
-                                                </div>
-                                            </td>
+                            {/* Tabel */}
+                            <div style={styles.tableCard}>
+                                <table style={styles.table}>
+                                    <thead>
+                                        <tr style={styles.thRow}>
+                                            <th style={{...styles.th, width: '50px'}}>No</th>
+                                            <th style={styles.th}>Nama Peserta</th>
+                                            <th style={styles.th}>Instansi</th>
+                                            <th style={styles.th}>Status</th>
+                                            <th style={{...styles.th, textAlign: 'center', width: '180px'}}>Aksi</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {displayData.length === 0 && <div style={{padding: '40px', textAlign: 'center', color: '#999'}}>Tidak ada data pengajuan.</div>}
-                        </div>
-                    </>
-                )}
+                                    </thead>
+                                    <tbody>
+                                        {displayData.filter(s => s.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase())).map((s, i) => (
+                                            <tr key={s.id} style={styles.tableRow}>
+                                                <td style={styles.td}>{i + 1}</td>
+                                                <td style={styles.td}><b style={{color: '#111827'}}>{s.nama_lengkap}</b></td>
+                                                <td style={styles.td}>{s.asal_instansi || '-'}</td>
+                                                <td style={styles.td}>
+                                                    <span style={{ color: getStatusColor(s.status), fontWeight: 'bold', fontSize: '12.5px' }}>
+                                                        {s.status}
+                                                    </span>
+                                                </td>
+                                                <td style={{...styles.td, textAlign: 'center'}}>
+                                                    <div style={{display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center'}}>
+                                                        <button onClick={() => viewDetail(s.id)} style={styles.btnIconDetail} title="Lihat Detail">
+                                                            <Eye size={18} strokeWidth={2}/>
+                                                        </button>
+                                                        
+                                                        {activeMenu === 'monitoring' && (
+                                                            <select 
+                                                                style={styles.dropdown}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (!val) return;
+                                                                    if (val === 'revisi' || val === 'tolak') handleRejection(s.id, val);
+                                                                    else if (val === 'ubah_jadwal') handleUpdateJadwal(s.id);
+                                                                    else handleUpdateStatus(s.id, val);
+                                                                    e.target.value = "";
+                                                                }}
+                                                                value=""
+                                                            >
+                                                                <option value="" disabled>Pilih Tindakan</option>
+                                                                {s.status === 'Menunggu Verifikasi' && (
+                                                                    <option value="Atur Jadwal Wawancara">Terima & Atur Wawancara</option>
+                                                                )}
+                                                                {s.status === 'Jadwal Wawancara Diajukan' && (
+                                                                    <>
+                                                                        <option value="Wawancara Disetujui">Setujui Jadwal Wawancara</option>
+                                                                        <option value="ubah_jadwal">Ubah Jadwal Wawancara</option>
+                                                                    </>
+                                                                )}
+                                                                {s.status === 'Wawancara Disetujui' && (
+                                                                    <option value="Selesai Wawancara (Lengkapi Berkas Akhir)">Selesaikan Wawancara</option>
+                                                                )}
+                                                                {s.status === 'Berkas Akhir Terkirim' && (
+                                                                    <option value="Berkas Disetujui Unit">Terima Berkas Final & Upload Rekomendasi</option>
+                                                                )}
+                                                                <option value="revisi">Minta Revisi</option>
+                                                                <option value="tolak">Tolak Pengajuan</option>
+                                                            </select>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {displayData.length === 0 && (
+                                            <tr><td colSpan="5" style={{padding: '40px', textAlign: 'center', color: '#999'}}>Tidak ada data pengajuan.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
 const styles = {
-    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8', fontFamily: 'sans-serif' },
-    sidebar: { width: '260px', backgroundColor: '#003399', color: '#fff', padding: '30px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
-        main: { flex: 1, padding: '0 40px 40px 40px', marginLeft: '260px', minHeight: '100vh' },
-    topBar: { 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '20px 0', 
-        marginBottom: '20px',
-        borderBottom: '1px solid #eaeaea',
-        position: 'sticky',
-        top: 0,
-        backgroundColor: '#f0f4f8',
-        zIndex: 50
-    },
+    container: { display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7fe', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+
+    // SIDEBAR (selaras SuperAdmin)
+    sidebar: { width: '280px', backgroundColor: '#052278', color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+    sidebarBrand: { padding: '30px 25px', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    brandTitle: { margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '1px' },
+    brandSubtitle: { margin: '5px 0 0 0', fontSize: '10px', opacity: 0.5, fontWeight: 'bold', letterSpacing: '1px' },
+    sidebarNav: { flex: 1, padding: '20px 15px', overflowY: 'auto' },
+    navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', transition: '0.3s', color: 'rgba(255,255,255,0.7)' },
+    navItemActive: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', marginBottom: '5px', backgroundColor: '#ff6600', color: '#fff', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(255, 102, 0, 0.3)' },
+    navLinkContent: { display: 'flex', alignItems: 'center', gap: '15px' },
+    sidebarFooter: { padding: '20px 15px', borderTop: '1px solid rgba(255,255,255,0.05)' },
+    logoutBtn: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', color: '#ff6b6b', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+
+    // MAIN
+    main: { flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', boxSizing: 'border-box' },
+    topHeader: { height: '80px', backgroundColor: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px', position: 'sticky', top: 0, zIndex: 5, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' },
     topBarInfo: { display: 'flex', flexDirection: 'column' },
-    topBarLabel: { fontSize: '11px', color: '#888', fontWeight: 'bold', textTransform: 'uppercase' },
+    topBarLabel: { fontSize: '11px', color: '#888', fontWeight: 'bold', letterSpacing: '1px' },
     topBarName: { fontSize: '14px', color: '#003399', fontWeight: 'bold', marginTop: '2px' },
-    logoArea: { marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px' },
-    menuActive: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', backgroundColor: '#ff6600', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', color: '#fff', marginBottom: '10px', cursor: 'pointer' },
-    menuItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: '#ccc', marginBottom: '10px' },
-    logout: { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', cursor: 'pointer', color: '#ffaaaa', fontSize: '14px', fontWeight: 'bold' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
-    searchBox: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', padding: '8px 15px', borderRadius: '20px', border: '1px solid #ddd' },
-    searchInput: { border: 'none', outline: 'none', fontSize: '13px' },
-    card: { backgroundColor: '#fff', borderRadius: '15px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden' },
+    contentScroll: { padding: '40px', flex: 1 },
+
+    // SECTION HEADER
+    accentBar: { width: '40px', height: '3px', background: '#ff6600', borderRadius: '2px', marginBottom: '12px' },
+    sectionTitle: { color: '#111827', margin: 0, fontSize: '24px', fontWeight: '800' },
+    sectionDesc: { color: '#6b7280', fontSize: '13px', margin: '6px 0 0' },
+
+    // ACTION BAR
+    actionBar: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '24px', flexWrap: 'wrap' },
+    searchBox: { flex: 1, minWidth: '280px', display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e0e7ff' },
+    input: { border: 'none', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px', color: '#333' },
+
+    // TABLE
+    tableCard: { backgroundColor: '#fff', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', border: '1px solid #f0f4f8', overflow: 'hidden' },
     table: { width: '100%', borderCollapse: 'collapse' },
-    thRow: { backgroundColor: '#f8f9fa' },
-    th: { textAlign: 'left', padding: '15px', fontSize: '12px', color: '#888', textTransform: 'uppercase' },
-    td: { padding: '15px', borderBottom: '1px solid #f1f1f1', fontSize: '14px', verticalAlign: 'middle' },
-    dropdown: { padding: '6px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '12px', outline: 'none', cursor: 'pointer', backgroundColor: '#f9f9f9' },
-    btnActionIcon: { padding: '6px', backgroundColor: '#f0f4ff', color: '#003399', border: '1px solid #d0dfff', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-    badge: (status) => {
-        let bg = '#e0f0ff'; let color = '#0055cc'; 
-        if (status?.includes('Ditolak')) { bg = '#ffe6e6'; color = '#dc3545'; }
-        else if (status?.includes('Revisi')) { bg = '#fff4e5'; color = '#ff6600'; }
-        else if (status?.includes('Wawancara')) { bg = '#f5eeff'; color = '#8e44ad'; }
-        else if (status?.includes('Selesai')) { bg = '#e1f7e7'; color = '#27ae60'; }
-        return { padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 'bold', backgroundColor: bg, color: color };
-    },
-    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '550px', borderRadius: '20px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', margin: '0 auto' },
-    profileHeader: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' },
-    avatarLarge: { width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#ff6600', color: '#fff', fontSize: '32px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' },
-    roleBadge: { backgroundColor: '#fff4e5', color: '#d35400', padding: '4px 15px', borderRadius: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' },
-    btnEditAvatar: { marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f0f4f8', color: '#003399', border: 'none', padding: '6px 15px', borderRadius: '20px', cursor: 'pointer', fontSize: '11px' },
-    infoGrid: { display: 'flex', flexDirection: 'column', gap: '12px' },
-    infoItem: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px', backgroundColor: '#f9f9f9', borderRadius: '10px' },
-    label: { color: '#888', fontSize: '11px', fontWeight: 'bold' },
-    val: { margin: 0, fontWeight: 'bold', color: '#333', fontSize: '14px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    inputGroup: { display: 'flex', flexDirection: 'column' },
-    input: { padding: '10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '14px' },
-    btnArea: { display: 'flex', gap: '10px', marginTop: '10px' },
-    btnSave: { flex: 1, padding: '10px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' },
-    btnCancel: { flex: 1, padding: '10px', backgroundColor: '#eee', color: '#555', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }
+    thRow: { backgroundColor: 'transparent' },
+    th: { padding: '16px 12px', textAlign: 'left', color: '#6b7280', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #f3f4f6' },
+    td: { padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '14px', color: '#374151', verticalAlign: 'middle' },
+    tableRow: {},
+
+    // ICON BUTTONS & DROPDOWN
+    btnIconDetail: { background: 'none', color: '#003399', border: 'none', padding: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+    dropdown: { padding: '8px 12px', borderRadius: '8px', border: '1px solid #cce0ff', fontSize: '12px', backgroundColor: '#f0f4ff', color: '#003399', fontWeight: 'bold', cursor: 'pointer', outline: 'none' },
+
+    // PROFILE (selaras SuperAdmin landscape)
+    profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '900px', borderRadius: '24px', padding: '40px', boxShadow: '0 8px 28px rgba(0,0,0,0.04)', margin: '0 auto', border: '1px solid #f0f4f8' },
+    landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', background: 'linear-gradient(135deg, #ff6600, #cc5200)', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 8px 20px rgba(255, 102, 0, 0.25)' },
+    roleBadgeUnit: { display: 'inline-block', backgroundColor: '#fff4e5', color: '#d35400', padding: '6px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
+    infoGridHorizontal: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    infoItemHorizontal: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #f1f3f9' },
+    labelSmall: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' },
+    valSmall: { margin: 0, fontWeight: 'bold', color: '#1b263b', fontSize: '16px' },
+    btnEditLandscape: { width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', backgroundColor: '#e0e7ff', color: '#4361ee', border: 'none', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+    formLandscape: { display: 'flex', flexDirection: 'column', gap: '16px' },
+    rowForm: { display: 'flex', gap: '20px' },
+    inputGroupFull: { display: 'flex', flexDirection: 'column' },
+    inputGroupHalf: { flex: 1, display: 'flex', flexDirection: 'column' },
+    labelForm: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' },
+    inputForm: { padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '14px', backgroundColor: '#f8f9fa' },
+    btnAreaLandscape: { display: 'flex', gap: '15px', marginTop: '8px' },
+    btnSaveLandscape: { flex: 2, padding: '14px', backgroundColor: '#003399', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+    btnCancelLandscape: { flex: 1, padding: '14px', backgroundColor: '#f1f3f9', color: '#778da9', border: 'none', borderRadius: '14px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
 };
 
 export default AdminDashboard;
