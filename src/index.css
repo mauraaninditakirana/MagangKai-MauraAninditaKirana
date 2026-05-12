@@ -1,13 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
 :root {
-  --kai-blue: #003399;   /* Biru Tua KAI */
-  --kai-orange: #ff6600; /* Oranye KAI */
+  --kai-blue: #003399;
+  --kai-orange: #ff6600;
   --kai-white: #ffffff;
   --kai-gray: #f4f4f4;
 }
 
-/* Memaksa scrollbar selalu ada agar layout tidak geser-geser saat pindah menu */
+/* Scrollbar always visible biar layout tidak geser */
 html {
   overflow-y: scroll;
 }
@@ -25,12 +25,10 @@ body {
   box-sizing: border-box;
 }
 
-/* Tambahan: Animasi halus untuk tombol dan menu */
 button, a {
   transition: all 0.2s ease-in-out;
 }
 
-/* Animasi putar untuk tombol refresh jika sedang loading */
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -38,4 +36,149 @@ button, a {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+
+/* ========================================
+   SWEETALERT2 GLOBAL STYLE OVERRIDE
+   ======================================== */
+
+/* POPUP: compact, tidak terlalu besar */
+.swal2-popup {
+    border-radius: 16px !important;
+    padding: 24px 28px !important;
+    width: 420px !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.18) !important;
+}
+
+/* TITLE: tegas, hitam pekat, ukuran proporsional */
+.swal2-title {
+    color: #111827 !important;
+    font-weight: 800 !important;
+    font-size: 19px !important;
+    letter-spacing: -0.2px !important;
+    padding: 0 !important;
+    margin: 0 0 6px !important;
+    line-height: 1.3 !important;
+}
+
+/* TEXT BODY: kontras, mudah dibaca */
+.swal2-html-container {
+    color: #4b5563 !important;
+    font-size: 13.5px !important;
+    line-height: 1.6 !important;
+    font-weight: 500 !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+}
+
+/* ICON: pakai ukuran default Swal, hanya atur margin biar rapi */
+.swal2-icon {
+    margin: 6px auto 14px !important;
+}
+/* SUCCESS ICON: hijau matang KAI */
+.swal2-icon.swal2-success {
+    border-color: #27ae60 !important;
+    color: #27ae60 !important;
+}
+
+.swal2-icon.swal2-success [class^="swal2-success-line"] {
+    background-color: #27ae60 !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+    border-color: rgba(39, 174, 96, 0.4) !important;
+}
+
+/* AREA TOMBOL: rapat */
+.swal2-actions {
+    gap: 8px !important;
+    margin: 18px 0 0 !important;
+}
+
+/* TOMBOL: padding proporsional, font tegas */
+.swal2-styled.swal2-confirm,
+.swal2-styled.swal2-cancel,
+.swal2-styled.swal2-deny {
+    padding: 10px 22px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.2px !important;
+    box-shadow: none !important;
+    transition: all 0.2s !important;
+}
+
+/* CONFIRM: default biru KAI */
+.swal2-styled.swal2-confirm {
+    background-color: #003399 !important;
+    background-image: none !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+    background-color: #002277 !important;
+}
+
+/* CANCEL: abu-abu soft */
+.swal2-styled.swal2-cancel {
+    background-color: #f1f3f9 !important;
+    color: #6b7280 !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+    background-color: #e5e7eb !important;
+}
+
+/* VALIDATION MESSAGE: merah dengan background card halus */
+.swal2-validation-message {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    margin: 12px 0 0 !important;
+}
+
+/* INPUT FIELD di dalam Swal (text, date, datetime, dll) */
+.swal2-popup .swal2-input,
+.swal2-popup .swal2-textarea,
+.swal2-popup .swal2-select,
+.swal2-popup .swal2-file {
+    border: 1px solid #e0e7ff !important;
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
+    font-size: 13.5px !important;
+    font-family: 'Segoe UI', Tahoma, sans-serif !important;
+    color: #374151 !important;
+    background: #f8fafd !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s !important;
+}
+
+.swal2-popup .swal2-input:focus,
+.swal2-popup .swal2-textarea:focus,
+.swal2-popup .swal2-select:focus {
+    border-color: #003399 !important;
+}
+
+.swal2-popup .swal2-label {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #003399 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* CLOSE BUTTON (X) di pojok kanan atas */
+.swal2-close {
+    color: #9ca3af !important;
+    font-size: 24px !important;
+    width: 32px !important;
+    height: 32px !important;
+}
+
+.swal2-close:hover {
+    color: #003399 !important;
 }

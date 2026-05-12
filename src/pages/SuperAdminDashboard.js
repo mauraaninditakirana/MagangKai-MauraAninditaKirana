@@ -609,7 +609,7 @@ const styles = {
     infoItemHorizontal: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #f1f3f9' },
     labelSmall: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' },
     valSmall: { margin: 0, fontWeight: 'bold', color: '#1b263b', fontSize: '16px' },
-    btnEditLandscape: { width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', backgroundColor: '#e0e7ff', color: '#4361ee', border: 'none', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
+    btnEditLandscape: { width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', backgroundColor: '#003399', color: '#fff', border: 'none', padding: '14px', borderRadius: '14px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,51,153,0.25)' },
     formLandscape: { display: 'flex', flexDirection: 'column', gap: '20px' },
     rowForm: { display: 'flex', gap: '20px' },
     inputGroupFull: { display: 'flex', flexDirection: 'column' },

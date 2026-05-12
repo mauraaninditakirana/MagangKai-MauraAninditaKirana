@@ -215,8 +215,8 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     return (
         <div style={styles.card}>
             <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
-                {isUploadFinal ? <CheckCircle color="#27ae60" size={28}/> : (revisiId ? <Edit3 color="#ff6600" /> : <ClipboardList color="#003399" />)}
-                <h3 style={{color: isUploadFinal ? '#27ae60' : (revisiId ? '#ff6600' : '#003399'), margin: 0}}>
+                {isUploadFinal ? <CheckCircle color="#1f7643" size={28}/> : (revisiId ? <Edit3 color="#ff6600" /> : <ClipboardList color="#003399" />)}
+                <h3 style={{color: isUploadFinal ? '#1f7643' : (revisiId ? '#ff6600' : '#003399'), margin: 0}}>
                     {isUploadFinal ? 'Unggah Berkas Akhir (Pasca Wawancara)' : (revisiId ? 'Form Perbaikan Data (Revisi)' : 'Form Pengajuan Baru')}
                 </h3>
             </div>
@@ -347,12 +347,12 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     ) : (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
                             {isUploadFinal ? (
-                                <div style={{backgroundColor: '#e1f7e7', padding: '10px 14px', borderRadius: '8px', fontSize: '12px', color: '#1e8449'}}>
-                                    ✅ Mode Berkas Akhir: Upload versi <b>fix</b> dari semua dokumen wajib (setelah wawancara).
+                                <div style={{backgroundColor: '#e1f7e7', padding: '12px 16px', borderRadius: '10px', fontSize: '12px', color: '#1e8449', borderLeft: '3px solid #27ae60', fontWeight: '500'}}>
+                                    <b>Mode Berkas Akhir:</b> Upload versi <b>fix</b> dari semua dokumen wajib (setelah wawancara).
                                 </div>
                             ) : revisiId ? (
-                                <div style={{backgroundColor: '#fff4e5', padding: '10px 14px', borderRadius: '8px', fontSize: '12px', color: '#d35400'}}>
-                                    💡 Mode Revisi: Upload hanya dokumen yang perlu diperbarui. Yang lama akan tetap tersimpan.
+                                <div style={{backgroundColor: '#fff4e5', padding: '12px 16px', borderRadius: '10px', fontSize: '12px', color: '#d35400', borderLeft: '3px solid #ff6600', fontWeight: '500'}}>
+                                    <b>Mode Revisi:</b> Upload hanya dokumen yang perlu diperbarui. Yang lama akan tetap tersimpan.
                                 </div>
                             ) : null}
 
@@ -400,7 +400,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     </p>
                 </div>
 
-                <button type="submit" style={{...styles.btnSubmit, backgroundColor: isUploadFinal ? '#27ae60' : (revisiId ? '#ff6600' : '#003399')}}>
+                <button type="submit" style={{...styles.btnSubmit, backgroundColor: isUploadFinal ? '#ff6600' : (revisiId ? '#ff6600' : '#003399')}}>
                     {isUploadFinal ? (
                         <><Send size={18} style={{marginRight: '8px'}} /> Kirim Berkas Final</>
                     ) : revisiId ? (
