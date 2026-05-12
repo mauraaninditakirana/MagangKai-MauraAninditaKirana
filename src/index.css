@@ -43,11 +43,9 @@ button, a {
    SWEETALERT2 GLOBAL STYLE OVERRIDE
    ======================================== */
 
-/* POPUP: compact, tidak terlalu besar */
 .swal2-popup {
     border-radius: 16px !important;
     padding: 24px 28px !important;
-    width: 420px !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     box-shadow: 0 16px 48px rgba(0,0,0,0.18) !important;
 }
@@ -146,9 +144,12 @@ button, a {
 .swal2-popup .swal2-textarea,
 .swal2-popup .swal2-select,
 .swal2-popup .swal2-file {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
     border: 1px solid #e0e7ff !important;
     border-radius: 8px !important;
-    padding: 10px 12px !important;
+    padding: 10px 14px !important;
     font-size: 13.5px !important;
     font-family: 'Segoe UI', Tahoma, sans-serif !important;
     color: #374151 !important;
@@ -156,7 +157,6 @@ button, a {
     box-shadow: none !important;
     transition: border-color 0.2s !important;
 }
-
 .swal2-popup .swal2-input:focus,
 .swal2-popup .swal2-textarea:focus,
 .swal2-popup .swal2-select:focus {

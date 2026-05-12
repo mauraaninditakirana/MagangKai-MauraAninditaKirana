@@ -105,7 +105,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal, onKirimSDM }) => {
 
     const getStatusStyle = (status) => {
         if (status === 'Selesai (Surat Dirilis)') return { color: '#27ae60', icon: <CheckCircle size={16} />, bg: '#e1f7e7' };
-        if (status === 'Dalam Masa Kegiatan') return { color: '#f39c12', icon: <Clock size={16} />, bg: '#fff4e5' };
+        if (status === 'Dalam Masa Kegiatan') return { color: '#ff6600', icon: <Clock size={16} />, bg: '#fff4e5' };
         if (status === 'Selesai Kegiatan') return { color: '#2c3e50', icon: <CheckCircle size={16} />, bg: '#eef2f7' };
         if (status === 'Atur Jadwal Wawancara') return { color: '#003399', icon: <Calendar size={16} />, bg: '#f0f4ff' };
         if (status === 'Jadwal Wawancara Diajukan') return { color: '#8e44ad', icon: <Clock size={16} />, bg: '#f5eeff' };
@@ -205,7 +205,7 @@ const TabelPengajuan = ({ userId, onAjukanJadwal, onKirimSDM }) => {
                                     {['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan'].includes(s.status) && (
                                         <button 
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-final`, '_blank')}
-                                            style={{...styles.btnAction, backgroundColor: '#27ae60', color: '#fff', marginBottom: '6px'}}
+                                            style={{...styles.btnAction, backgroundColor: '#ff6600', color: '#fff', marginBottom: '6px'}}
                                         >
                                             <Download size={14}/> Surat KAI Pusat
                                         </button>

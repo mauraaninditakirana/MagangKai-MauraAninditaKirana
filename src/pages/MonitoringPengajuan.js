@@ -197,51 +197,76 @@ const MonitoringPengajuan = () => {
         }
     };
 
-    const viewDetail = async (id) => {
+        const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
-            const s = res.data; 
+            const s = res.data;
+
+            // Helper inline styles (selaras ArchiveManagement / AdminDashboard)
+            const sectionCard = 'background:#f8fafd; padding:18px 22px; border-radius:12px; margin-bottom:14px; border:1px solid #f0f4f8;';
+            const sectionLabel = 'font-size:11px; color:#003399; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; display:block;';
+            const fieldRow = 'display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e5e7eb; font-size:13px;';
+            const fieldLabel = 'color:#6b7280; font-weight:600;';
+            const fieldValue = 'color:#111827; font-weight:600; text-align:right; max-width:60%;';
 
             let berkasHtml = '';
             if (s.documents && s.documents.length > 0) {
                 berkasHtml = s.documents.map((doc, index) => {
                     const justFileName = doc.file_path.split(/[\\/]/).pop();
                     const pathFile = `http://localhost:5000/api/preview/${justFileName}`;
-                    
                     return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e0e0e0;">
-                            <span style="font-size: 13px; color: #444; font-weight: 500;">
-                                ${index + 1}. ${doc.nama_dokumen === 'files' ? 'Dokumen' : doc.nama_dokumen}
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:8px; margin-bottom:6px; border:1px solid #e0e7ff;">
+                            <span style="font-size:13px; color:#374151; font-weight:600;">
+                                ${index + 1}. ${doc.nama_dokumen === 'files' ? 'Dokumen Pengajuan' : doc.nama_dokumen}
                             </span>
                             <a href="${pathFile}" target="_blank" rel="noopener noreferrer" 
-                               style="background-color: #0055cc; color: white; padding: 5px 12px; border-radius: 5px; text-decoration: none; font-size: 11px; font-weight: bold; transition: 0.2s;">
-                               📄 Lihat File
+                               style="background:#003399; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">
+                                Lihat File
                             </a>
                         </div>
                     `;
                 }).join('');
             } else {
-                berkasHtml = '<p style="color: #999; font-style: italic; text-align: center;">Tidak ada berkas yang dilampirkan.</p>';
+                berkasHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:20px 0;">Tidak ada berkas yang dilampirkan.</p>';
             }
 
-            let htmlContent = `
-                <div style="text-align:left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
-                    <div style="background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-                        <h4 style="margin-top:0; color: #003399; border-bottom: 2px solid #003399; padding-bottom: 5px; font-size: 15px;">Data Mahasiswa</h4>
-                        <p style="margin: 5px 0;"><b>Nama:</b> ${s.nama_lengkap}</p>
-                        <p style="margin: 5px 0;"><b>Instansi:</b> ${s.asal_instansi || '-'}</p>
+            const htmlContent = `
+                <div style="text-align:left; font-family:'Segoe UI', Tahoma, sans-serif;">
+                    
+                    <div style="${sectionCard}">
+                        <span style="${sectionLabel}">━━ Data Mahasiswa</span>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Nama Lengkap</span>
+                            <span style="${fieldValue}">${s.nama_lengkap}</span>
+                        </div>
+                        <div style="${fieldRow} border-bottom:none;">
+                            <span style="${fieldLabel}">Asal Instansi</span>
+                            <span style="${fieldValue}">${s.asal_instansi || '-'}</span>
+                        </div>
                     </div>
 
-                    <div style="background: #fff4e5; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-                        <h4 style="margin-top:0; color: #d35400; border-bottom: 2px solid #d35400; padding-bottom: 5px; font-size: 15px;">Detail Kegiatan</h4>
-                        <p style="margin: 5px 0;"><b>Jenis:</b> ${s.nama_jenis}</p>
-                        <p style="margin: 5px 0;"><b>Judul:</b> ${s.judul_atau_tujuan}</p>
-                        <p style="margin: 5px 0;"><b>Pembimbing:</b> ${s.nama_pembimbing || '-'}</p>
-                        <p style="margin: 5px 0;"><b>Kontak:</b> ${s.kontak_pembimbing || '-'}</p>
+                    <div style="${sectionCard}">
+                        <span style="${sectionLabel}">━━ Detail Kegiatan</span>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Jenis Kegiatan</span>
+                            <span style="${fieldValue}">${s.nama_jenis}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Judul Project</span>
+                            <span style="${fieldValue}">${s.judul_atau_tujuan || '-'}</span>
+                        </div>
+                        <div style="${fieldRow}">
+                            <span style="${fieldLabel}">Pembimbing</span>
+                            <span style="${fieldValue}">${s.nama_pembimbing || '-'}</span>
+                        </div>
+                        <div style="${fieldRow} border-bottom:none;">
+                            <span style="${fieldLabel}">Kontak Pembimbing</span>
+                            <span style="${fieldValue}">${s.kontak_pembimbing || '-'}</span>
+                        </div>
                     </div>
-                    
-                    <div style="background: #eef2f7; padding: 15px; border-radius: 12px;">
-                        <h4 style="margin-top:0; color: #003399; font-size: 15px; margin-bottom: 15px;">Berkas Lampiran</h4>
+
+                    <div style="${sectionCard} margin-bottom:0;">
+                        <span style="${sectionLabel}">━━ Berkas Lampiran</span>
                         ${berkasHtml}
                     </div>
                 </div>
@@ -250,9 +275,19 @@ const MonitoringPengajuan = () => {
             Swal.fire({
                 title: 'Detail Pengajuan Magang',
                 html: htmlContent,
-                width: '600px',
+                width: '640px',
                 confirmButtonText: 'Tutup',
-                confirmButtonColor: '#666'
+                confirmButtonColor: '#003399',
+                didOpen: () => {
+                    const titleEl = Swal.getTitle();
+                    if (titleEl) {
+                        titleEl.style.color = '#111827';
+                        titleEl.style.fontWeight = '800';
+                        titleEl.style.fontSize = '22px';
+                        titleEl.style.fontFamily = "'Segoe UI', Tahoma, sans-serif";
+                        titleEl.style.letterSpacing = '-0.2px';
+                    }
+                }
             });
         } catch (err) {
             Swal.fire('Error', 'Gagal mengambil detail data.', 'error');
@@ -718,12 +753,12 @@ const styles = {
 
     // STATUS BADGES
     badge: (status) => {
-        let bg = '#eef2f7'; let color = '#34495e';
-        if (status === 'Sedang Ditinjau SDM') { bg = '#fff4e5'; color = '#d35400'; }
-        if (status === 'Setujui, Tunggu Pengajuan Dikirim ke Pusat') { bg = '#e0f0ff'; color = '#0055cc'; }
-        if (status === 'Pengajuan Telah Dikirim ke Pusat') { bg = '#f5eeff'; color = '#8e44ad'; }
-        if (status === 'Surat Telah Masuk dari Pusat') { bg = '#e1f7e7'; color = '#27ae60'; }
-        return { padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', backgroundColor: bg, color: color, display: 'inline-block' };
+        let color = '#34495e';
+        if (status === 'Sedang Ditinjau SDM') color = '#d35400';
+        if (status === 'Setujui, Tunggu Pengajuan Dikirim ke Pusat') color = '#003399';
+        if (status === 'Pengajuan Telah Dikirim ke Pusat') color = '#8e44ad';
+        if (status === 'Surat Telah Masuk dari Pusat') color = '#27ae60';
+        return { fontSize: '13px', fontWeight: 'bold', color: color, display: 'inline-block' };
     },
 
     // BUTTONS
