@@ -556,9 +556,9 @@ const MonitoringPengajuan = () => {
                                                                 <><option value="Sedang Ditinjau SDM">Mulai Tinjau Berkas</option><option value="tolak">Tolak Pengajuan</option></>
                                                             )}
                                                             {s.status === 'Sedang Ditinjau SDM' && (
-                                                                <><option value="Setujui, Tunggu Pengajuan Dikirim ke Pusat">Setujui & Siapkan Kirim</option><option value="tolak">Tolak Pengajuan</option></>
+                                                                <><option value="Disetujui SDM, Tunggu Pengajuan Dikirim ke Pusat">Setujui & Siapkan Kirim</option><option value="tolak">Tolak Pengajuan</option></>
                                                             )}
-                                                            {s.status === 'Setujui, Tunggu Pengajuan Dikirim ke Pusat' && (
+                                                            {s.status === 'Disetujui SDM, Tunggu Pengajuan Dikirim ke Pusat' && (
                                                                 <option value="Pengajuan Telah Dikirim ke Pusat">Tandai Dikirim ke Pusat (Input Tgl)</option>
                                                             )}
                                                             {s.status === 'Pengajuan Telah Dikirim ke Pusat' && (
@@ -702,7 +702,7 @@ const styles = {
     badge: (status) => {
         let color = '#34495e';
         if (status === 'Sedang Ditinjau SDM') color = '#d35400';
-        if (status === 'Setujui, Tunggu Pengajuan Dikirim ke Pusat') color = '#003399';
+        if (status === 'Disetujui SDM, Tunggu Pengajuan Dikirim ke Pusat') color = '#003399';
         if (status === 'Pengajuan Telah Dikirim ke Pusat') color = '#8e44ad';
         if (status === 'Surat Telah Masuk dari Pusat') color = '#27ae60';
         return { fontSize: '13px', fontWeight: 'bold', color: color, display: 'inline-block' };

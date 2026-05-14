@@ -154,7 +154,7 @@ const TabelPengajuan = ({ userId }) => {
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-final`, '_blank')}
                                             style={{...styles.btnAction, backgroundColor: '#ff6600', color: '#fff', marginBottom: '6px'}}
                                         >
-                                            <Download size={14}/> Surat KAI Pusat
+                                            <Download size={14}/> Surat Pengantar KAI Pusat
                                         </button>
                                     )}
                                     {s.status === 'Revisi' && (
@@ -172,7 +172,7 @@ const TabelPengajuan = ({ userId }) => {
                                             </button>
                                         </div>
                                     )}
-                                    {['Menunggu Verifikasi', 'Disetujui Unit, Menunggu Verifikasi SDM', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
+                                    {['Menunggu Verifikasi', 'Disetujui Unit, Menunggu Verifikasi SDM', 'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Disetujui SDM, Tunggu Pengajuan Dikirim ke Pusat', 'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat'].includes(s.status) && (
                                         <div style={styles.textWait}>Sedang diproses internal...</div>
                                     )}
                                     {/* 7. TOMBOL DITOLAK */}

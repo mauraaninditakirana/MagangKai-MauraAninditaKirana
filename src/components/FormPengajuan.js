@@ -384,7 +384,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                 </div>
                 {formData.tanggal_mulai && (
                     <p style={{fontSize: '11px', color: '#6b7280', margin: '-10px 0 0', fontStyle: 'italic'}}>
-                        💡 Default 1 bulan dari tanggal mulai. Bisa diperpanjang hingga 3 bulan.
+                        Note: Default 1 bulan dari tanggal mulai. Bisa diperpanjang hingga 3 bulan.
                     </p>
                 )}
 
@@ -393,7 +393,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     
                     {requirements.length === 0 ? (
                         <div style={{...styles.reqBox, color: '#888', fontStyle: 'italic'}}>
-                            Belum ada syarat dokumen yang ditetapkan oleh Admin Pusat.
+                            Belum ada syarat dokumen yang ditetapkan oleh Admin.
                         </div>
                     ) : (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
