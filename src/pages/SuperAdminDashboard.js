@@ -296,7 +296,11 @@ const SuperAdminDashboard = () => {
                                         const fillPercent = Math.min((activeInUnit / maxVisual) * 100, 100);
                                         
                                         return (
-                                           <div key={unit.id} style={styles.unitCardClean}>
+                                            <div 
+                                                key={unit.id} 
+                                                style={{...styles.unitCardClean, cursor: 'pointer'}}
+                                                onClick={() => navigate(`/admin/unit/${unit.id}`)}
+                                            >
                                                 <div style={styles.unitCardHeader}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                                                         <Building size={22} color="#003399" strokeWidth={2}/>
@@ -304,6 +308,7 @@ const SuperAdminDashboard = () => {
                                                             {unit.nama_unit}
                                                         </h4>
                                                     </div>
+                                                    <span style={{ color: '#9ca3af', fontSize: '18px', flexShrink: 0 }}>→</span>
                                                 </div>
 
                                                 <div style={styles.unitNumberRow}>

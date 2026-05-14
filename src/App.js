@@ -12,6 +12,7 @@ import UnitManagement from './pages/UnitManagement';
 import ArchiveManagement from './pages/ArchiveManagement';
 import Profile from './pages/Profile';
 import MonitoringPengajuan from './pages/MonitoringPengajuan';
+import UnitDetail from './pages/UnitDetail';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
 
         <Route path="/admin/archive" element={<ArchiveManagement />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/admin/unit/:id" element={<UnitDetail />} />
       </Routes>
     </Router>
   );
