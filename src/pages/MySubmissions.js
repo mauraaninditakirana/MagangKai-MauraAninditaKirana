@@ -140,8 +140,7 @@ const MySubmissions = () => {
                             Halo <b>{userData.nama_lengkap}</b>, pantau status pengajuan & unduh surat balasan di sini.
                         </p>
                     </div>
-
-                    <TabelPengajuan userId={userData.id} onAjukanJadwal={handleAjukanJadwal} onKirimSDM={handleKirimSDM} />
+                    <TabelPengajuan userId={userData.id} />
                 </div>
             </div>
         </div>

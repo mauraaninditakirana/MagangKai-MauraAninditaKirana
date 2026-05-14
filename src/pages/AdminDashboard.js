@@ -126,54 +126,26 @@ const AdminDashboard = () => {
     };
 
     const handleUpdateStatus = async (id, newStatus) => {
-        if (newStatus === 'Berkas Disetujui Unit') {
-            const { value: file } = await Swal.fire({
-                title: 'Upload Surat Rekomendasi Unit',
-                text: 'Wajib mengunggah Surat Rekomendasi (PDF) sebagai pengantar ke SDM Pusat.',
-                input: 'file',
-                inputAttributes: {
-                    'accept': 'application/pdf',
-                    'aria-label': 'Upload surat rekomendasi unit'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Upload & Setujui',
-                confirmButtonColor: '#28a745'
-            });
+        
+        let confirmText = `Ubah status menjadi: ${newStatus}?`;
+        let confirmTitle = 'Konfirmasi Aksi';
+        let confirmColor = '#0055cc';
+        let confirmBtnText = 'Ya, Proses';
 
-            if (file) {
-                const formDataFile = new FormData();
-                formDataFile.append('surat_unit', file); 
-                formDataFile.append('status', newStatus);
-                formDataFile.append('admin_id', userData.id);
-                formDataFile.append('catatan', 'Berkas final disetujui, Surat Rekomendasi Unit telah diunggah.');
-
-                try {
-                    await axios.put(`http://localhost:5000/api/submissions/${id}/status`, formDataFile, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
-                    Swal.fire('Berhasil!', 'Surat Rekomendasi terupload & status diperbarui.', 'success');
-                    fetchData(userData.unit_id);
-                } catch (err) {
-                    Swal.fire('Gagal', 'Gagal memperbarui status dan mengunggah dokumen.', 'error');
-                }
-            }
-            return; 
+        if (newStatus === 'Disetujui Unit, Menunggu Verifikasi SDM') {
+            confirmTitle = 'Terima Pengajuan?';
+            confirmText = 'Pengajuan akan langsung diteruskan ke SDM DAOP 6 untuk diverifikasi. Lanjutkan?';
+            confirmColor = '#27ae60';
+            confirmBtnText = 'Ya, Terima & Teruskan';
         }
 
-        let confirmText = `Ubah status menjadi: ${newStatus}?`;
-        let confirmColor = '#0055cc';
-
-        if (newStatus === 'Atur Jadwal Wawancara') confirmText = 'Terima berkas awal dan minta mahasiswa atur jadwal wawancara?';
-        if (newStatus === 'Wawancara Disetujui') confirmText = 'Setujui jadwal wawancara ini?';
-        if (newStatus === 'Selesai Wawancara (Lengkapi Berkas Akhir)') confirmText = 'Wawancara selesai? Mahasiswa akan diminta upload berkas final.';
-
         const result = await Swal.fire({
-            title: 'Konfirmasi Aksi',
+            title: confirmTitle,
             text: confirmText,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: confirmColor,
-            confirmButtonText: 'Ya, Proses'
+            confirmButtonText: confirmBtnText
         });
 
         if (result.isConfirmed) {
@@ -191,13 +163,19 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleRejection = async (id, type) => {
+        const handleRejection = async (id, type) => {
         const { value: text } = await Swal.fire({
-            title: type === 'revisi' ? 'Berikan Catatan Revisi' : 'Alasan Penolakan',
+            title: type === 'revisi' ? 'Pending — Minta Revisi' : 'Tolak Pengajuan',
+            text: type === 'revisi' 
+                ? 'Berikan catatan apa yang perlu diperbaiki/direvisi oleh mahasiswa.' 
+                : 'Berikan alasan penolakan (data akan tetap masuk arsip SDM).',
             input: 'textarea',
-            inputPlaceholder: 'Tuliskan detail di sini...',
+            inputPlaceholder: type === 'revisi' 
+                ? 'Contoh: Mohon perbaiki nama pembimbing dan judul project...' 
+                : 'Contoh: Kuota unit sudah penuh / dokumen tidak valid...',
             showCancelButton: true,
-            confirmButtonColor: type === 'revisi' ? '#ff6600' : '#ff6600'
+            confirmButtonColor: type === 'revisi' ? '#ff6600' : '#d33',
+            confirmButtonText: type === 'revisi' ? 'Kirim Catatan Revisi' : 'Tolak Pengajuan'
         });
 
         if (text) {
@@ -273,16 +251,10 @@ const AdminDashboard = () => {
                             <span style="${fieldLabel}">Nama Lengkap</span>
                             <span style="${fieldValue}">${s.nama_lengkap}</span>
                         </div>
-                        <div style="${fieldRow} ${s.jadwal_wawancara ? '' : 'border-bottom:none;'}">
+                        <div style="${fieldRow} border-bottom:none;">
                             <span style="${fieldLabel}">Asal Instansi</span>
                             <span style="${fieldValue}">${s.asal_instansi || '-'}</span>
                         </div>
-                        ${s.jadwal_wawancara ? `
-                            <div style="${fieldRow} border-bottom:none;">
-                                <span style="${fieldLabel}">Jadwal Wawancara</span>
-                                <span style="${fieldValue} color:#ff6600;">${new Date(s.jadwal_wawancara).toLocaleString('id-ID')}</span>
-                            </div>
-                        ` : ''}
                     </div>
 
                     <div style="${sectionCard}">
@@ -342,13 +314,13 @@ const AdminDashboard = () => {
 
     if (!userData) return null;
 
-    const monitoringData = submissions.filter(s => 
-        ['Menunggu Verifikasi', 'Atur Jadwal Wawancara', 'Jadwal Wawancara Diajukan', 'Wawancara Disetujui', 'Selesai Wawancara (Lengkapi Berkas Akhir)', 'Berkas Akhir Terkirim', 'Revisi'].includes(s.status)
+        const monitoringData = submissions.filter(s => 
+        ['Menunggu Verifikasi', 'Revisi'].includes(s.status)
     );
 
     const archiveData = submissions.filter(s => 
         [
-            'Berkas Disetujui Unit', 'Disetujui Unit, Menunggu Verifikasi SDM', 
+            'Disetujui Unit, Menunggu Verifikasi SDM', 
             'Menunggu Verifikasi SDM', 'Sedang Ditinjau SDM', 'Setujui, Tunggu Pengajuan Dikirim ke Pusat', 
             'Pengajuan Telah Dikirim ke Pusat', 'Surat Telah Masuk dari Pusat', 'Disetujui SDM, Menunggu Surat Pengantar Magang', 
             'Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan', 
@@ -531,37 +503,22 @@ const AdminDashboard = () => {
                                                         </button>
                                                         
                                                         {activeMenu === 'monitoring' && (
-                                                            <select 
-                                                                style={styles.dropdown}
-                                                                onChange={(e) => {
-                                                                    const val = e.target.value;
-                                                                    if (!val) return;
-                                                                    if (val === 'revisi' || val === 'tolak') handleRejection(s.id, val);
-                                                                    else if (val === 'ubah_jadwal') handleUpdateJadwal(s.id);
-                                                                    else handleUpdateStatus(s.id, val);
-                                                                    e.target.value = "";
-                                                                }}
-                                                                value=""
-                                                            >
-                                                                <option value="" disabled>Pilih Tindakan</option>
-                                                                {s.status === 'Menunggu Verifikasi' && (
-                                                                    <option value="Atur Jadwal Wawancara">Terima & Atur Wawancara</option>
-                                                                )}
-                                                                {s.status === 'Jadwal Wawancara Diajukan' && (
-                                                                    <>
-                                                                        <option value="Wawancara Disetujui">Setujui Jadwal Wawancara</option>
-                                                                        <option value="ubah_jadwal">Ubah Jadwal Wawancara</option>
-                                                                    </>
-                                                                )}
-                                                                {s.status === 'Wawancara Disetujui' && (
-                                                                    <option value="Selesai Wawancara (Lengkapi Berkas Akhir)">Selesaikan Wawancara</option>
-                                                                )}
-                                                                {s.status === 'Berkas Akhir Terkirim' && (
-                                                                    <option value="Berkas Disetujui Unit">Terima Berkas Final & Upload Rekomendasi</option>
-                                                                )}
-                                                                <option value="revisi">Minta Revisi</option>
-                                                                <option value="tolak">Tolak Pengajuan</option>
-                                                            </select>
+                                                        <select 
+                                                            style={styles.dropdown}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (!val) return;
+                                                                if (val === 'revisi' || val === 'tolak') handleRejection(s.id, val);
+                                                                else handleUpdateStatus(s.id, val);
+                                                                e.target.value = "";
+                                                            }}
+                                                            value=""
+                                                        >
+                                                            <option value="" disabled>Pilih Tindakan</option>
+                                                            <option value="Disetujui Unit, Menunggu Verifikasi SDM">✓ Terima & Teruskan ke SDM</option>
+                                                            <option value="revisi">⏸ Pending (Minta Revisi)</option>
+                                                            <option value="tolak">✗ Tolak Pengajuan</option>
+                                                        </select>
                                                         )}
                                                     </div>
                                                 </td>

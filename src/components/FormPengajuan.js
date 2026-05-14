@@ -27,15 +27,20 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     });
     
     const [filesByReq, setFilesByReq] = useState({}); 
-    const [isUploadFinal, setIsUploadFinal] = useState(false);
+    // Helper: tambah X bulan ke tanggal (return YYYY-MM-DD)
+    const addMonths = (dateStr, months) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        d.setMonth(d.getMonth() + months);
+        return d.toISOString().split('T')[0];
+    };
+
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                // 1. Fetch Units (Sudah membawa data .quotas dari backend terbaru)
                 const unitRes = await axios.get(`http://localhost:5000/api/units?_t=${Date.now()}`);
                 setUnits(unitRes.data);
 
-                // 2. Fetch Submission Types
                 setSubmissionTypes([
                     { id: 1, nama: 'Magang / Kerja Praktek' },
                     { id: 2, nama: 'PKL (Praktek Kerja Lapangan)' },
@@ -43,7 +48,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     { id: 4, nama: 'Tugas Akhir / Skripsi' }
                 ]);
 
-                // 3. Fetch Syarat Dokumen
                 try {
                     const reqRes = await axios.get('http://localhost:5000/api/requirements');
                     setRequirements(reqRes.data.filter(r => r.is_active) || []);
@@ -51,18 +55,14 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     console.error("Belum ada API requirements, abaikan sementara", reqErr);
                 }
 
-                // 4. Fetch User Data
                 let userInstansi = '';
                 if (userId) {
                     const userRes = await axios.get(`http://localhost:5000/api/users/${userId}`);
                     userInstansi = userRes.data.asal_instansi || '';
                 }
 
-                // 5. Set Form Data
                 if (revisiId) {
                     if (initialData) {
-                        if (initialData.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') setIsUploadFinal(true);
-
                         setFormData({
                             submission_type_id: initialData.submission_type_id || '',
                             unit_id: initialData.unit_id || '',
@@ -78,8 +78,6 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     } else {
                         const resLama = await axios.get(`http://localhost:5000/api/submissions/${revisiId}`);
                         const dataLama = resLama.data;
-                        
-                        if (dataLama.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)') setIsUploadFinal(true);
 
                         setFormData({
                             submission_type_id: dataLama.submission_type_id || '',
@@ -122,8 +120,13 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     const handleChange = (e) => {
         let updatedData = { ...formData, [e.target.name]: e.target.value };
         
-       if (e.target.name === 'submission_type_id') {
+        if (e.target.name === 'submission_type_id') {
             updatedData.unit_id = ''; 
+        }
+
+        // ✨ Auto-fill tanggal selesai = tanggal mulai + 1 bulan saat user pilih tanggal mulai ✨
+        if (e.target.name === 'tanggal_mulai' && e.target.value) {
+            updatedData.tanggal_selesai = addMonths(e.target.value, 1);
         }
 
         setFormData(updatedData);
@@ -143,7 +146,8 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         if (!formData.submission_type_id || !formData.unit_id) {
             return Swal.fire('Perhatian', 'Mohon pilih Keperluan dan Unit Tujuan', 'warning');
         }
-    const isRegularRevisi = revisiId && !isUploadFinal;
+
+        const isRegularRevisi = !!revisiId;
         if (!isRegularRevisi) {
             const missingRequired = requirements
                 .filter(r => r.is_wajib)
@@ -155,6 +159,38 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     `Mohon upload dokumen wajib berikut:<br/><b>${missingRequired.map(r => r.nama_dokumen).join('<br/>')}</b>`,
                     'warning'
                 );
+            }
+        }
+
+        // ✨ VALIDASI TANGGAL ✨
+        if (formData.tanggal_mulai && formData.tanggal_selesai) {
+            const start = new Date(formData.tanggal_mulai);
+            const end = new Date(formData.tanggal_selesai);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // 1. Tanggal mulai tidak boleh di masa lalu (kecuali revisi - data lama)
+            if (!revisiId && start < today) {
+                return Swal.fire('Tanggal Tidak Valid', 'Tanggal mulai tidak boleh di masa lalu.', 'warning');
+            }
+
+            // 2. Tanggal selesai harus SETELAH tanggal mulai (tidak boleh sama)
+            if (end <= start) {
+                return Swal.fire('Tanggal Tidak Valid', 'Tanggal selesai harus setelah tanggal mulai (minimal 1 hari).', 'warning');
+            }
+
+            // 3. Durasi MINIMAL 1 bulan
+            const minEnd = new Date(start);
+            minEnd.setMonth(minEnd.getMonth() + 1);
+            if (end < minEnd) {
+                return Swal.fire('Durasi Terlalu Singkat', 'Durasi magang minimal <b>1 bulan</b> dari tanggal mulai.', 'warning');
+            }
+
+            // 4. Durasi MAKSIMAL 3 bulan
+            const maxEnd = new Date(start);
+            maxEnd.setMonth(maxEnd.getMonth() + 3);
+            if (end > maxEnd) {
+                return Swal.fire('Durasi Terlalu Lama', 'Durasi magang maksimal <b>3 bulan</b> dari tanggal mulai.', 'warning');
             }
         }
 
@@ -183,11 +219,11 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
 
         try {
             if (revisiId) {
-                const pesanLog = isUploadFinal ? 'User mengirimkan berkas final setelah wawancara.' : 'Mahasiswa telah melakukan perbaikan data/dokumen.';
+                const pesanLog = 'Mahasiswa telah melakukan perbaikan data/dokumen.';                
                 data.append('catatan', pesanLog);
                 await axios.put(`http://localhost:5000/api/submissions/${revisiId}/revisi`, data);
                 
-                Swal.fire('Berhasil!', isUploadFinal ? 'Berkas Final berhasil dikirim ke Admin Unit.' : 'Perbaikan data Anda telah terkirim.', 'success');
+                Swal.fire('Berhasil!', 'Perbaikan data Anda telah terkirim.', 'success');
             } else {
                 await axios.post('http://localhost:5000/api/submissions', data);
                 Swal.fire('Berhasil!', 'Pengajuan Anda telah berhasil dikirim.', 'success');
@@ -198,11 +234,11 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
             Swal.fire('Gagal', 'Terjadi kesalahan saat mengirim data.', 'error');
         }
     };
+
     const getAvailableUnits = () => {
-        if (!formData.submission_type_id) return []; // Jangan tampilkan unit kalau belum pilih jenis
+        if (!formData.submission_type_id) return [];
 
         return units.map(u => {
-            // Cari kuota spesifik unit ini berdasarkan jenis yang dipilih user
             const typeQuota = u.quotas?.find(q => q.submission_type_id.toString() === formData.submission_type_id.toString());
             const limit = typeQuota ? typeQuota.quota_limit : 0;
             
@@ -215,23 +251,17 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
     return (
         <div style={styles.card}>
             <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
-                {isUploadFinal ? <CheckCircle color="#1f7643" size={28}/> : (revisiId ? <Edit3 color="#ff6600" /> : <ClipboardList color="#003399" />)}
-                <h3 style={{color: isUploadFinal ? '#1f7643' : (revisiId ? '#ff6600' : '#003399'), margin: 0}}>
-                    {isUploadFinal ? 'Unggah Berkas Akhir (Pasca Wawancara)' : (revisiId ? 'Form Perbaikan Data (Revisi)' : 'Form Pengajuan Baru')}
+                {revisiId ? <Edit3 color="#ff6600" /> : <ClipboardList color="#003399" />}
+                <h3 style={{color: revisiId ? '#ff6600' : '#003399', margin: 0}}>
+                    {revisiId ? 'Form Perbaikan Data (Revisi)' : 'Form Pengajuan Baru'}
                 </h3>
             </div>
-            
-            {isUploadFinal && (
-                <div style={{backgroundColor: '#e1f7e7', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', color: '#1e8449'}}>
-                    <strong>Selamat!</strong> Anda telah menyelesaikan tahap wawancara. Silakan pastikan data di bawah ini sudah benar (Fix) dan unggah dokumen akhir yang diperlukan sebelum dikirim ke SDM Pusat.
-                </div>
-            )}
             
             <form onSubmit={handleSubmit} style={styles.form}>
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Jenis Keperluan</label>
-                        <select name="submission_type_id" value={formData.submission_type_id} onChange={handleChange} style={styles.input} required disabled={isUploadFinal}>
+                        <select name="submission_type_id" value={formData.submission_type_id} onChange={handleChange} style={styles.input} required>
                             <option value="">-- Pilih Keperluan Dahulu --</option>
                             {submissionTypes.map(type => (
                                 <option key={type.id} value={type.id}>{type.nama}</option>
@@ -247,16 +277,15 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                             onChange={handleChange} 
                             style={styles.input} 
                             required 
-                            disabled={isUploadFinal || !formData.submission_type_id}
+                            disabled={!formData.submission_type_id}
                         >
                             <option value="">
                                 {!formData.submission_type_id ? 'Pilih Keperluan di atas terlebih dahulu' : '-- Pilih Unit --'}
                             </option>
                             
-                            
                             {availableUnits.map(u => (
                                 <option key={u.id} value={u.id} disabled={u.availableQuota <= 0}>
-                                    {u.nama_unit} {u.availableQuota <= 0 ? '(KUOTA PENUH 🚫)' : `(Sisa: ${u.availableQuota} Slot)`}
+                                    {u.nama_unit} {u.availableQuota <= 0 ? '(KUOTA PENUH)' : `(Sisa: ${u.availableQuota} Slot)`}
                                 </option>
                             ))}
                         </select>
@@ -266,7 +295,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Kategori Pendaftar</label>
-                        <select name="kategori_pendaftar" value={formData.kategori_pendaftar} onChange={handleChange} style={styles.input} disabled={isUploadFinal}>
+                        <select name="kategori_pendaftar" value={formData.kategori_pendaftar} onChange={handleChange} style={styles.input}>
                             <option value="Individu">Individu</option>
                             <option value="Kelompok">Kelompok</option>
                         </select>
@@ -274,7 +303,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     {formData.kategori_pendaftar === 'Kelompok' && (
                         <div style={styles.inputBox}>
                             <label style={styles.label}>Jumlah Anggota (Termasuk Anda)</label>
-                            <input type="number" name="jumlah_anggota" value={formData.jumlah_anggota} min="2" onChange={handleChange} style={styles.input} required disabled={isUploadFinal} />
+                            <input type="number" name="jumlah_anggota" value={formData.jumlah_anggota} min="2" onChange={handleChange} style={styles.input} required />
                         </div>
                     )}
                 </div>
@@ -329,15 +358,37 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                 <div style={styles.row}>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Rencana Tanggal Mulai</label>
-                        <input type="date" name="tanggal_mulai" value={formData.tanggal_mulai} onChange={handleChange} style={styles.input} required />
+                        <input 
+                            type="date" 
+                            name="tanggal_mulai" 
+                            value={formData.tanggal_mulai} 
+                            onChange={handleChange} 
+                            style={styles.input} 
+                            required 
+                            min={!revisiId ? new Date().toISOString().split('T')[0] : undefined}
+                        />
                     </div>
                     <div style={styles.inputBox}>
                         <label style={styles.label}>Rencana Tanggal Selesai</label>
-                        <input type="date" name="tanggal_selesai" value={formData.tanggal_selesai} onChange={handleChange} style={styles.input} required />
+                        <input 
+                            type="date" 
+                            name="tanggal_selesai" 
+                            value={formData.tanggal_selesai} 
+                            onChange={handleChange} 
+                            style={styles.input} 
+                            required 
+                            min={formData.tanggal_mulai ? addMonths(formData.tanggal_mulai, 1) : undefined}
+                            max={formData.tanggal_mulai ? addMonths(formData.tanggal_mulai, 3) : undefined}
+                        />
                     </div>
                 </div>
+                {formData.tanggal_mulai && (
+                    <p style={{fontSize: '11px', color: '#6b7280', margin: '-10px 0 0', fontStyle: 'italic'}}>
+                        💡 Default 1 bulan dari tanggal mulai. Bisa diperpanjang hingga 3 bulan.
+                    </p>
+                )}
 
-                                <div style={styles.inputBox}>
+                <div style={styles.inputBox}>
                     <label style={styles.label}>Upload Dokumen Pendukung</label>
                     
                     {requirements.length === 0 ? (
@@ -346,21 +397,16 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                         </div>
                     ) : (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                            {isUploadFinal ? (
-                                <div style={{backgroundColor: '#e1f7e7', padding: '12px 16px', borderRadius: '10px', fontSize: '12px', color: '#1e8449', borderLeft: '3px solid #27ae60', fontWeight: '500'}}>
-                                    <b>Mode Berkas Akhir:</b> Upload versi <b>fix</b> dari semua dokumen wajib (setelah wawancara).
-                                </div>
-                            ) : revisiId ? (
+                            {revisiId && (
                                 <div style={{backgroundColor: '#fff4e5', padding: '12px 16px', borderRadius: '10px', fontSize: '12px', color: '#d35400', borderLeft: '3px solid #ff6600', fontWeight: '500'}}>
                                     <b>Mode Revisi:</b> Upload hanya dokumen yang perlu diperbarui. Yang lama akan tetap tersimpan.
                                 </div>
-                            ) : null}
+                            )}
 
                             {requirements.map(req => {
                                 const uploaded = filesByReq[req.nama_dokumen];
                                 const isWajib = !!req.is_wajib;
-                                // Wajib di-required HTML kecuali mode revisi biasa (bukan final)
-                                const isRegularRevisi = revisiId && !isUploadFinal;
+                                const isRegularRevisi = !!revisiId;
                                 
                                 return (
                                     <div key={req.id} style={styles.reqUploadBox}>
@@ -392,18 +438,13 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                         </div>
                     )}
                     <p style={{fontSize: '11px', color: '#888', marginTop: '8px'}}>
-                        {isUploadFinal 
-                            ? '*Pastikan semua dokumen wajib di-upload sebagai versi final. Format: PDF/JPG/PNG.' 
-                            : revisiId 
-                                ? '*Hanya upload dokumen yang perlu diperbaiki. Format: PDF/JPG/PNG.' 
-                                : '*Setiap dokumen di-upload terpisah. Format: PDF/JPG/PNG.'}
+                        {revisiId 
+                            ? '*Hanya upload dokumen yang perlu diperbaiki. Format: PDF/JPG/PNG.' 
+                            : '*Setiap dokumen di-upload terpisah. Format: PDF/JPG/PNG.'}
                     </p>
                 </div>
-
-                <button type="submit" style={{...styles.btnSubmit, backgroundColor: isUploadFinal ? '#ff6600' : (revisiId ? '#ff6600' : '#003399')}}>
-                    {isUploadFinal ? (
-                        <><Send size={18} style={{marginRight: '8px'}} /> Kirim Berkas Final</>
-                    ) : revisiId ? (
+                <button type="submit" style={{...styles.btnSubmit, backgroundColor: revisiId ? '#ff6600' : '#003399'}}>
+                    {revisiId ? (
                         <><Edit3 size={18} style={{marginRight: '8px'}} /> Kirim Perbaikan Data</>
                     ) : (
                         <><Send size={18} style={{marginRight: '8px'}} /> Kirim Pengajuan Ke KAI</>
@@ -423,31 +464,9 @@ const styles = {
     input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', backgroundColor: '#fcfcfc', fontSize: '14px' },
     fileContainer: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', border: '2px dashed #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' },
     btnSubmit: { color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '16px', transition: '0.3s' },
-        reqBox: { backgroundColor: '#fff4e5', border: '1px solid #ffe0b2', padding: '12px 15px', borderRadius: '8px', marginBottom: '10px' },
-    reqUploadBox: { 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '15px', 
-        padding: '12px 16px', 
-        backgroundColor: '#f9fafb', 
-        border: '1px solid #e5e7eb', 
-        borderRadius: '10px',
-        transition: '0.2s'
-    },
-    btnPickFile: { 
-        display: 'inline-flex', 
-        alignItems: 'center', 
-        gap: '6px', 
-        padding: '8px 14px', 
-        backgroundColor: '#003399', 
-        color: '#fff', 
-        borderRadius: '8px', 
-        fontSize: '12px', 
-        fontWeight: 'bold', 
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-        flexShrink: 0
-    }
+    reqBox: { backgroundColor: '#fff4e5', border: '1px solid #ffe0b2', padding: '12px 15px', borderRadius: '8px', marginBottom: '10px' },
+    reqUploadBox: { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 16px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '10px', transition: '0.2s' },
+    btnPickFile: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#003399', color: '#fff', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }
 };
 
 export default FormPengajuan;

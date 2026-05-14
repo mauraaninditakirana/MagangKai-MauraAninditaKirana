@@ -292,7 +292,7 @@ const Dashboard = () => {
                                                         </div>
                                                     )}
                                                 </>
-                                            ) : activeSubmission.status === 'Revisi' || activeSubmission.status === 'Selesai Wawancara (Lengkapi Berkas Akhir)' ? (
+                                                ) : activeSubmission.status === 'Revisi' ? (
                                                 <>
                                                     <AlertTriangle size={40} color="#0055cc" style={{marginBottom: '15px'}} />
                                                     <h3 style={{color: '#0055cc', margin: '0 0 10px 0'}}>Pengajuan Anda Perlu Tindakan</h3>

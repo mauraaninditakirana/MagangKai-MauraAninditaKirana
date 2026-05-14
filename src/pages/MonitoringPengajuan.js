@@ -58,6 +58,7 @@ const MonitoringPengajuan = () => {
                 s.status !== 'Ditolak SDM' &&
                 s.status !== 'Selesai Kegiatan'
             );
+            console.log('🔍 AFTER FILTER:', activeProcess);
 
             const sortedData = activeProcess.sort((a, b) => 
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
@@ -307,73 +308,19 @@ const MonitoringPengajuan = () => {
             Swal.fire('Error', 'Gagal memperbarui status', 'error');
         }
     };
-
     const handleStatusDropdown = async (id, newStatus) => {
-        if (newStatus === 'Pengajuan Telah Dikirim ke Pusat') {
-            const result = await Swal.fire({
-                title: 'Kirim Berkas ke Pusat (RDS)',
-                html: `
-                    <div style="text-align:left; font-size:14px;">
-                        <label style="font-weight:bold; color:#003399; display:block; margin-bottom:5px;">
-                            Tanggal Kirim ke Pusat
-                        </label>
-                        <input type="date" id="swal-tgl-pusat" class="swal2-input" style="margin-bottom:15px; margin-top:0;">
-
-                        <label style="font-weight:bold; color:#003399; display:block; margin-bottom:5px;">
-                            Upload Surat RDS (PDF)
-                        </label>
-                        <input type="file" id="swal-rds" class="swal2-file" accept="application/pdf" style="margin-bottom:8px;">
-
-                        <p style="font-size:11px; color:#666; margin:8px 0 0 0; line-height:1.5; padding:10px; background:#fff4e5; border-radius:6px;">
-                            Surat RDS akan dilampirkan bersama berkas mahasiswa (KTP, KTM, dll) dan dikirim ke KAI Pusat.
-                        </p>
-                    </div>
-                `,
+            if (newStatus === 'Pengajuan Telah Dikirim ke Pusat') {
+            const { value: date } = await Swal.fire({
+                title: 'Kirim Berkas ke Pusat',
+                input: 'date',
+                inputLabel: 'Tanggal berkas dikirim ke KAI Pusat',
                 showCancelButton: true,
-                confirmButtonText: 'Simpan & Kirim ke Pusat',
+                confirmButtonText: 'Simpan & Lanjutkan',
                 confirmButtonColor: '#003399',
                 cancelButtonText: 'Batal',
-                focusConfirm: false,
-                preConfirm: () => {
-                    const tgl = document.getElementById('swal-tgl-pusat').value;
-                    const rdsFile = document.getElementById('swal-rds').files[0];
-                    
-                    if (!tgl) {
-                        Swal.showValidationMessage('Tanggal wajib diisi!');
-                        return false;
-                    }
-                    if (!rdsFile) {
-                        Swal.showValidationMessage('Wajib upload Surat RDS (PDF)!');
-                        return false;
-                    }
-                    if (rdsFile.type !== 'application/pdf') {
-                        Swal.showValidationMessage('File harus berformat PDF!');
-                        return false;
-                    }
-                    return { tgl, rdsFile };
-                }
+                inputValidator: (value) => { if (!value) return 'Tanggal wajib diisi!' }
             });
-
-            if (result.isConfirmed && result.value) {
-                const { tgl, rdsFile } = result.value;
-                const formData = new FormData();
-                formData.append('rds', rdsFile);
-                formData.append('status', newStatus);
-                formData.append('admin_id', user.id);
-                formData.append('tgl_kirim_pusat', tgl);
-                formData.append('catatan', `Berkas dikirim ke Pusat pada ${tgl} dengan Surat RDS terlampir.`);
-
-                try {
-                    await axios.put(`http://localhost:5000/api/submissions/${id}/status`, formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
-                    Swal.fire('Berhasil!', 'Berkas + Surat RDS telah dikirim ke Pusat.', 'success');
-                    fetchData();
-                } catch (err) {
-                    console.error(err);
-                    Swal.fire('Error', 'Gagal mengirim berkas + RDS.', 'error');
-                }
-            }
+            if (date) sendStatusUpdate(id, newStatus, { tgl_kirim_pusat: date, catatan: `Berkas dikirim ke Pusat pada ${date}` }, 'Status diubah ke Dikirim ke Pusat');
         } else if (newStatus === 'Surat Telah Masuk dari Pusat') {
             const { value: date } = await Swal.fire({
                 title: 'Surat Masuk',
