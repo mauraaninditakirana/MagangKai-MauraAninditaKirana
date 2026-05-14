@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import NotificationBell from '../components/NotificationBell';
 import { 
     LayoutDashboard, FileText, LogOut, Search, User, 
-    Edit3, Mail, IdCard, Building, Save, X, Eye 
+    Edit3, Mail, IdCard, Building, Save, X, Eye, Settings2, Phone
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -20,10 +20,12 @@ const AdminDashboard = () => {
     const [submissions, setSubmissions] = useState([]);
     const [activeMenu, setActiveMenu] = useState(location.state?.activeMenu || 'profile'); 
     const [searchTerm, setSearchTerm] = useState('');
+     const [types, setTypes] = useState([]);
+    const [quotaForm, setQuotaForm] = useState({});
     
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
-        nama_lengkap: '', email: '', nomor_induk: '', asal_instansi: '', password_lama: '', password_baru: ''
+        nama_lengkap: '', email: '', nomor_induk: '', asal_instansi: '', no_telp: '', password_lama: '', password_baru: ''
     });
 
     useEffect(() => {
@@ -41,6 +43,8 @@ const AdminDashboard = () => {
         
         fetchData(parsedUser.unit_id);
         fetchProfile(parsedUser.id);
+        fetchTypes();
+        fetchUnitQuotas(parsedUser.unit_id);
         window.history.replaceState({}, document.title);
     }, [navigate]);
 
@@ -61,6 +65,7 @@ const AdminDashboard = () => {
                 email: dataUser.email || '',
                 nomor_induk: dataUser.nomor_induk || '',
                 asal_instansi: dataUser.asal_instansi || '',
+                no_telp: dataUser.no_telp || '',
                 password_lama: '',
                 password_baru: ''
             });
@@ -122,6 +127,50 @@ const AdminDashboard = () => {
             setSubmissions(res.data || []);
         } catch (err) {
             console.error("Gagal ambil data unit:", err);
+        }
+    };
+    const fetchTypes = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/submission-types');
+            setTypes(res.data || []);
+        } catch (err) { console.error("Gagal ambil jenis:", err); }
+    };
+    const fetchUnitQuotas = async (unitId) => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/units');
+            const myUnit = res.data.find(u => u.id === unitId);
+            if (myUnit) {
+                const initialForm = {};
+                (myUnit.quotas || []).forEach(q => {
+                    initialForm[q.submission_type_id] = q.quota_limit;
+                });
+                setQuotaForm(initialForm);
+            }
+        } catch (err) { console.error("Gagal ambil kuota unit:", err); }
+    };
+    const handleSaveQuotas = async () => {
+        try {
+            const quotasPayload = types.map(t => ({
+                type_id: t.id,
+                limit: parseInt(quotaForm[t.id]) || 0
+            }));
+
+            await axios.put(`http://localhost:5000/api/units/${userData.unit_id}`, {
+                nama_unit: userData.nama_unit,
+                quotas: quotasPayload
+            });
+
+            Swal.fire({
+                title: 'Tersimpan!',
+                text: 'Kuota unit berhasil diperbarui.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            fetchUnitQuotas(userData.unit_id);
+        } catch (err) {
+            Swal.fire('Gagal', 'Gagal memperbarui kuota.', 'error');
         }
     };
 
@@ -355,6 +404,9 @@ const AdminDashboard = () => {
                     <div style={activeMenu === 'monitoring' ? styles.navItemActive : styles.navItem} onClick={() => setActiveMenu('monitoring')}>
                         <div style={styles.navLinkContent}><LayoutDashboard size={20}/> <span>Monitoring Tugas</span></div>
                     </div>
+                                        <div style={activeMenu === 'kuota' ? styles.navItemActive : styles.navItem} onClick={() => setActiveMenu('kuota')}>
+                        <div style={styles.navLinkContent}><Settings2 size={20}/> <span>Kuota Unit</span></div>
+                    </div>
                     <div style={activeMenu === 'arsip' ? styles.navItemActive : styles.navItem} onClick={() => setActiveMenu('arsip')}>
                         <div style={styles.navLinkContent}><FileText size={20}/> <span>Arsip Peserta Unit</span></div>
                     </div>
@@ -403,8 +455,12 @@ const AdminDashboard = () => {
                                             <IdCard size={18} color="#003399" />
                                             <div><small style={styles.labelSmall}>NIPP / Nomor Induk</small><p style={styles.valSmall}>{userData.nomor_induk || '-'}</p></div>
                                         </div>
+                                            <div style={styles.infoItemHorizontal}>
+                                            <Phone size={18} color="#003399" />
+                                            <div><small style={styles.labelSmall}>No. Telepon</small><p style={styles.valSmall}>{userData.no_telp || '-'}</p></div>
+                                        </div>
                                         <div style={styles.infoItemHorizontal}>
-                                            <Building size={18} color="#003399" />
+                                            <Building size={18} color="#003399" />  
                                             <div><small style={styles.labelSmall}>Unit Penempatan</small><p style={styles.valSmall}>{userData.nama_unit || '-'}</p></div>
                                         </div>
                                     </div>
@@ -430,6 +486,17 @@ const AdminDashboard = () => {
                                             <input style={styles.inputForm} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
                                         </div>
                                     </div>
+                                    <div style={styles.rowForm}>
+                                        <div style={styles.inputGroupHalf}>
+                                            <label style={styles.labelForm}>No. Telepon (Opsional)</label>
+                                            <input
+                                                style={styles.inputForm}
+                                                placeholder="Contoh: 081234567890"
+                                                value={formData.no_telp}
+                                                onChange={e => setFormData({...formData, no_telp: e.target.value.replace(/\s/g, '')})}
+                                            />
+                                        </div>
+                                    </div>
                                     <hr style={{margin: '8px 0', border: '0.5px solid #eee'}} />
                                     <p style={{fontSize: '12px', color: '#ff6600', fontWeight: '700', letterSpacing: '1px', margin: 0, textTransform: 'uppercase'}}>Ganti Password (Opsional)</p>
                                     <div style={styles.rowForm}>
@@ -452,7 +519,7 @@ const AdminDashboard = () => {
                     )}
 
                     {/* TAB: MONITORING / ARSIP */}
-                    {activeMenu !== 'profile' && (
+                    {(activeMenu === 'monitoring' || activeMenu === 'arsip') && (
                         <>
                             {/* Section header (selaras dengan halaman lain) */}
                             <div style={{ marginBottom: '24px' }}>
@@ -532,6 +599,52 @@ const AdminDashboard = () => {
                             </div>
                         </>
                     )}
+                    {/* TAB: KUOTA UNIT (BARU) */}
+                    {activeMenu === 'kuota' && (
+                        <>
+                            <div style={{ marginBottom: '24px' }}>
+                                <div style={styles.accentBar} />
+                                <h2 style={styles.sectionTitle}>Kuota {userData.nama_unit || 'Unit'}</h2>
+                                <p style={styles.sectionDesc}>
+                                    Atur batas maksimal peserta magang per jenis kegiatan untuk unit Anda. Perubahan akan tersinkron dengan SDM Pusat.
+                                </p>
+                            </div>
+
+                            <div style={styles.quotaPanel}>
+                                {types.length === 0 ? (
+                                    <p style={{color: '#9ca3af', textAlign: 'center', padding: '20px', fontStyle: 'italic'}}>
+                                        Memuat data jenis kegiatan...
+                                    </p>
+                                ) : (
+                                    <>
+                                        <div style={styles.quotaGrid}>
+                                            {types.map(t => (
+                                                <div key={t.id} style={styles.quotaItem}>
+                                                    <label style={styles.quotaLabel}>{t.nama_jenis}</label>
+                                                    <div style={styles.quotaInputWrap}>
+                                                        <span style={styles.quotaInputPrefix}>Max</span>
+                                                        <input 
+                                                            type="number" 
+                                                            min="0"
+                                                            style={styles.quotaInput}
+                                                            value={quotaForm[t.id] !== undefined ? quotaForm[t.id] : 0}
+                                                            onChange={(e) => setQuotaForm({...quotaForm, [t.id]: e.target.value})}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div style={styles.quotaActions}>
+                                            <button onClick={handleSaveQuotas} style={styles.btnSaveQuota}>
+                                                <Save size={14}/> Simpan Perubahan Kuota
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
@@ -583,11 +696,21 @@ const styles = {
     btnIconDetail: { background: 'none', color: '#003399', border: 'none', padding: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
     dropdown: { padding: '8px 12px', borderRadius: '8px', border: '1px solid #cce0ff', fontSize: '12px', backgroundColor: '#f0f4ff', color: '#003399', fontWeight: 'bold', cursor: 'pointer', outline: 'none' },
 
+    // KUOTA PANEL
+    quotaPanel: { background: '#f8fbff', border: '1px solid #cce0ff', borderRadius: '12px', padding: '24px 28px' },
+    quotaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px', marginBottom: '20px' },
+    quotaItem: { display: 'flex', flexDirection: 'column', gap: '6px' },
+    quotaLabel: { fontSize: '12px', fontWeight: '700', color: '#374151' },
+    quotaInputWrap: { display: 'flex', alignItems: 'stretch', backgroundColor: '#fff', border: '1px solid #e0e7ff', borderRadius: '8px', overflow: 'hidden' },
+    quotaInputPrefix: { padding: '10px 14px', backgroundColor: '#f0f4ff', color: '#003399', fontSize: '12px', fontWeight: '700', borderRight: '1px solid #e0e7ff', display: 'flex', alignItems: 'center' },
+    quotaInput: { border: 'none', padding: '10px 14px', width: '100%', outline: 'none', fontWeight: 'bold', fontSize: '14px', color: '#003399', background: 'transparent' },
+    quotaActions: { display: 'flex', justifyContent: 'flex-end', paddingTop: '14px', borderTop: '1px solid #e0e7ff' },
+    btnSaveQuota: { backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 4px 10px rgba(39,174,96,0.25)' },
     // PROFILE (selaras SuperAdmin landscape)
     profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '900px', borderRadius: '24px', padding: '40px', boxShadow: '0 8px 28px rgba(0,0,0,0.04)', margin: '0 auto', border: '1px solid #f0f4f8' },
     landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
-    avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', background: 'linear-gradient(135deg, #ff6600, #cc5200)', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 8px 20px rgba(255, 102, 0, 0.25)' },
-    roleBadgeUnit: { display: 'inline-block', backgroundColor: '#fff4e5', color: '#d35400', padding: '6px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
+            avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center' },
+    roleBadgeUnit: { display: 'inline-block', color: '#ed6002', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' },
     infoGridHorizontal: { display: 'flex', flexDirection: 'column', gap: '15px' },
     infoItemHorizontal: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #f1f3f9' },
     labelSmall: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' },

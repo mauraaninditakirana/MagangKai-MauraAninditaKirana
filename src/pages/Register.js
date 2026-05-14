@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { UserPlus, Mail, Lock, User, Building, Phone, Hash } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Building, Phone, Hash, GraduationCap } from 'lucide-react';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -11,17 +11,16 @@ const Register = () => {
         password: '',
         nomor_induk: '',
         no_telp: '',
-        asal_instansi: ''
+        asal_instansi: '',
+        jenjang: 'Mahasiswa'
     });
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         let { name, value } = e.target;
-        // Paksa email jadi kecil dan buang spasi
         if (name === 'email') {
             value = value.toLowerCase().replace(/\s/g, '');
         }
-        // Buang spasi untuk Nomor Induk dan No Telepon
         if (name === 'nomor_induk' || name === 'no_telp') {
             value = value.replace(/\s/g, '');
         }
@@ -38,7 +37,7 @@ const Register = () => {
                 text: res.data.message,
                 confirmButtonColor: '#003399'
             });
-            navigate('/'); // Balik ke login
+            navigate('/');
         } catch (error) {
             Swal.fire({
                 icon: 'error',
@@ -57,6 +56,22 @@ const Register = () => {
                 </div>
 
                 <form onSubmit={handleRegister} style={styles.form}>
+                    {/* Jenjang — full width di atas */}
+                    <div style={styles.inputGroup}>
+                        <GraduationCap size={18} style={styles.icon} />
+                        <select 
+                            name="jenjang" 
+                            value={formData.jenjang}
+                            onChange={handleChange} 
+                            style={{...styles.input, cursor: 'pointer'}} 
+                            required
+                        >
+                            <option value="Mahasiswa">Mahasiswa (Kuliah)</option>
+                            <option value="Siswa">Siswa (SMA/SMK/sederajat)</option>
+                        </select>
+                    </div>
+
+                    {/* 2 kolom landscape */}
                     <div style={styles.grid}>
                         <div style={styles.inputGroup}>
                             <User size={18} style={styles.icon} />
@@ -67,20 +82,32 @@ const Register = () => {
                             <input name="email" type="email" placeholder="Email" style={styles.input} onChange={handleChange} required />
                         </div>
                         <div style={styles.inputGroup}>
-                            <Lock size={18} style={styles.icon} />
-                            <input name="password" type="password" placeholder="Password" style={styles.input} onChange={handleChange} required />
-                        </div>
-                        <div style={styles.inputGroup}>
                             <Hash size={18} style={styles.icon} />
-                            <input name="nomor_induk" placeholder="NIM / NIS" style={styles.input} onChange={handleChange} required />
+                            <input 
+                                name="nomor_induk" 
+                                placeholder={formData.jenjang === 'Siswa' ? 'NIS' : 'NIM'} 
+                                style={styles.input} 
+                                onChange={handleChange} 
+                                required 
+                            />
                         </div>
                         <div style={styles.inputGroup}>
                             <Phone size={18} style={styles.icon} />
                             <input name="no_telp" placeholder="No. WhatsApp" style={styles.input} onChange={handleChange} required />
                         </div>
                         <div style={styles.inputGroup}>
+                            <Lock size={18} style={styles.icon} />
+                            <input name="password" type="password" placeholder="Password" style={styles.input} onChange={handleChange} required />
+                        </div>
+                        <div style={styles.inputGroup}>
                             <Building size={18} style={styles.icon} />
-                            <input name="asal_instansi" placeholder="Asal Kampus / Sekolah" style={styles.input} onChange={handleChange} required />
+                            <input 
+                                name="asal_instansi" 
+                                placeholder={formData.jenjang === 'Siswa' ? 'Asal Sekolah' : 'Asal Kampus'} 
+                                style={styles.input} 
+                                onChange={handleChange} 
+                                required 
+                            />
                         </div>
                     </div>
 
@@ -100,16 +127,16 @@ const Register = () => {
 
 const styles = {
     container: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f4f4f4', padding: '20px' },
-    card: { backgroundColor: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', maxWidth: '600px', textAlign: 'center' },
-    header: { marginBottom: '25px' },
+    card: { backgroundColor: '#fff', padding: '30px 40px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', maxWidth: '720px', textAlign: 'center' },
+    header: { marginBottom: '20px' },
     title: { margin: '0', fontSize: '22px', fontWeight: 'bold', color: '#003399' },
-    subtitle: { color: '#666', fontSize: '13px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '15px' },
-    grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' },
+    subtitle: { color: '#666', fontSize: '13px', marginTop: '6px' },
+    form: { display: 'flex', flexDirection: 'column', gap: '12px' },
+    grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' },
     inputGroup: { display: 'flex', alignItems: 'center', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' },
-    icon: { color: '#003399' },
+    icon: { color: '#003399', flexShrink: 0 },
     input: { border: 'none', backgroundColor: 'transparent', padding: '10px', width: '100%', outline: 'none', fontSize: '13px' },
-    button: { backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' },
+    button: { backgroundColor: '#ff6600', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '8px' },
     footerText: { marginTop: '15px', fontSize: '13px', color: '#666' },
     link: { color: '#003399', fontWeight: 'bold', cursor: 'pointer' }
 };

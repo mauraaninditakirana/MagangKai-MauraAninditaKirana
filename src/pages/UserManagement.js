@@ -23,7 +23,7 @@ const UserManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [formData, setFormData] = useState({
-        id: '', nama_lengkap: '', email: '', password: '', role: 'user', unit_id: '', nomor_induk: '', asal_instansi: ''
+        id: '', nama_lengkap: '', email: '', password: '', role: 'user', unit_id: '', nomor_induk: '', asal_instansi: '', no_telp: '', jenjang: 'Mahasiswa'
     });
 
     useEffect(() => {
@@ -110,7 +110,7 @@ const UserManagement = () => {
 
     const handleAdd = () => {
         setIsEdit(false);
-        setFormData({ id: '', nama_lengkap: '', email: '', password: '', role: 'user', unit_id: '', nomor_induk: '', asal_instansi: '' });
+        setFormData({ id: '', nama_lengkap: '', email: '', password: '', role: 'user', unit_id: '', nomor_induk: '', asal_instansi: '', no_telp: '', jenjang: 'Mahasiswa' });
         setShowModal(true);
     };
 
@@ -124,7 +124,9 @@ const UserManagement = () => {
             role: (user.role || 'user').toLowerCase(), 
             unit_id: user.unit_id || '',
             nomor_induk: user.nomor_induk || '',
-            asal_instansi: user.asal_instansi || ''
+            asal_instansi: user.asal_instansi || '',
+            no_telp: user.no_telp || '',
+            jenjang: user.jenjang || 'Mahasiswa'
         });
         setShowModal(true);
     };
@@ -304,8 +306,15 @@ const UserManagement = () => {
                                             <span style={{ color: getRoleColor(u.role), fontWeight: 'bold', fontSize: '13px' }}>
                                                 {u.role === 'admin unit' && u.nama_unit 
                                                     ? `Admin: ${u.nama_unit}` 
-                                                    : (u.role || '').toUpperCase()}
+                                                    : u.role === 'user'
+                                                        ? `${(u.jenjang || 'Mahasiswa').toUpperCase()}`
+                                                        : (u.role || '').toUpperCase()}
                                             </span>
+                                            {u.role === 'user' && u.asal_instansi && (
+                                                <div style={{fontSize: '11px', color: '#6b7280', marginTop: '2px', fontWeight: '500'}}>
+                                                    {u.asal_instansi}
+                                                </div>
+                                            )}
                                         </td>
                                         <td style={{...styles.td, textAlign: 'center'}}>
                                             <div style={{display: 'flex', gap: '6px', justifyContent: 'center'}}>
@@ -407,7 +416,7 @@ const UserManagement = () => {
                                                 value={formData.role} 
                                                 onChange={e => setFormData({...formData, role: e.target.value, unit_id: e.target.value !== 'admin unit' ? '' : formData.unit_id})}
                                             >
-                                                <option value="user">User (Mahasiswa)</option>
+                                                <option value="user">User</option>
                                                 <option value="admin unit">Admin Unit</option>
                                                 <option value="super admin">Super Admin</option>
                                             </select>
@@ -435,40 +444,77 @@ const UserManagement = () => {
                                     <div style={styles.sectionLabel}>Identitas Tambahan</div>
 
                                     {formData.role === 'user' ? (
+                                        <>
+                                            <div style={styles.formRow}>
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>Jenjang Pendidikan</label>
+                                                    <select 
+                                                        style={{...styles.formInput, cursor: 'pointer'}} 
+                                                        value={formData.jenjang} 
+                                                        onChange={e => setFormData({...formData, jenjang: e.target.value})}
+                                                    >
+                                                        <option value="Mahasiswa">Mahasiswa (Kuliah)</option>
+                                                        <option value="Siswa">Siswa (SMA/SMK/sederajat)</option>
+                                                    </select>
+                                                </div>
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>No. WhatsApp</label>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Contoh: 081234567890"
+                                                        style={styles.formInput} 
+                                                        value={formData.no_telp} 
+                                                        onChange={e => setFormData({...formData, no_telp: e.target.value.replace(/\s/g, '')})} 
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div style={styles.formRow}>
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>{formData.jenjang === 'Siswa' ? 'Nomor Induk Siswa (NIS)' : 'Nomor Induk Mahasiswa (NIM)'}</label>
+                                                    <input 
+                                                        required 
+                                                        type="text" 
+                                                        placeholder="Contoh: 20230140090"
+                                                        style={styles.formInput} 
+                                                        value={formData.nomor_induk} 
+                                                        onChange={e => setFormData({...formData, nomor_induk: e.target.value})} 
+                                                    />
+                                                </div>
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>{formData.jenjang === 'Siswa' ? 'Asal Sekolah' : 'Asal Kampus / Universitas'}</label>
+                                                    <input 
+                                                        required 
+                                                        type="text" 
+                                                        placeholder={formData.jenjang === 'Siswa' ? 'Contoh: SMK Negeri 2 Yogyakarta' : 'Contoh: Universitas Muhammadiyah Yogyakarta'}
+                                                        style={styles.formInput} 
+                                                        value={formData.asal_instansi} 
+                                                        onChange={e => setFormData({...formData, asal_instansi: e.target.value})} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
                                         <div style={styles.formRow}>
                                             <div style={styles.formGroup}>
-                                                <label style={styles.label}>Nomor Induk (NIM/NIS)</label>
+                                                <label style={styles.label}>NIPP (Nomor Induk Pegawai)</label>
                                                 <input 
-                                                    required 
                                                     type="text" 
-                                                    placeholder="Contoh: 20230140090"
+                                                    placeholder="Masukkan NIPP (opsional)" 
                                                     style={styles.formInput} 
                                                     value={formData.nomor_induk} 
                                                     onChange={e => setFormData({...formData, nomor_induk: e.target.value})} 
                                                 />
                                             </div>
                                             <div style={styles.formGroup}>
-                                                <label style={styles.label}>Asal Instansi</label>
+                                                <label style={styles.label}>No. Telepon (Opsional)</label>
                                                 <input 
-                                                    required 
                                                     type="text" 
-                                                    placeholder="Contoh: Universitas Muhammadiyah Yogyakarta"
+                                                    placeholder="Contoh: 081234567890"
                                                     style={styles.formInput} 
-                                                    value={formData.asal_instansi} 
-                                                    onChange={e => setFormData({...formData, asal_instansi: e.target.value})} 
+                                                    value={formData.no_telp} 
+                                                    onChange={e => setFormData({...formData, no_telp: e.target.value.replace(/\s/g, '')})} 
                                                 />
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div style={styles.formGroup}>
-                                            <label style={styles.label}>NIPP (Nomor Induk Pegawai)</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Masukkan NIPP (opsional)" 
-                                                style={styles.formInput} 
-                                                value={formData.nomor_induk} 
-                                                onChange={e => setFormData({...formData, nomor_induk: e.target.value})} 
-                                            />
                                         </div>
                                     )}
                                 </div>

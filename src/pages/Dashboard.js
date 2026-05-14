@@ -6,7 +6,7 @@ import FormPengajuan from '../components/FormPengajuan';
 import NotificationBell from '../components/NotificationBell';
 import { 
     FilePlus, History, LogOut, AlertTriangle, CheckCircle, 
-    User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock
+    User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock, Phone, GraduationCap
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -29,7 +29,7 @@ const Dashboard = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
-        nama_lengkap: '', email: '', nomor_induk: '', asal_instansi: '', password_lama: '', password_baru: ''
+        nama_lengkap: '', email: '', nomor_induk: '', asal_instansi: '', no_telp: '', jenjang: 'Mahasiswa', password_lama: '', password_baru: ''
     });
 
     useEffect(() => {
@@ -66,6 +66,8 @@ const Dashboard = () => {
                 email: res.data.email || '',
                 nomor_induk: res.data.nomor_induk || '',
                 asal_instansi: res.data.asal_instansi || '',
+                no_telp: res.data.no_telp || '',
+                jenjang: res.data.jenjang || 'Mahasiswa',
                 password_lama: '',
                 password_baru: ''
             });
@@ -81,7 +83,7 @@ const Dashboard = () => {
             Swal.fire('Berhasil!', 'Profil diperbarui. Silakan login ulang jika mengubah password.', 'success');
             setIsEditing(false);
             
-            const updatedUser = { ...userData, nama_lengkap: formData.nama_lengkap, email: formData.email, nomor_induk: formData.nomor_induk, asal_instansi: formData.asal_instansi };
+            const updatedUser = { ...userData, nama_lengkap: formData.nama_lengkap, email: formData.email, nomor_induk: formData.nomor_induk, asal_instansi: formData.asal_instansi, no_telp: formData.no_telp, jenjang: formData.jenjang };
             sessionStorage.setItem('user', JSON.stringify(updatedUser));
             setUserData(updatedUser);
         } catch (err) {
@@ -180,7 +182,7 @@ const Dashboard = () => {
                                             <div style={styles.avatarLarge}>{userData.nama_lengkap?.charAt(0).toUpperCase()}</div>
                                             <div>
                                                 <h2 style={{margin: '0 0 5px 0', color: '#003399', fontSize: '24px'}}>{userData.nama_lengkap}</h2>
-                                                <span style={styles.roleBadge}>Mahasiswa Magang</span>
+                                                <span style={styles.roleBadge}>{(userData.jenjang || 'Mahasiswa')} Magang</span>
                                             </div>
                                         </div>
                                     </div>
@@ -196,11 +198,15 @@ const Dashboard = () => {
                                                 </div>
                                                 <div style={styles.infoItemHorizontal}>
                                                     <IdCard size={18} color="#003399" />
-                                                    <div><small style={styles.labelSmall}>Nomor Induk (NIM/NIS)</small><p style={styles.valSmall}>{userData.nomor_induk || '-'}</p></div>
+                                                    <div><small style={styles.labelSmall}>{userData.jenjang === 'Siswa' ? 'Nomor Induk (NIS)' : 'Nomor Induk (NIM)'}</small><p style={styles.valSmall}>{userData.nomor_induk || '-'}</p></div>
+                                                </div>
+                                                <div style={styles.infoItemHorizontal}>
+                                                    <Phone size={18} color="#003399" />
+                                                    <div><small style={styles.labelSmall}>No. WhatsApp</small><p style={styles.valSmall}>{userData.no_telp || '-'}</p></div>
                                                 </div>
                                                 <div style={styles.infoItemHorizontal}>
                                                     <Building size={18} color="#003399" />
-                                                    <div><small style={styles.labelSmall}>Asal Instansi / Universitas</small><p style={styles.valSmall}>{userData.asal_instansi || '-'}</p></div>
+                                                    <div><small style={styles.labelSmall}>{userData.jenjang === 'Siswa' ? 'Asal Sekolah' : 'Asal Kampus / Universitas'}</small><p style={styles.valSmall}>{userData.asal_instansi || '-'}</p></div>
                                                 </div>
                                             </div>
                                             <div style={{marginTop: '30px'}}>
@@ -225,8 +231,21 @@ const Dashboard = () => {
                                                     <input style={styles.inputForm} value={formData.nomor_induk} onChange={e => setFormData({...formData, nomor_induk: e.target.value})} />
                                                 </div>
                                             </div>
+                                            <div style={styles.rowForm}>
+                                                <div style={styles.inputGroupHalf}>
+                                                    <label style={styles.labelForm}>Jenjang Pendidikan</label>
+                                                    <select style={{...styles.inputForm, cursor: 'pointer'}} value={formData.jenjang} onChange={e => setFormData({...formData, jenjang: e.target.value})}>
+                                                        <option value="Mahasiswa">Mahasiswa (Kuliah)</option>
+                                                        <option value="Siswa">Siswa (SMA/SMK/sederajat)</option>
+                                                    </select>
+                                                </div>
+                                                <div style={styles.inputGroupHalf}>
+                                                    <label style={styles.labelForm}>No. WhatsApp</label>
+                                                    <input style={styles.inputForm} value={formData.no_telp} onChange={e => setFormData({...formData, no_telp: e.target.value.replace(/\s/g, '')})} />
+                                                </div>
+                                            </div>
                                             <div style={styles.inputGroupFull}>
-                                                <label style={styles.labelForm}>Asal Instansi</label>
+                                                <label style={styles.labelForm}>{formData.jenjang === 'Siswa' ? 'Asal Sekolah' : 'Asal Kampus / Universitas'}</label>
                                                 <input style={styles.inputForm} value={formData.asal_instansi} onChange={e => setFormData({...formData, asal_instansi: e.target.value})} />
                                             </div>
 
@@ -279,6 +298,7 @@ const Dashboard = () => {
                                                     </p>
                                                     {daysRemaining !== null && daysRemaining <= 7 && daysRemaining >= 0 && (
                                                         <div style={styles.extendBox}>
+                                                        
                                                             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#d35400', marginBottom: '8px'}}>
                                                                 <CalendarClock size={20} />
                                                                 <strong style={{fontSize: '15px'}}>Masa Kegiatan Hampir Selesai ({daysRemaining} Hari Lagi)</strong>
@@ -379,8 +399,8 @@ const styles = {
     // PROFILE (landscape style)
     profileContainer: { backgroundColor: '#fff', width: '100%', maxWidth: '900px', borderRadius: '24px', padding: '40px', boxShadow: '0 8px 28px rgba(0,0,0,0.04)', margin: '0 auto', border: '1px solid #f0f4f8' },
     landscapeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
-    avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', background: 'linear-gradient(135deg, #ff6600, #cc5200)', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 8px 20px rgba(255, 102, 0, 0.25)' },
-    roleBadge: { display: 'inline-block', backgroundColor: '#e0f0ff', color: '#0055cc', padding: '6px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' },
+        avatarLarge: { width: '90px', height: '90px', borderRadius: '24px', backgroundColor: '#ff6600', color: '#fff', fontSize: '36px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center' },
+            roleBadge: { display: 'inline-block', color: '#0055cc', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' },
     infoGridHorizontal: { display: 'flex', flexDirection: 'column', gap: '15px' },
     infoItemHorizontal: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #f1f3f9' },
     labelSmall: { color: '#778da9', fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' },
