@@ -35,6 +35,11 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
         return d.toISOString().split('T')[0];
     };
 
+    // Max bulan magang: PKL boleh 6 bulan, lainnya 3 bulan 
+    const getMaxMonths = () => {
+        return formData.submission_type_id?.toString() === '2' ? 6 : 3;
+    };
+
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -186,11 +191,12 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                 return Swal.fire('Durasi Terlalu Singkat', 'Durasi magang minimal <b>1 bulan</b> dari tanggal mulai.', 'warning');
             }
 
-            // 4. Durasi MAKSIMAL 3 bulan
+            // 4. Durasi MAKSIMAL 3 bulan, pkl 6 bulan (sesuai jenis pengajuan)
+            const maxBulan = getMaxMonths();
             const maxEnd = new Date(start);
-            maxEnd.setMonth(maxEnd.getMonth() + 3);
+            maxEnd.setMonth(maxEnd.getMonth() + maxBulan);
             if (end > maxEnd) {
-                return Swal.fire('Durasi Terlalu Lama', 'Durasi magang maksimal <b>3 bulan</b> dari tanggal mulai.', 'warning');
+                return Swal.fire('Durasi Terlalu Lama', `Durasi maksimal <b>${maxBulan} bulan</b> dari tanggal mulai.`, 'warning');
             }
         }
 
@@ -378,13 +384,14 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                             style={styles.input} 
                             required 
                             min={formData.tanggal_mulai ? addMonths(formData.tanggal_mulai, 1) : undefined}
-                            max={formData.tanggal_mulai ? addMonths(formData.tanggal_mulai, 3) : undefined}
+                            max={formData.tanggal_mulai ? addMonths(formData.tanggal_mulai, getMaxMonths()) : undefined}
                         />
                     </div>
                 </div>
                 {formData.tanggal_mulai && (
                     <p style={{fontSize: '11px', color: '#6b7280', margin: '-10px 0 0', fontStyle: 'italic'}}>
-                        Note: Default 1 bulan dari tanggal mulai. Bisa diperpanjang hingga 3 bulan.
+                        *Default 1 bulan dari tanggal mulai. Bisa diperpanjang hingga <b>{getMaxMonths()} bulan</b>
+                        {formData.submission_type_id?.toString() === '2' ? ' (khusus PKL)' : ''}.
                     </p>
                 )}
 
