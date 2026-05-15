@@ -54,11 +54,11 @@ const LandingPage = () => {
     const caraDaftarRef = useRef(null);
     const faqRef = useRef(null);
 
-    const scrollToSection = (ref, sectionName) => {
+    const scrollToSection = (ref, sectionName, extraOffset = 0) => {
     setActiveSection(sectionName);
     if (ref.current) {
-        const navbarHeight = 48;
-        const top = ref.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        const navbarHeight = 68;
+        const top = ref.current.getBoundingClientRect().top + window.scrollY - navbarHeight + extraOffset;
         window.scrollTo({ top, behavior: 'smooth' });
     }
     };
@@ -250,7 +250,7 @@ const LandingPage = () => {
                 },
                 {
                     q: 'Berapa lama durasi magang yang berlaku?',
-                    a: 'Durasi magang bervariasi mulai dari 1 bulan hingga 3 bulan, tergantung kebutuhan dari pihak universitas/sekolah serta ketersediaan kuota unit kerja yang dipilih.'
+                    a: 'Durasi magang bervariasi mulai dari 1 bulan hingga 3 bulan, kecuali PKL dengan maksimal 6 bulan. Tergantung kebutuhan dari pihak universitas/sekolah serta ketersediaan kuota unit kerja yang dipilih.'
                 },
             ]
         },
@@ -278,10 +278,10 @@ const LandingPage = () => {
 
                 <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
                     <span style={getLinkStyle('beranda')} onClick={() => scrollToSection(berandaRef, 'beranda')}>Beranda</span>
-                    <span style={getLinkStyle('tentang')} onClick={() => scrollToSection(tentangRef, 'tentang')}>Tentang</span>
-                    <span style={getLinkStyle('caradaftar')} onClick={() => scrollToSection(caraDaftarRef, 'caradaftar')}>Cara Mendaftar</span>
+                    <span style={getLinkStyle('tentang')} onClick={() => scrollToSection(tentangRef, 'tentang', 60)}>Tentang</span>
+                    <span style={getLinkStyle('caradaftar')} onClick={() => scrollToSection(caraDaftarRef, 'caradaftar', 60)}>Cara Mendaftar</span>
                     <span style={{ ...getLinkStyle(''), color: '#374151', fontWeight: '500' }} onClick={handleCekKuota}>Cek Kuota</span>
-                    <span style={getLinkStyle('faq')} onClick={() => scrollToSection(faqRef, 'faq')}>FAQ</span>
+                    <span style={getLinkStyle('faq')} onClick={() => scrollToSection(faqRef, 'faq', 60)}>FAQ</span>
                 </div>
 
                 <button onClick={() => navigate('/login')} style={{ backgroundColor: KAI_ORANGE, color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '14px', boxShadow: '0 3px 10px rgba(255,102,0,0.3)' }}>
@@ -295,10 +295,7 @@ const LandingPage = () => {
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(0,20,80,0.88) 0%, rgba(0,51,153,0.78) 55%, rgba(0,15,55,0.90) 100%)', zIndex: 1 }} />
 
                 <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: '820px', color: 'white' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,102,0,0.20)', border: '1px solid rgba(255,102,0,0.45)', borderRadius: '100px', padding: '6px 18px', fontSize: '12px', fontWeight: '600', marginBottom: '28px', letterSpacing: '0.5px', color: '#ffcc99' }}>
-                        <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: KAI_ORANGE, display: 'inline-block' }} />
-                        PT Kereta Api Indonesia (Persero) — Daop 6 Yogyakarta
-                    </div>
+                    
                     <h1 style={{ fontSize: '50px', fontWeight: '800', margin: '0 0 20px', lineHeight: '1.15', letterSpacing: '-1px' }}>
                         Sistem Manajemen Magang<br /><span style={{ color: '#ffaa55' }}>KAI Daop 6 Yogyakarta</span>
                     </h1>
@@ -545,9 +542,9 @@ const LandingPage = () => {
                                 <p style={{ fontWeight: '700', fontSize: '13px', marginBottom: '12px', color: KAI_ORANGE }}>Navigasi</p>
                                 {[
                                     { label: 'Beranda', action: () => scrollToSection(berandaRef, 'beranda') },
-                                    { label: 'Tentang', action: () => scrollToSection(tentangRef, 'tentang') },
-                                    { label: 'Cara Mendaftar', action: () => scrollToSection(caraDaftarRef, 'caradaftar') },
-                                    { label: 'FAQ', action: () => scrollToSection(faqRef, 'faq') }
+                                    { label: 'Tentang', action: () => scrollToSection(tentangRef, 'tentang', 60) },
+                                    { label: 'Cara Mendaftar', action: () => scrollToSection(caraDaftarRef, 'caradaftar', 60) },
+                                    { label: 'FAQ', action: () => scrollToSection(faqRef, 'faq', 60) }
                                 ].map(item => (
                                     <p 
                                         key={item.label} 

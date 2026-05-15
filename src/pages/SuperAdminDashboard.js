@@ -241,12 +241,12 @@ const SuperAdminDashboard = () => {
                             <div style={styles.welcomeCard}>
                                 <div style={styles.welcomeFlex}>
                                     <div style={{ flex: 1, minWidth: '260px' }}>
-                                        <div style={styles.welcomeTag}>DASHBOARD SDM PUSAT</div>
+                                        <div style={styles.welcomeTag}>DASHBOARD SDM DAOP 6 YOGYAKARTA</div>
                                         <h2 style={styles.welcomeTitle}>
                                             Selamat Datang, {userData.nama_lengkap}
                                         </h2>
                                         <p style={styles.welcomeSubtitle}>
-                                            Berikut ringkasan pengajuan magang yang masuk ke Pusat hari ini.
+                                            Berikut ringkasan pengajuan magang yang masuk ke SDM hari ini.
                                         </p>
                                     </div>
                                     <div style={styles.dateCard}>
