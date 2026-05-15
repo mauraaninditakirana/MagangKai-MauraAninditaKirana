@@ -55,8 +55,12 @@ const LandingPage = () => {
     const faqRef = useRef(null);
 
     const scrollToSection = (ref, sectionName) => {
-        setActiveSection(sectionName);
-        ref.current?.scrollIntoView({ behavior: 'smooth' });
+    setActiveSection(sectionName);
+    if (ref.current) {
+        const navbarHeight = 48;
+        const top = ref.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        window.scrollTo({ top, behavior: 'smooth' });
+    }
     };
 
     const handleCekKuota = () => {
@@ -173,13 +177,29 @@ const LandingPage = () => {
                 {
                     q: 'Bagaimana cara saya mendaftarkan diri?',
                     a: (
+                        <>
                         <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px', color: '#374151', fontSize: '14px', lineHeight: '1.85' }}>
-                            <li>Buka halaman ini dan klik tombol <strong>Daftar Sekarang</strong>.</li>
+                            <li>Datang ke kantor KAI Daop 6 Yogyakarta dan temui satpam untuk menyampaikan tujuan magang.</li>
+                            <li>Satpam mengarahkan ke manajer atau jajarannya — wawancara bisa langsung hari itu atau dijadwalkan di hari lain.</li>
+                            <li>Setelah disetujui secara offline, buka portal dan pilih <strong>Daftar Akun</strong>.</li>
                             <li>Isi form pendaftaran dengan data diri yang benar dan lengkap.</li>
-                            <li>Lengkapi berkas pengajuan (proposal, surat pengantar, KTP/KTM).</li>
-                            <li>Pilih unit dan jenis pengajuan magang yang diinginkan.</li>
-                            <li>Pantau status pengajuan melalui dashboard sistem.</li>
+                            <li>Lengkapi dan unggah berkas pengajuan (proposal, surat pengantar, KTP/KTM, dll).</li>
+                            <li>Pantau status pengajuan melalui dashboard sistem secara berkala.</li>
                         </ol>
+                        <div style={{ marginTop: '14px', padding: '12px 16px', background: '#ffffff', borderRadius: '8px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#1434b2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" style={{ flexShrink: 0, marginTop: '2px' }}>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                            <p style={{ margin: 0, fontSize: '13px', color: '#374151', lineHeight: '1.75' }}>
+                                Setiap perubahan status pengajuan akan masuk ke <strong>notifikasi akun</strong> kamu secara real-time. <br />
+                                Selain itu, ringkasan status juga akan dikirimkan ke <strong>email kamu setiap hari Jumat</strong>.
+                            </p>
+                        </div>
+                     </>
                     )
                 },
                 {
@@ -235,10 +255,8 @@ const LandingPage = () => {
             ]
         },
     ];
-
     const toggleCategory = (i) => { setOpenCategory(openCategory === i ? null : i); setOpenQuestion(null); };
     const toggleQuestion = (key) => { setOpenQuestion(openQuestion === key ? null : key); };
-
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: '#f8fafd', color: '#111827' }}>
 
@@ -294,9 +312,9 @@ const LandingPage = () => {
                 </div>
             </section>
 
-                        <section id="tentang" ref={tentangRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '68px' }}>
+            <section id="tentang" ref={tentangRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '100px' }}>
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-                    {/* ✨ Header ala FAQ ✨ */}
+                    {/* Header  */}
                     <div style={{ marginBottom: '56px' }}>
                         <div style={{ width: '48px', height: '4px', background: KAI_ORANGE, borderRadius: '2px', marginBottom: '18px' }} />
                         <h2 style={{ fontSize: '36px', fontWeight: '800', color: '#111827', margin: '0 0 14px', lineHeight: 1.25 }}>
@@ -307,99 +325,58 @@ const LandingPage = () => {
                         </p>
                     </div>
 
-                    {/* ✨ BENEFIT CARDS — modern design ✨ */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
                         {benefits.map((b, i) => (
-                            <div 
-                                key={i} 
-                                style={{ 
-                                    background: '#ffffff', 
-                                    borderRadius: '20px', 
-                                    padding: '40px 32px 36px', 
+                            <div
+                                key={i}
+                                style={{
+                                    borderRadius: '16px',
+                                    padding: '32px 26px 28px',
+                                    background: '#ffffff',
+                                    border: `2px solid ${b.accent}`,
+                                    boxShadow: '0 2px 14px rgba(0,51,153,0.06)',
                                     position: 'relative',
                                     overflow: 'hidden',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)', 
-                                    border: '1px solid #f0f4ff', 
-                                    transition: 'all 0.35s', 
-                                    cursor: 'default',
-                                    minHeight: '320px',
                                     display: 'flex',
-                                    flexDirection: 'column'
+                                    flexDirection: 'column',
+                                    transition: 'transform .25s, box-shadow .25s',
+                                    cursor: 'default',
                                 }}
-                                onMouseEnter={(e) => { 
-                                    e.currentTarget.style.transform = 'translateY(-8px)'; 
-                                    e.currentTarget.style.boxShadow = `0 18px 36px ${b.accent}25`;
-                                    e.currentTarget.style.borderColor = b.accent + '50';
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-6px)';
+                                    e.currentTarget.style.boxShadow = `0 12px 28px ${b.accent}20`;
                                 }}
-                                onMouseLeave={(e) => { 
-                                    e.currentTarget.style.transform = 'translateY(0)'; 
-                                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.06)'; 
-                                    e.currentTarget.style.borderColor = '#f0f4ff';
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 2px 14px rgba(0,51,153,0.06)';
                                 }}
                             >
-                                {/* Giant decorative number di pojok kanan atas */}
-                                <span style={{ 
-                                    position: 'absolute', 
-                                    top: '-30px', 
-                                    right: '-12px',
-                                    fontSize: '180px', 
-                                    fontWeight: '900', 
-                                    color: b.accent,
-                                    opacity: 0.07, 
-                                    lineHeight: 1,
-                                    pointerEvents: 'none',
-                                    letterSpacing: '-5px'
-                                }}>
-                                    {String(i + 1).padStart(2, '0')}
-                                </span>
-
-                                {/* Icon container dengan gradient */}
-                                <div style={{ 
-                                    width: '64px', 
-                                    height: '64px', 
-                                    borderRadius: '16px', 
-                                    background: `linear-gradient(135deg, ${b.accent} 0%, ${b.accentDark} 100%)`, 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center', 
-                                    marginBottom: '24px', 
-                                    boxShadow: `0 10px 24px ${b.accent}40`,
-                                    position: 'relative',
-                                    zIndex: 1
+                                {/* Icon */}
+                                <div style={{
+                                    width: '52px', height: '52px', borderRadius: '13px',
+                                    background: `linear-gradient(135deg, ${b.accent} 0%, ${b.accentDark} 100%)`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    marginBottom: '20px',
+                                    boxShadow: `0 6px 16px ${b.accent}35`,
                                 }}>
                                     {b.icon}
                                 </div>
 
-                                {/* Label kecil */}
-                                <div style={{ fontSize: '11px', color: b.accent, fontWeight: '700', letterSpacing: '2px', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
-                                    BENEFIT · {String(i + 1).padStart(2, '0')}
-                                </div>
-
                                 {/* Title */}
-                                <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', margin: '0 0 14px', position: 'relative', zIndex: 1 }}>
+                                <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#111827', margin: '0 0 10px' }}>
                                     {b.title}
                                 </h3>
 
-                                {/* Description */}
-                                <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: '1.75', margin: 0, position: 'relative', zIndex: 1, flex: 1 }}>
+                                {/* Desc */}
+                                <p style={{ color: '#6b7280', fontSize: '13px', lineHeight: '1.75', margin: 0, flex: 1 }}>
                                     {b.desc}
                                 </p>
 
-                                {/* Bottom accent bar */}
-                                <div style={{ 
-                                    position: 'absolute', 
-                                    bottom: 0, 
-                                    left: 0, 
-                                    height: '4px', 
-                                    width: '100%',
-                                    background: `linear-gradient(90deg, ${b.accent} 0%, ${b.accentDark} 100%)`,
-                                    opacity: 0.8
-                                }} />
+
                             </div>
                         ))}
                     </div>
 
-                    {/* ✨ MISSION BANNER ✨ */}
                     <div style={{ marginTop: '40px', background: KAI_BLUE, borderRadius: '16px', padding: '36px 40px', display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: '260px' }}>
                             <h3 style={{ color: 'white', fontSize: '22px', fontWeight: '800', margin: '0 0 10px' }}>Melayani Dengan Sepenuh Hati</h3>
@@ -414,10 +391,9 @@ const LandingPage = () => {
                 </div>
             </section>
             
-                        {/* ─── CARA MENDAFTAR — 2x2 Grid Cards ─── */}
-            <section id="caradaftar" ref={caraDaftarRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '68px' }}>
+            <section id="caradaftar" ref={caraDaftarRef} style={{ padding: '80px 48px', backgroundColor: '#ffffff', scrollMarginTop: '80px' }}>                
                 <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-                    {/* ✨ Header ala FAQ ✨ */}
+                    {/* Header  */}
                     <div style={{ marginBottom: '48px' }}>
                         <div style={{ width: '48px', height: '4px', background: KAI_ORANGE, borderRadius: '2px', marginBottom: '18px' }} />
                         <h2 style={{ fontSize: '36px', fontWeight: '800', color: '#111827', margin: '0 0 14px', lineHeight: 1.25 }}>
@@ -428,132 +404,67 @@ const LandingPage = () => {
                         </p>
                     </div>
 
-                    {/* ✨ 2x2 GRID CARDS ✨ */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-                        {phases.map((ph, pi) => (
-                            <div 
-                                key={pi}
-                                style={{
-                                    background: '#ffffff',
-                                    borderRadius: '20px',
-                                    overflow: 'hidden',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                                    border: '1px solid #f0f4f8',
-                                    transition: 'all 0.3s',
-                                    cursor: 'default',
-                                    display: 'flex',
-                                    flexDirection: 'column'
-                                }}
-                                onMouseEnter={(e) => { 
-                                    e.currentTarget.style.transform = 'translateY(-6px)'; 
-                                    e.currentTarget.style.boxShadow = `0 16px 36px ${ph.color}25`;
-                                }}
-                                onMouseLeave={(e) => { 
-                                    e.currentTarget.style.transform = 'translateY(0)'; 
-                                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                                }}
-                            >
-                                {/* Colored top band dengan giant number bg */}
-                                <div style={{
-                                    background: `linear-gradient(135deg, ${ph.color} 0%, ${ph.color}d0 100%)`,
-                                    padding: '28px 32px',
-                                    position: 'relative',
-                                    overflow: 'hidden'
-                                }}>
-                                    {/* Decorative giant number */}
-                                    <span style={{
-                                        position: 'absolute',
-                                        top: '-40px',
-                                        right: '-15px',
-                                        fontSize: '180px',
-                                        fontWeight: '900',
-                                        color: 'rgba(255,255,255,0.13)',
-                                        lineHeight: 1,
-                                        pointerEvents: 'none',
-                                        letterSpacing: '-5px'
-                                    }}>
-                                        {pi + 1}
-                                    </span>
+                    <div style={{ borderRadius: '18px', overflow: 'hidden', boxShadow: '0 6px 32px rgba(0,30,100,0.15)' }}>
 
-                                    {/* Decorative circle */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: '-30px',
-                                        left: '-30px',
-                                        width: '100px',
-                                        height: '100px',
-                                        borderRadius: '50%',
-                                        background: 'rgba(255,255,255,0.08)',
-                                        pointerEvents: 'none'
-                                    }} />
-
-                                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                        {/* Small number badge */}
-                                        <div style={{
-                                            width: '44px',
-                                            height: '44px',
-                                            borderRadius: '12px',
-                                            background: 'rgba(255,255,255,0.25)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontSize: '18px',
-                                            fontWeight: '900',
-                                            color: 'white',
-                                            backdropFilter: 'blur(4px)',
-                                            border: '1px solid rgba(255,255,255,0.3)'
-                                        }}>
-                                            {pi + 1}
-                                        </div>
-
-                                        <div>
-                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', fontWeight: '700', letterSpacing: '1.5px', marginBottom: '4px' }}>
-                                                {ph.phase.toUpperCase()}
-                                            </div>
-                                            <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '800', margin: 0, lineHeight: 1.25 }}>
-                                                {ph.title}
-                                            </h3>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Steps content - compact */}
-                                <div style={{ padding: '20px 28px 24px', flex: 1 }}>
-                                    {ph.steps.map((st, si) => (
-                                        <div key={si} style={{
-                                            display: 'flex',
-                                            gap: '14px',
-                                            alignItems: 'flex-start',
-                                            padding: si === 0 ? '0 0 12px' : '12px 0',
-                                            borderTop: si > 0 ? '1px dashed #f0f0f0' : 'none'
-                                        }}>
-                                            {/* Number badge kecil */}
-                                            <span style={{
-                                                background: ph.color + '15',
-                                                color: ph.color,
-                                                fontWeight: '800',
-                                                fontSize: '11px',
-                                                padding: '4px 8px',
-                                                borderRadius: '6px',
-                                                flexShrink: 0,
-                                                minWidth: '30px',
-                                                textAlign: 'center',
-                                                letterSpacing: '0.5px',
-                                                marginTop: '1px'
-                                            }}>
-                                                {String(st.n).padStart(2, '0')}
-                                            </span>
-                                            <p style={{ margin: 0, color: '#4b5563', fontSize: '13.5px', lineHeight: '1.65', flex: 1 }}>
-                                                {st.text}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
+                    {/* PANEL OFFLINE */}
+                    <div style={{ background: '#003399' }}>
+                        <div style={{ padding: '26px 30px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.55)', marginBottom: '4px' }}>TAHAP AWAL</div>
+                                <div style={{ fontSize: '18px', fontWeight: '800', color: 'white' }}>Offline — Di Kantor</div>
+                                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginTop: '3px' }}>Sebelum masuk ke sistem</div>
                             </div>
-                        ))}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'rgba(255,255,255,0.08)' }}>
+                            {[
+                                { n: '01', title: 'Datang ke Kantor', desc: 'Sampaikan tujuan magang kepada satpam, lalu diarahkan ke manajer atau jajarannya.', bg: '#003399' },
+                                { n: '02', title: 'Wawancara', desc: 'Bisa langsung hari itu jika manajer tersedia, atau dijadwalkan di hari lain.', bg: '#002e8a' },
+                                { n: '03', title: 'Mendapat Persetujuan', desc: 'Setelah disetujui secara langsung, baru bisa lanjut mendaftar via sistem.', bg: '#002575' },
+                            ].map((s) => (
+                                <div key={s.n} style={{ background: s.bg, padding: '18px 22px 22px' }}>
+                                    <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)', marginBottom: '10px' }}>{s.n}</div>
+                                    <div style={{ fontSize: '13px', fontWeight: '700', color: 'white', marginBottom: '6px', lineHeight: '1.3' }}>{s.title}</div>
+                                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.6' }}>{s.desc}</div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* ✨ CTA ✨ */}
+                    {/* BRIDGE */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(0,34,119,0.95)', padding: '10px 30px' }}>
+                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.12)' }} />
+                        <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.4)' }}>↓ LANJUT KE SISTEM ONLINE</span>
+                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.12)' }} />
+                    </div>
+
+                    {/* PANEL ONLINE */}
+                    <div style={{ background: '#002277' }}>
+                        <div style={{ padding: '26px 30px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px', color: 'rgba(255,180,80,0.7)', marginBottom: '4px' }}>TAHAP LANJUT</div>
+                                <div style={{ fontSize: '18px', fontWeight: '800', color: 'white' }}>Online — Di Sistem</div>
+                                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginTop: '3px' }}>Setelah mendapat persetujuan offline</div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
+                            {[
+                                { n: '04', title: 'Daftar Akun', desc: 'Isi data diri, email, password, NIM/NIS, dan asal instansi.', bg: '#002277' },
+                                { n: '05', title: 'Isi Formulir & Upload', desc: 'Lengkapi detail pengajuan dan unggah dokumen wajib.', bg: '#001e6b' },
+                                { n: '06', title: 'Pantau Status', desc: 'Admin meninjau berkas. Ada revisi? Kamu bisa upload ulang lewat dashboard.', bg: '#001a5e' },
+                                { n: '07', title: 'Mulai Kegiatan', desc: 'Surat disetujui → unduh dari sistem. Status otomatis berubah saat tanggal mulai tiba.', bg: '#001652' },
+                            ].map((s) => (
+                                <div key={s.n} style={{ background: s.bg, padding: '18px 18px 22px' }}>
+                                    <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '1px', color: 'rgba(255,180,80,0.4)', marginBottom: '10px' }}>{s.n}</div>
+                                    <div style={{ fontSize: '13px', fontWeight: '700', color: 'white', marginBottom: '6px', lineHeight: '1.3' }}>{s.title}</div>
+                                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.6' }}>{s.desc}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                </div>
+
+                    {/* CTA  */}
                     <div style={{ textAlign: 'center', marginTop: '56px' }}>
                         <button onClick={() => navigate('/login')} style={{ backgroundColor: KAI_ORANGE, color: 'white', border: 'none', padding: '15px 40px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', fontSize: '15px', boxShadow: '0 6px 18px rgba(255,102,0,0.35)' }}>
                             Mulai Pendaftaran Sekarang →
@@ -611,7 +522,7 @@ const LandingPage = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px', marginBottom: '32px' }}>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                {/* ✨ Logo asli (bukan kotak KAI lagi) ✨ */}
+                                {/* Logo kai*/}
                                 <img src="/logo-kai.png" alt="KAI Logo" style={{ width: '42px', height: '42px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '8px', padding: '4px' }} />
                                 <div>
                                     <div style={{ fontSize: '14px', fontWeight: '700' }}>KAI Daop 6 Yogyakarta</div>
@@ -620,11 +531,16 @@ const LandingPage = () => {
                             </div>
                             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>Sistem manajemen magang resmi PT Kereta Api Indonesia (Persero) Daop 6 Yogyakarta.</p>
                             <br />
-                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>Created by: Maura Anindita Kirana<br/>Universitas Muhammadiyyah Yogyakarta<br/>kiranamaura351@gmail.com</p>
+                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', maxWidth: '280px', lineHeight: '1.6', margin: 0 }}>
+                                <span style={{ color: KAI_ORANGE, fontWeight: '700', fontSize: '10px', letterSpacing: '1.5px' }}>FULLSTACK DEVELOPER</span><br/>
+                                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: '700', fontSize: '14px' }}>Maura Anindita Kirana</span><br/>
+                                <a href="mailto:kiranamaura351@gmail.com" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontSize: '12px' }}>kiranamaura351@gmail.com</a>
+                                <br/>
+                                <span style={{ fontSize: '12px' }}>Universitas Muhammadiyah Yogyakarta</span><br/>
+                            </p>
                         </div>
 
                         <div style={{ display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
-                            {/* ✨ Navigasi clickable ✨ */}
                             <div>
                                 <p style={{ fontWeight: '700', fontSize: '13px', marginBottom: '12px', color: KAI_ORANGE }}>Navigasi</p>
                                 {[
@@ -645,7 +561,7 @@ const LandingPage = () => {
                                 ))}
                             </div>
 
-                            {/* ✨ Akun clickable ✨ */}
+                            {/* Akun clickable */}
                             <div>
                                 <p style={{ fontWeight: '700', fontSize: '13px', marginBottom: '12px', color: KAI_ORANGE }}>Akun</p>
                                 {[
