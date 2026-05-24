@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Bell, CheckCheck, X } from 'lucide-react';
+import { formatTanggalIndo } from '../utils/formatTanggal';
 
 const API = 'http://localhost:5000/api';
 
@@ -15,7 +16,7 @@ const formatTimeAgo = (dateStr) => {
     if (diffSec < 3600) return `${Math.floor(diffSec / 60)} menit lalu`;
     if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} jam lalu`;
     if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} hari lalu`;
-    return then.toLocaleDateString('id-ID');
+    return formatTanggalIndo(dateStr);
 };
 
 const NotificationBell = ({ userId, iconColor = '#ff6600', iconSize = 22 }) => {

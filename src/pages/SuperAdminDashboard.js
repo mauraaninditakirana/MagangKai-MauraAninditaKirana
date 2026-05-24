@@ -3,6 +3,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from '../components/NotificationBell';
+import { formatTanggalIndo } from '../utils/formatTanggal';
 import { 
     LayoutDashboard, FileText, RefreshCcw, UserCog, Building2, 
     LogOut, ChevronDown, User, Users, Archive, Edit3, Mail, IdCard, 
@@ -399,7 +400,7 @@ const SuperAdminDashboard = () => {
                                                 <td style={styles.td}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ff6600', fontWeight: 'bold' }}>
                                                         <Calendar size={14} />
-                                                        {new Date(p.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(p.tanggal_selesai).toLocaleDateString('id-ID')}
+                                                        {formatTanggalIndo(p.tanggal_mulai)} - {formatTanggalIndo(p.tanggal_selesai)}
                                                     </div>
                                                 </td>
                                             </tr>

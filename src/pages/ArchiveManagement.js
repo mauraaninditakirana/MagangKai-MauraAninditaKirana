@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { formatTanggalIndo } from '../utils/formatTanggal';
 import { 
     LayoutDashboard, RefreshCcw, UserCog, Building2, 
     LogOut, Search, Eye, ChevronDown, Archive
@@ -115,7 +116,7 @@ const ArchiveManagement = () => {
                         </div>
                         <div style="${fieldRow} border-bottom:none;">
                             <span style="${fieldLabel}">Periode Kegiatan</span>
-                            <span style="${fieldValue}">${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</span>
+                            <span style="${fieldValue}">${formatTanggalIndo(s.tanggal_mulai)} s/d ${formatTanggalIndo(s.tanggal_selesai)}</span>
                         </div>
                     </div>
 
@@ -294,8 +295,8 @@ const ArchiveManagement = () => {
                                             <span style={{color: '#003399', fontWeight: 'bold'}}>{s.nama_unit}</span>
                                         </td>
                                         <td style={styles.td}>{s.nama_jenis}</td>
-                                        <td style={styles.td}>{new Date(s.tanggal_mulai).toLocaleDateString('id-ID')}</td>
-                                        <td style={styles.td}>{new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</td>
+                                        <td style={styles.td}>{formatTanggalIndo(s.tanggal_mulai)}</td>
+                                        <td style={styles.td}>{formatTanggalIndo(s.tanggal_selesai)}</td>
                                         <td style={{...styles.td, textAlign: 'center'}}>
                                             <span style={{ color: getStatusColor(s.status), fontWeight: 'bold', fontSize: '13px' }}>
                                                 {s.status}

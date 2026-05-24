@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { formatTanggalIndo } from '../utils/formatTanggal';
 import { 
     LayoutDashboard, RefreshCcw, UserCog, Building2, Briefcase,
     LogOut, ChevronDown, Archive, Search, ArrowLeft, Calendar
@@ -218,7 +219,7 @@ const UnitDetail = () => {
                                         <td style={styles.td}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#003399', fontWeight: 'bold' }}>
                                                 <Calendar size={14} />
-                                                {new Date(p.tanggal_mulai).toLocaleDateString('id-ID')} — {new Date(p.tanggal_selesai).toLocaleDateString('id-ID')}
+                                                {formatTanggalIndo(p.tanggal_mulai)} — {formatTanggalIndo(p.tanggal_selesai)}
                                             </div>
                                         </td>
                                     </tr>

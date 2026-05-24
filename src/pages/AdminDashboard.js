@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import NotificationBell from '../components/NotificationBell';
+import { formatTanggalIndo } from '../utils/formatTanggal';
 import { 
     LayoutDashboard, FileText, LogOut, Search, User, 
     Edit3, Mail, IdCard, Building, Save, X, Eye, Settings2, Phone
@@ -314,7 +315,7 @@ const AdminDashboard = () => {
                         </div>
                         <div style="${fieldRow}">
                             <span style="${fieldLabel}">Periode</span>
-                            <span style="${fieldValue}">${new Date(s.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(s.tanggal_selesai).toLocaleDateString('id-ID')}</span>
+                            <span style="${fieldValue}">${formatTanggalIndo(s.tanggal_mulai)} s/d ${formatTanggalIndo(s.tanggal_selesai)}</span>
                         </div>
                         <div style="${fieldRow}">
                             <span style="${fieldLabel}">Pembimbing</span>

@@ -4,6 +4,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import FormPengajuan from '../components/FormPengajuan';
 import NotificationBell from '../components/NotificationBell';
+import { formatTanggalIndo } from '../utils/formatTanggal';
 import { 
     FilePlus, History, LogOut, AlertTriangle, CheckCircle, 
     User, Edit3, Mail, IdCard, Building, Save, X, CalendarClock, Phone, GraduationCap
@@ -294,7 +295,7 @@ const Dashboard = () => {
                                                     <CheckCircle size={40} color="#27ae60" style={{marginBottom: '15px'}} />
                                                     <h3 style={{color: '#27ae60', margin: '0 0 10px 0'}}>Anda Sedang Menjalani Kegiatan Magang</h3>
                                                     <p style={{color: '#555', lineHeight: '1.6', fontSize: '14px'}}>
-                                                        Sistem mendeteksi bahwa Anda sedang aktif melaksanakan <b>{activeSubmission.nama_jenis}</b> hingga <b>{new Date(activeSubmission.tanggal_selesai).toLocaleDateString('id-ID')}</b>.
+                                                        Sistem mendeteksi bahwa Anda sedang aktif melaksanakan <b>{activeSubmission.nama_jenis}</b> hingga <b>{formatTanggalIndo(activeSubmission.tanggal_selesai)}</b>.
                                                     </p>
                                                     {daysRemaining !== null && daysRemaining <= 7 && daysRemaining >= 0 && (
                                                         <div style={styles.extendBox}>
