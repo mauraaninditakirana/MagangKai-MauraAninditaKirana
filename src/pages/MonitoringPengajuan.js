@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { formatTanggalIndo } from '../utils/formatTanggal';
 import { 
     LayoutDashboard, Search, LogOut, Eye, 
     RefreshCcw, UserCog, Building2, Briefcase, 
@@ -320,7 +321,7 @@ const MonitoringPengajuan = () => {
                 cancelButtonText: 'Batal',
                 inputValidator: (value) => { if (!value) return 'Tanggal wajib diisi!' }
             });
-            if (date) sendStatusUpdate(id, newStatus, { tgl_kirim_pusat: date, catatan: `Berkas dikirim ke Pusat pada ${date}` }, 'Status diubah ke Dikirim ke Pusat');
+            if (date) sendStatusUpdate(id, newStatus, { tgl_kirim_pusat: date, catatan: `Berkas dikirim ke Pusat pada ${formatTanggalIndo(date)}` }, 'Status diubah ke Dikirim ke Pusat');
         } else if (newStatus === 'Surat Telah Masuk dari Pusat') {
             const { value: date } = await Swal.fire({
                 title: 'Surat Masuk',
@@ -330,7 +331,7 @@ const MonitoringPengajuan = () => {
                 confirmButtonText: 'Simpan & Lanjutkan',
                 inputValidator: (value) => { if (!value) return 'Tanggal wajib diisi!' }
             });
-            if (date) sendStatusUpdate(id, newStatus, { tgl_terima_pusat: date, catatan: `Surat diterima dari Pusat pada ${date}` }, 'Status diubah ke Surat Masuk dari Pusat');
+            if (date) sendStatusUpdate(id, newStatus, { tgl_terima_pusat: date, catatan: `Surat diterima dari Pusat pada ${formatTanggalIndo(date)}` }, 'Status diubah ke Surat Masuk dari Pusat');
         } else {
             const result = await Swal.fire({
                 title: 'Konfirmasi',

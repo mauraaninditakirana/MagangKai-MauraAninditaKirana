@@ -282,7 +282,7 @@ const SuperAdminDashboard = () => {
                                         <div style={styles.accentBar} />
                                         <h3 style={styles.sectionTitle}>Pantauan Unit</h3>
                                         <p style={styles.sectionDesc}>
-                                            Daftar unit dan jumlah peserta yang sedang aktif menjalani magang.
+                                            Daftar unit dan jumlah peserta yang sedang aktif menjalani kegiatan.
                                         </p>
                                     </div>
                                     <div style={styles.unitCountBadge}>
