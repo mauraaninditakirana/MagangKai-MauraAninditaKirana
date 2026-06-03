@@ -307,7 +307,7 @@ const UserManagement = () => {
                                                 {u.role === 'admin unit' && u.nama_unit 
                                                     ? `Admin: ${u.nama_unit}` 
                                                     : u.role === 'user'
-                                                        ? `${(u.jenjang || 'Mahasiswa').toUpperCase()}`
+                                                        ? (u.jenjang || 'Mahasiswa').toUpperCase()
                                                         : (u.role || '').toUpperCase()}
                                             </span>
                                             {u.role === 'user' && u.asal_instansi && (

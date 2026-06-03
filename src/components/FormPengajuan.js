@@ -433,7 +433,7 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                                             <FileUp size={14} /> {uploaded ? 'Ganti' : 'Pilih File'}
                                             <input 
                                                 type="file" 
-                                                accept=".pdf,.jpg,.jpeg,.png" 
+                                                accept="application/pdf" 
                                                 onChange={(e) => handleFileForReq(req.nama_dokumen, e.target.files[0])}
                                                 style={{display: 'none'}}
                                                 required={isWajib && !uploaded && !isRegularRevisi}
@@ -446,8 +446,8 @@ const FormPengajuan = ({ userId, onDocsUploaded, initialData }) => {
                     )}
                     <p style={{fontSize: '11px', color: '#888', marginTop: '8px'}}>
                         {revisiId 
-                            ? '*Hanya upload dokumen yang perlu diperbaiki. Format: PDF/JPG/PNG.' 
-                            : '*Setiap dokumen di-upload terpisah. Format: PDF/JPG/PNG.'}
+                            ? '*Hanya upload dokumen yang perlu diperbaiki. Format wajib: PDF.' 
+                            : '*Setiap dokumen di-upload terpisah. Format wajib: PDF.'}
                     </p>
                 </div>
                 <button type="submit" style={{...styles.btnSubmit, backgroundColor: revisiId ? '#ff6600' : '#003399'}}>

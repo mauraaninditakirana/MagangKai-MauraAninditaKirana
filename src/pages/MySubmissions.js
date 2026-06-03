@@ -126,7 +126,7 @@ const MySubmissions = () => {
                 <div style={styles.topHeader}>
                     <div style={styles.topBarInfo}>
                         <small style={styles.topBarLabel}>LOGIN SEBAGAI</small>
-                        <span style={styles.topBarName}>{userData.nama_lengkap} <span style={{color:'#ff6600'}}>• Mahasiswa</span></span>
+                        <span style={styles.topBarName}>{userData.nama_lengkap} <span style={{color:'#ff6600'}}>• {userData.jenjang || 'Mahasiswa'}</span></span>
                     </div>
                     {userData.id && <NotificationBell userId={userData.id} iconColor="#ff6600" iconSize={22} />}
                 </div>

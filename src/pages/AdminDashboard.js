@@ -175,27 +175,55 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleUpdateStatus = async (id, newStatus) => {
-        
-        let confirmText = `Ubah status menjadi: ${newStatus}?`;
-        let confirmTitle = 'Konfirmasi Aksi';
-        let confirmColor = '#0055cc';
-        let confirmBtnText = 'Ya, Proses';
-
+        const handleUpdateStatus = async (id, newStatus) => {
+        //  Khusus ACC Unit — minta input LOKASI PENEMPATAN dulu 
         if (newStatus === 'Disetujui Unit, Menunggu Verifikasi SDM') {
-            confirmTitle = 'Terima Pengajuan?';
-            confirmText = 'Pengajuan akan langsung diteruskan ke SDM DAOP 6 untuk diverifikasi. Lanjutkan?';
-            confirmColor = '#27ae60';
-            confirmBtnText = 'Ya, Terima & Teruskan';
+            const { value: lokasi } = await Swal.fire({
+                title: 'ACC Unit & Teruskan ke SDM',
+                html: `
+                    <p style="margin-bottom:12px; color:#374151; font-size:14px;">
+                        Masukkan <b>Lokasi Penempatan Magang</b> untuk peserta ini.<br/>
+                        Pengajuan akan langsung diteruskan ke SDM DAOP 6 setelah ACC.
+                    </p>
+                `,
+                input: 'text',
+                inputPlaceholder: 'Contoh: bagian IT',
+                showCancelButton: true,
+                confirmButtonColor: '#27ae60',
+                confirmButtonText: 'ACC & Teruskan',
+                cancelButtonText: 'Batal',
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'Lokasi penempatan wajib diisi sebelum ACC!';
+                    }
+                }
+            });
+
+            if (lokasi) {
+                try {
+                    await axios.put(`http://localhost:5000/api/submissions/${id}/status`, {
+                        status: newStatus,
+                        catatan: `Admin Unit ACC pengajuan ini. Lokasi penempatan: ${lokasi}`,
+                        admin_id: userData.id,
+                        lokasi_penempatan: lokasi
+                    });
+                    Swal.fire('Berhasil!', 'Pengajuan diteruskan ke SDM DAOP 6.', 'success');
+                    fetchData(userData.unit_id);
+                } catch (err) {
+                    Swal.fire('Gagal', 'Gagal memperbarui status.', 'error');
+                }
+            }
+            return;
         }
 
+        // Default flow untuk status lainnya
         const result = await Swal.fire({
-            title: confirmTitle,
-            text: confirmText,
+            title: 'Konfirmasi Aksi',
+            text: `Ubah status menjadi: ${newStatus}?`,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: confirmColor,
-            confirmButtonText: confirmBtnText
+            confirmButtonColor: '#0055cc',
+            confirmButtonText: 'Ya, Proses'
         });
 
         if (result.isConfirmed) {
@@ -321,9 +349,13 @@ const AdminDashboard = () => {
                             <span style="${fieldLabel}">Pembimbing</span>
                             <span style="${fieldValue}">${s.nama_pembimbing || '-'}</span>
                         </div>
-                        <div style="${fieldRow} border-bottom:none;">
+                        <div style="${fieldRow}">
                             <span style="${fieldLabel}">Kontak Pembimbing</span>
                             <span style="${fieldValue}">${s.kontak_pembimbing || '-'}</span>
+                        </div>
+                        <div style="${fieldRow} border-bottom:none;">
+                            <span style="${fieldLabel}">Lokasi Penempatan</span>
+                            <span style="${fieldValue} ${s.lokasi_penempatan ? 'color:#003399;' : 'color:#9ca3af; font-style:italic;'}">${s.lokasi_penempatan || 'Belum ditentukan'}</span>
                         </div>
                     </div>
 
@@ -492,7 +524,7 @@ const AdminDashboard = () => {
                                             <label style={styles.labelForm}>No. Telepon (Opsional)</label>
                                             <input
                                                 style={styles.inputForm}
-                                                placeholder="Contoh: 081234567890"
+                                                placeholder="Contoh: 08xxx"
                                                 value={formData.no_telp}
                                                 onChange={e => setFormData({...formData, no_telp: e.target.value.replace(/\s/g, '')})}
                                             />
@@ -583,7 +615,7 @@ const AdminDashboard = () => {
                                                             value=""
                                                         >
                                                             <option value="" disabled>Pilih Tindakan</option>
-                                                            <option value="Disetujui Unit, Menunggu Verifikasi SDM">✓ Terima & Teruskan ke SDM</option>
+                                                            <option value="Disetujui Unit, Menunggu Verifikasi SDM">✓ ACC Unit & Teruskan ke SDM</option>
                                                             <option value="revisi">⏸ Pending (Minta Revisi)</option>
                                                             <option value="tolak">✗ Tolak Pengajuan</option>
                                                         </select>

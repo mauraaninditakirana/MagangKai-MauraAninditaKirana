@@ -261,9 +261,13 @@ const MonitoringPengajuan = () => {
                             <span style="${fieldLabel}">Pembimbing</span>
                             <span style="${fieldValue}">${s.nama_pembimbing || '-'}</span>
                         </div>
-                        <div style="${fieldRow} border-bottom:none;">
+                        <div style="${fieldRow}">
                             <span style="${fieldLabel}">Kontak Pembimbing</span>
                             <span style="${fieldValue}">${s.kontak_pembimbing || '-'}</span>
+                        </div>
+                        <div style="${fieldRow} border-bottom:none;">
+                            <span style="${fieldLabel}">Lokasi Penempatan</span>
+                            <span style="${fieldValue} ${s.lokasi_penempatan ? 'color:#27ae60;' : 'color:#9ca3af; font-style:italic;'}">${s.lokasi_penempatan || 'Belum ditentukan'}</span>
                         </div>
                     </div>
 
