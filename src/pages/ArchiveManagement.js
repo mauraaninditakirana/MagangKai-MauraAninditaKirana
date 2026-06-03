@@ -60,20 +60,91 @@ const ArchiveManagement = () => {
         } catch (err) { console.error(err); }
     };
 
-    const viewDetail = async (id) => {
+    const handleUploadSertifikat = async (id) => {
+        const { value: file } = await Swal.fire({
+            title: 'Upload Surat Keterangan Selesai',
+            text: 'Pilih file PDF Surat Keterangan / Sertifikat untuk peserta ini.',
+            input: 'file',
+            inputAttributes: { 'accept': 'application/pdf' },
+            showCancelButton: true,
+            confirmButtonText: 'Upload & Kirim ke Peserta',
+            confirmButtonColor: '#27ae60',
+            cancelButtonText: 'Batal',
+            inputValidator: (value) => {
+                if (!value) return 'Mohon pilih file PDF!';
+                if (value.type !== 'application/pdf') return 'File harus berformat PDF!';
+            }
+        });
+
+        if (file) {
+            const adminId = JSON.parse(sessionStorage.getItem('user') || '{}').id;
+            const formData = new FormData();
+            formData.append('sertifikat', file);
+            formData.append('admin_id', adminId || '');
+
+            try {
+                await axios.post(`http://localhost:5000/api/submissions/${id}/upload-sertifikat`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                Swal.fire('Berhasil!', 'Sertifikat berhasil di-upload & email otomatis terkirim ke peserta.', 'success');
+                fetchArchive();
+            } catch (err) {
+                const errorMsg = err.response?.data?.message || 'Gagal upload sertifikat.';
+                Swal.fire('Gagal', errorMsg, 'error');
+            }
+        }
+    };
+        const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
             const s = res.data;
             const docs = s.documents || [];
+            const logs = s.logs || [];
 
-            // Helper inline styles untuk modal
+            // Cek apakah sertifikat sudah ada → kalau sudah, tombol upload disembunyikan
+            const hasSertifikat = docs.some(d => d.nama_dokumen === 'Surat Keterangan Selesai');
+            const showUploadBtn = s.status === 'Selesai Kegiatan' && !hasSertifikat;
+
             const sectionCard = 'background:#f8fafd; padding:18px 22px; border-radius:12px; margin-bottom:14px; border:1px solid #f0f4f8;';
             const sectionLabel = 'font-size:11px; color:#003399; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; display:block;';
             const fieldRow = 'display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e5e7eb; font-size:13px;';
             const fieldLabel = 'color:#6b7280; font-weight:600;';
             const fieldValue = 'color:#111827; font-weight:600; text-align:right; max-width:60%;';
 
-            let htmlContent = `
+            // Berkas Lampiran
+            let berkasHtml = '';
+            if (docs.length > 0) {
+                berkasHtml = docs.map((doc, i) => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:8px; margin-bottom:6px; border:1px solid #e0e7ff;">
+                        <span style="font-size:13px; color:#374151; font-weight:600;">${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
+                        <a href="http://localhost:5000/${doc.file_path}" target="_blank" 
+                           style="background:#003399; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">
+                           Lihat Berkas
+                        </a>
+                    </div>
+                `).join('');
+            } else {
+                berkasHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:20px 0;">Tidak ada dokumen dilampirkan.</p>';
+            }
+
+            // Riwayat Status
+            let riwayatHtml = '';
+            if (logs.length > 0) {
+                riwayatHtml = logs.map(log => `
+                    <div style="display:flex; gap:10px; padding:10px 0; border-bottom:1px dashed #e5e7eb; font-size:12px; color:#374151;">
+                        <span style="min-width:8px; height:8px; background:#003399; border-radius:50%; margin-top:6px; flex-shrink:0;"></span>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; color:#003399; margin-bottom:2px; font-size:13px;">${log.status_perubahan}</div>
+                            <div style="color:#6b7280; line-height:1.5;">${log.catatan || '-'}</div>
+                            <div style="color:#9ca3af; font-size:11px; margin-top:4px;">${formatTanggalIndo(log.created_at)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                riwayatHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:14px 0;">Belum ada riwayat perubahan.</p>';
+            }
+
+            const htmlContent = `
                 <div style="text-align:left; font-family:'Segoe UI', Tahoma, sans-serif;">
                     
                     <div style="${sectionCard}">
@@ -124,26 +195,27 @@ const ArchiveManagement = () => {
                         </div>
                     </div>
 
-                    <div style="${sectionCard} margin-bottom:0;">
+                    <div style="${sectionCard}">
                         <span style="${sectionLabel}">━━ Arsip Dokumen Lampiran</span>
-                        ${docs.length > 0 ? docs.map((doc, i) => `
-                            <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:8px; margin-bottom:6px; border:1px solid #e0e7ff;">
-                                <span style="font-size:13px; color:#374151; font-weight:600;">${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
-                                <a href="http://localhost:5000/${doc.file_path}" target="_blank" 
-                                   style="background:#003399; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">
-                                   Lihat Berkas
-                                </a>
-                            </div>
-                        `).join('') : '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:20px 0;">Tidak ada dokumen dilampirkan.</p>'}
+                        ${berkasHtml}
+                    </div>
+
+                    <div style="${sectionCard} margin-bottom:0;">
+                        <span style="${sectionLabel}">━━ Riwayat Status</span>
+                        ${riwayatHtml}
                     </div>
                 </div>
             `;
-            Swal.fire({
+
+            const swalResult = await Swal.fire({
                 title: 'Detail Arsip Pengajuan',
                 html: htmlContent,
                 width: '640px',
                 confirmButtonText: 'Tutup',
                 confirmButtonColor: '#003399',
+                showDenyButton: showUploadBtn,
+                denyButtonText: '🡅 Upload Sertifikat',
+                denyButtonColor: '#ff6600',
                 didOpen: () => {
                     const titleEl = Swal.getTitle();
                     if (titleEl) {
@@ -155,6 +227,11 @@ const ArchiveManagement = () => {
                     }
                 }
             });
+
+            // Klik tombol "Upload Sertifikat" → trigger handler
+            if (swalResult.isDenied) {
+                await handleUploadSertifikat(id);
+            }
         } catch (err) {
             Swal.fire('Error', 'Gagal memuat detail arsip.', 'error');
         }

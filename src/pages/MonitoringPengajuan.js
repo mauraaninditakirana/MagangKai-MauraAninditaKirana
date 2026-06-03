@@ -199,7 +199,7 @@ const MonitoringPengajuan = () => {
         }
     };
 
-        const viewDetail = async (id) => {
+    const viewDetail = async (id) => {
         try {
             const res = await axios.get(`http://localhost:5000/api/submissions/${id}`);
             const s = res.data;
@@ -230,6 +230,23 @@ const MonitoringPengajuan = () => {
                 }).join('');
             } else {
                 berkasHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:20px 0;">Tidak ada berkas yang dilampirkan.</p>';
+            }
+
+            const logs = s.logs || [];
+            let riwayatHtml = '';
+            if (logs.length > 0) {
+                riwayatHtml = logs.map(log => `
+                    <div style="display:flex; gap:10px; padding:10px 0; border-bottom:1px dashed #e5e7eb; font-size:12px; color:#374151;">
+                        <span style="min-width:8px; height:8px; background:#003399; border-radius:50%; margin-top:6px; flex-shrink:0;"></span>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; color:#003399; margin-bottom:2px; font-size:13px;">${log.status_perubahan}</div>
+                            <div style="color:#6b7280; line-height:1.5;">${log.catatan || '-'}</div>
+                            <div style="color:#9ca3af; font-size:11px; margin-top:4px;">${formatTanggalIndo(log.created_at)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                riwayatHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:14px 0;">Belum ada riwayat perubahan.</p>';
             }
 
             const htmlContent = `
@@ -271,9 +288,14 @@ const MonitoringPengajuan = () => {
                         </div>
                     </div>
 
-                    <div style="${sectionCard} margin-bottom:0;">
+                    <div style="${sectionCard}">
                         <span style="${sectionLabel}">━━ Berkas Lampiran</span>
                         ${berkasHtml}
+                    </div>
+
+                    <div style="${sectionCard} margin-bottom:0;">
+                        <span style="${sectionLabel}">━━ Riwayat Status</span>
+                        ${riwayatHtml}
                     </div>
                 </div>
             `;

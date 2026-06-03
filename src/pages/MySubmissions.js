@@ -8,17 +8,29 @@ import { FilePlus, History, LogOut, User } from 'lucide-react';
 
 const MySubmissions = () => {
     const navigate = useNavigate();
-    const [userData, setUserData] = useState(null);
+    const [userData, setUserData] = useState(() => {
+        const saved = sessionStorage.getItem('user');
+        return saved ? JSON.parse(saved) : null;
+    });
 
     useEffect(() => {
-        const storedUser = sessionStorage.getItem('user');
-        if (!storedUser) {
+        if (!userData) {
             navigate('/');
             return;
         }
-        setUserData(JSON.parse(storedUser));
+        // Auto-enrich kalau sessionStorage lama (belum punya nama_lengkap) — backward compat
+        if (!userData.nama_lengkap) {
+            axios.get(`http://localhost:5000/api/users/${userData.id}`)
+                .then(res => {
+                    const fullData = { ...userData, ...res.data };
+                    setUserData(fullData);
+                    sessionStorage.setItem('user', JSON.stringify(fullData));
+                })
+                .catch(() => {});
+        }
         window.scrollTo(0, 0);
-    }, [navigate]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleAjukanJadwal = (submissionId) => {
         Swal.fire({

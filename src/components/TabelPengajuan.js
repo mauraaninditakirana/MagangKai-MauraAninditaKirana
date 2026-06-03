@@ -23,6 +23,83 @@ const TabelPengajuan = ({ userId }) => {
         }
     };
 
+    const showRiwayat = async (submissionId) => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/submissions/${submissionId}`);
+            const s = res.data;
+            const logs = s.logs || [];
+            const docs = s.documents || [];
+
+            const sectionCard = 'background:#f8fafd; padding:18px 22px; border-radius:12px; margin-bottom:14px; border:1px solid #f0f4f8;';
+            const sectionLabel = 'font-size:11px; color:#003399; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; display:block;';
+
+            let riwayatHtml = '';
+            if (logs.length > 0) {
+                riwayatHtml = logs.map(log => `
+                    <div style="display:flex; gap:10px; padding:10px 0; border-bottom:1px dashed #e5e7eb; font-size:12px; color:#374151;">
+                        <span style="min-width:8px; height:8px; background:#003399; border-radius:50%; margin-top:6px; flex-shrink:0;"></span>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; color:#003399; margin-bottom:2px; font-size:13px;">${log.status_perubahan}</div>
+                            <div style="color:#6b7280; line-height:1.5;">${log.catatan || '-'}</div>
+                            <div style="color:#9ca3af; font-size:11px; margin-top:4px;">${new Date(log.created_at).toLocaleDateString('id-ID').split('/').reverse().map((v,i)=>i===0?v:v.padStart(2,'0')).reverse().join('-')}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                riwayatHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:14px 0;">Belum ada riwayat.</p>';
+            }
+
+            // Berkas yang user upload (bisa download ulang)
+            let myBerkasHtml = '';
+            const myDocs = docs.filter(d => 
+                d.nama_dokumen !== 'Surat Pengantar dari Pusat' &&
+                d.nama_dokumen !== 'Surat Keterangan Selesai'
+            );
+            if (myDocs.length > 0) {
+                myBerkasHtml = myDocs.map((doc, i) => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:8px; margin-bottom:6px; border:1px solid #e0e7ff;">
+                        <span style="font-size:13px; color:#374151; font-weight:600;">${i + 1}. ${doc.nama_dokumen || 'Berkas'}</span>
+                        <a href="http://localhost:5000/${doc.file_path}" target="_blank" 
+                           style="background:#003399; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">
+                           Unduh Ulang
+                        </a>
+                    </div>
+                `).join('');
+            } else {
+                myBerkasHtml = '<p style="color:#9ca3af; margin:0; font-style:italic; font-size:13px; text-align:center; padding:14px 0;">Tidak ada berkas Anda yang ter-upload.</p>';
+            }
+
+            Swal.fire({
+                title: 'Riwayat Pengajuan',
+                html: `
+                    <div style="text-align:left; font-family:'Segoe UI', Tahoma, sans-serif;">
+                        <div style="${sectionCard}">
+                            <span style="${sectionLabel}">━━ Berkas Saya (Upload-an Anda)</span>
+                            ${myBerkasHtml}
+                        </div>
+                        <div style="${sectionCard} margin-bottom:0;">
+                            <span style="${sectionLabel}">━━ Riwayat Perubahan Status</span>
+                            ${riwayatHtml}
+                        </div>
+                    </div>
+                `,
+                width: '600px',
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#003399',
+                didOpen: () => {
+                    const titleEl = Swal.getTitle();
+                    if (titleEl) {
+                        titleEl.style.color = '#111827';
+                        titleEl.style.fontWeight = '800';
+                        titleEl.style.fontSize = '22px';
+                        titleEl.style.fontFamily = "'Segoe UI', Tahoma, sans-serif";
+                    }
+                }
+            });
+        } catch (err) {
+            Swal.fire('Error', 'Gagal memuat riwayat.', 'error');
+        }
+    };
     const showCatatan = (submission) => {
         const catatan = submission.catatan;
         const catatanBy = submission.catatan_by || 'Admin';
@@ -152,11 +229,29 @@ const TabelPengajuan = ({ userId }) => {
                                     {['Selesai (Surat Dirilis)', 'Dalam Masa Kegiatan', 'Selesai Kegiatan'].includes(s.status) && (
                                         <button 
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-final`, '_blank')}
-                                            style={{...styles.btnAction, backgroundColor: '#ff6600', color: '#fff', marginBottom: '6px'}}
+                                            style={{...styles.btnAction, backgroundColor: '#27ae60', color: '#fff', marginBottom: '6px'}}
                                         >
                                             <Download size={14}/> Surat Pengantar KAI Pusat
                                         </button>
                                     )}
+
+                                    {/* Download Sertifikat — muncul kalau sudah selesai & ada sertifikat  */}
+                                    {s.status === 'Selesai Kegiatan' && (
+                                        <button 
+                                            onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-sertifikat`, '_blank')}
+                                            style={{...styles.btnAction, backgroundColor: '#9333ea', color: '#fff', marginBottom: '6px'}}
+                                        >
+                                            <Download size={14}/> Sertifikat
+                                        </button>
+                                    )}
+
+                                    {/* Lihat Riwayat */}
+                                    <button 
+                                        onClick={() => showRiwayat(s.id)} 
+                                        style={{...styles.btnInfo, marginBottom: '6px'}}
+                                    >
+                                        <Clock size={14}/> Lihat Riwayat
+                                    </button>
                                     {s.status === 'Revisi' && (
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
                                             <button onClick={() => showCatatan(s)} style={styles.btnInfo}>
