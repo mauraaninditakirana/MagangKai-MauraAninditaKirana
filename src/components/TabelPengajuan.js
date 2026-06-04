@@ -239,7 +239,7 @@ const TabelPengajuan = ({ userId }) => {
                                     {s.status === 'Selesai Kegiatan' && (
                                         <button 
                                             onClick={() => window.open(`http://localhost:5000/api/submissions/${s.id}/download-sertifikat`, '_blank')}
-                                            style={{...styles.btnAction, backgroundColor: '#9333ea', color: '#fff', marginBottom: '6px'}}
+                                            style={{...styles.btnAction, backgroundColor: '#ff6600', color: '#fff', marginBottom: '6px'}}
                                         >
                                             <Download size={14}/> Sertifikat
                                         </button>
